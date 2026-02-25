@@ -25,21 +25,22 @@ jobs:
       - name: Verify wheel installs
         run: |
           python -m venv /tmp/test-env
-          /tmp/test-env/bin/pip install packages/python/dist/*.whl
+          /tmp/test-env/bin/pip install dist/*.whl
           /tmp/test-env/bin/python -c "import odin_sig; print(odin_sig.__version__)"
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           mkdir -p /tmp/0din-sig-python-${VERSION}
-          cp packages/python/dist/*.whl /tmp/0din-sig-python-${VERSION}/
-          cp packages/python/dist/*.tar.gz /tmp/0din-sig-python-${VERSION}/
+          cp dist/*.whl /tmp/0din-sig-python-${VERSION}/
+          cp dist/*.tar.gz /tmp/0din-sig-python-${VERSION}/
           cp packages/python/INSTALL.md /tmp/0din-sig-python-${VERSION}/ 2>/dev/null || true
           cd /tmp && zip -r 0din-sig-python-${VERSION}.zip 0din-sig-python-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: python-dist
           path: |
-            packages/python/dist/*
+            dist/*.whl
+            dist/*.tar.gz
             /tmp/0din-sig-python-*.zip
 
   # Package Rust crate
@@ -55,14 +56,14 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           mkdir -p /tmp/odin-sig-rust-${VERSION}
-          cp packages/rust/target/package/odin-sig-${VERSION}.crate /tmp/odin-sig-rust-${VERSION}/
+          cp dist/odin-sig-${VERSION}.crate /tmp/odin-sig-rust-${VERSION}/
           cp packages/rust/README.md /tmp/odin-sig-rust-${VERSION}/
           cd /tmp && zip -r odin-sig-rust-${VERSION}.zip odin-sig-rust-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: rust-dist
           path: |
-            packages/rust/target/package/*.crate
+            dist/*.crate
             /tmp/odin-sig-rust-*.zip
 
   # Package TypeScript npm tarball
@@ -82,14 +83,14 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           mkdir -p /tmp/0din-sig-typescript-${VERSION}
-          cp packages/typescript/*.tgz /tmp/0din-sig-typescript-${VERSION}/
+          cp dist/*.tgz /tmp/0din-sig-typescript-${VERSION}/
           cp packages/typescript/README.md /tmp/0din-sig-typescript-${VERSION}/
           cd /tmp && zip -r 0din-sig-typescript-${VERSION}.zip 0din-sig-typescript-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: typescript-dist
           path: |
-            packages/typescript/*.tgz
+            dist/*.tgz
             /tmp/0din-sig-typescript-*.zip
 
   # Create GitHub Release with all artifacts
@@ -109,14 +110,14 @@ jobs:
         run: |
           mkdir -p release-files
           # Python
-          cp artifacts/python-dist/packages/python/dist/*.whl release-files/
-          cp artifacts/python-dist/packages/python/dist/*.tar.gz release-files/
+          cp artifacts/python-dist/dist/*.whl release-files/
+          cp artifacts/python-dist/dist/*.tar.gz release-files/
           cp artifacts/python-dist/tmp/0din-sig-python-*.zip release-files/
           # Rust
-          cp artifacts/rust-dist/packages/rust/target/package/*.crate release-files/
+          cp artifacts/rust-dist/dist/*.crate release-files/
           cp artifacts/rust-dist/tmp/odin-sig-rust-*.zip release-files/
           # TypeScript
-          cp artifacts/typescript-dist/packages/typescript/*.tgz release-files/
+          cp artifacts/typescript-dist/dist/*.tgz release-files/
           cp artifacts/typescript-dist/tmp/0din-sig-typescript-*.zip release-files/
 
       - name: Create GitHub Release
