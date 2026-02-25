@@ -1,0 +1,51 @@
+{
+  "description": "Signature string format parsing test vectors",
+  "format": "0din-v{N}:<hex_signature>",
+  "vectors": [
+    {
+      "description": "Valid V0 signature",
+      "expected_signature": "deadbeef12345678",
+      "expected_version": "v0",
+      "input": "0din-v0:deadbeef12345678",
+      "valid": true
+    },
+    {
+      "description": "Valid V1 signature",
+      "expected_signature": "cafebabe87654321",
+      "expected_version": "v1",
+      "input": "0din-v1:cafebabe87654321",
+      "valid": true
+    },
+    {
+      "description": "Valid V0 signature (full 256-bit)",
+      "expected_signature": "a3f9c2e1b8d4f7a2c5e8b1d3f6a9c2e5b8d1f4a7c2e5b8d1f4a7c2e5b8d1f4a7c2",
+      "expected_version": "v0",
+      "input": "0din-v0:a3f9c2e1b8d4f7a2c5e8b1d3f6a9c2e5b8d1f4a7c2e5b8d1f4a7c2e5b8d1f4a7c2",
+      "valid": true
+    },
+    {
+      "description": "Invalid prefix (should be 0din-)",
+      "error": true,
+      "input": "invalid:foo",
+      "valid": false
+    },
+    {
+      "description": "Unsupported version",
+      "error": true,
+      "input": "0din-v99:foo",
+      "valid": false
+    },
+    {
+      "description": "Missing signature component",
+      "error": true,
+      "input": "0din-v0",
+      "valid": false
+    },
+    {
+      "description": "Too many colons (V0 should have one colon)",
+      "error": true,
+      "input": "0din-v0:foo:bar",
+      "valid": false
+    }
+  ]
+}

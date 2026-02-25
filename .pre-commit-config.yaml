@@ -1,0 +1,44 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rust-fmt
+        name: Rust format check
+        entry: bash -c 'cd packages/rust && cargo fmt --check'
+        language: system
+        pass_filenames: false
+        files: '\.rs$'
+        
+      - id: rust-clippy
+        name: Rust clippy
+        entry: bash -c 'cd packages/rust && cargo clippy --all-features -- -D warnings'
+        language: system
+        pass_filenames: false
+        files: '\.rs$'
+        
+      - id: python-ruff
+        name: Python lint (ruff)
+        entry: bash -c 'cd packages/python && ruff check src/ tests/'
+        language: system
+        pass_filenames: false
+        files: '\.py$'
+        
+      - id: python-mypy
+        name: Python type check (mypy)
+        entry: bash -c 'cd packages/python && mypy src/odin_sig/'
+        language: system
+        pass_filenames: false
+        files: '\.py$'
+        
+      - id: typescript-lint
+        name: TypeScript lint
+        entry: bash -c 'cd packages/typescript && npm run lint'
+        language: system
+        pass_filenames: false
+        files: '\.ts$'
+        
+      - id: typescript-typecheck
+        name: TypeScript type check
+        entry: bash -c 'cd packages/typescript && npx tsc --noEmit'
+        language: system
+        pass_filenames: false
+        files: '\.ts$'

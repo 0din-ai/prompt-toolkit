@@ -1,0 +1,81 @@
+{
+  "model_id": "intfloat/multilingual-e5-small",
+  "variant": "0din-threat-feed-v1",
+  "description": "Custom fine-tuned variant of multilingual-e5-small for jailbreak/threat detection",
+  "architecture": {
+    "type": "BertModel",
+    "hidden_size": 384,
+    "num_hidden_layers": 12,
+    "num_attention_heads": 12,
+    "intermediate_size": 1536,
+    "max_position_embeddings": 512,
+    "vocab_size": 250037
+  },
+  "tokenizer": {
+    "type": "XLMRobertaTokenizer",
+    "model_type": "sentencepiece_bpe",
+    "max_sequence_length": 512,
+    "padding": "max_length",
+    "truncation": true
+  },
+  "inference": {
+    "pooling": "mean",
+    "pooling_with_attention_mask": true,
+    "normalization": "l2",
+    "input_prefix": "",
+    "input_prefix_note": "Empty prefix (unlike stock E5 which uses 'query: '). This custom model was fine-tuned without prefixes."
+  },
+  "training": {
+    "base_model": "intfloat/multilingual-e5-small",
+    "loss": "ContrastiveLoss",
+    "training_samples": "~4000",
+    "dataset": "0din jailbreak/threat-feed corpus",
+    "fine_tuned_by": "0DIN team"
+  },
+  "dimensions": 384,
+  "files": {
+    "onnx_model": "onnx/model.onnx",
+    "onnx_model_optimized": "onnx/model_O4.onnx",
+    "tokenizer": "tokenizer.json",
+    "config": "config.json",
+    "config_sentence_transformers": "config_sentence_transformers.json",
+    "model_safetensors": "model.safetensors",
+    "readme": "README.md"
+  },
+  "download": {
+    "huggingface_repo": "TBD",
+    "local_path": "../heimdall/models/v1",
+    "cache_dir_default": "~/.cache/odin-sig/models/v1",
+    "cache_dir_env_var": "ODIN_SIG_MODEL_CACHE",
+    "download_strategy": "on_first_use",
+    "note": "Model is not bundled in SDK packages. Downloaded from HuggingFace on first use and cached locally."
+  },
+  "checksums": {
+    "onnx_model_sha256": "TBD",
+    "tokenizer_sha256": "TBD",
+    "note": "Checksums to be added once model is finalized and uploaded to HuggingFace"
+  },
+  "compatibility": {
+    "rust": {
+      "runtime": "tract-onnx",
+      "min_version": "0.21.0"
+    },
+    "python": {
+      "runtime": "onnxruntime",
+      "min_version": "1.16.0"
+    },
+    "typescript": {
+      "runtime": "onnxruntime-node",
+      "min_version": "1.16.0"
+    }
+  },
+  "performance": {
+    "inference_time_cpu": "~50-100ms per prompt (M1 Mac)",
+    "memory_footprint": "~500MB RAM",
+    "disk_size_onnx": "~470MB",
+    "disk_size_onnx_optimized": "~235MB"
+  },
+  "license": "MIT",
+  "version": "1.0.0",
+  "last_updated": "2026-02-24"
+}
