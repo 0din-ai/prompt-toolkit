@@ -1,6 +1,6 @@
 [package]
 name = "odin-sig"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "LSH signature generation for AI prompt similarity detection"
 license = "MIT"
