@@ -1,3 +1,6 @@
+# Build artifacts
+/dist/
+
 # Rust
 /packages/rust/target/
 /packages/rust/Cargo.lock

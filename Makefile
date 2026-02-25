@@ -78,28 +78,35 @@ build-typescript: ## Build TypeScript package
 
 ##@ Packaging
 
+DIST_DIR := dist
+
 package: package-python package-rust package-typescript ## Build distributable artifacts for all packages
+	@echo ""
 	@echo "$(GREEN)✅ All packages built!$(RESET)"
 	@echo ""
-	@echo "$(CYAN)Artifacts:$(RESET)"
-	@echo "  Python:     packages/python/dist/"
-	@echo "  Rust:       packages/rust/target/package/"
-	@echo "  TypeScript: packages/typescript/*.tgz"
+	@echo "$(CYAN)Artifacts (dist/):$(RESET)"
+	@ls -1 $(DIST_DIR)/ | sed 's/^/  /'
 
 package-python: ## Build Python wheel and sdist
 	@echo "$(CYAN)Packaging Python SDK...$(RESET)"
 	@cd packages/python && hatch build
-	@echo "$(GREEN)✅ Python package built$(RESET)"
+	@mkdir -p $(DIST_DIR)
+	@cp packages/python/dist/*.whl packages/python/dist/*.tar.gz $(DIST_DIR)/
+	@echo "$(GREEN)✅ Python package built and copied to $(DIST_DIR)/$(RESET)"
 
 package-rust: ## Package Rust crate
 	@echo "$(CYAN)Packaging Rust crate...$(RESET)"
 	@cd packages/rust && cargo package --allow-dirty
-	@echo "$(GREEN)✅ Rust crate packaged$(RESET)"
+	@mkdir -p $(DIST_DIR)
+	@cp packages/rust/target/package/*.crate $(DIST_DIR)/
+	@echo "$(GREEN)✅ Rust crate packaged and copied to $(DIST_DIR)/$(RESET)"
 
 package-typescript: ## Build and pack TypeScript npm tarball
 	@echo "$(CYAN)Packaging TypeScript SDK...$(RESET)"
 	@cd packages/typescript && npm run build && npm pack
-	@echo "$(GREEN)✅ TypeScript package built$(RESET)"
+	@mkdir -p $(DIST_DIR)
+	@cp packages/typescript/*.tgz $(DIST_DIR)/
+	@echo "$(GREEN)✅ TypeScript package built and copied to $(DIST_DIR)/$(RESET)"
 
 ##@ Test Vectors
 
@@ -227,6 +234,7 @@ check: ## Run all checks (lint + test)
 ##@ Cleaning
 
 clean: clean-rust clean-python clean-typescript ## Clean build artifacts for all packages
+	@rm -rf $(DIST_DIR)
 	@echo "$(GREEN)✅ All build artifacts cleaned$(RESET)"
 
 clean-rust: ## Clean Rust build artifacts
