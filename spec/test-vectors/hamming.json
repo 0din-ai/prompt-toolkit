@@ -1,0 +1,66 @@
+{
+  "algorithm": "XOR nibbles, popcount each, sum",
+  "description": "Hamming distance test vectors for hex-encoded signatures",
+  "vectors": [
+    {
+      "a": "0000",
+      "b": "ffff",
+      "description": "All bits different",
+      "distance": 16
+    },
+    {
+      "a": "0000",
+      "b": "0000",
+      "description": "Identical",
+      "distance": 0
+    },
+    {
+      "a": "0f0f",
+      "b": "f0f0",
+      "description": "Alternating nibbles",
+      "distance": 16
+    },
+    {
+      "a": "abcd",
+      "b": "abcd",
+      "description": "Identical complex",
+      "distance": 0
+    },
+    {
+      "a": "a",
+      "b": "b",
+      "description": "Single char difference (a=1010, b=1011, 1 bit diff)",
+      "distance": 1
+    },
+    {
+      "a": "abc",
+      "b": "def",
+      "description": "Different chars (3 nibbles, 7 bits diff)",
+      "distance": 7
+    },
+    {
+      "a": "00",
+      "b": "01",
+      "description": "1 bit different",
+      "distance": 1
+    },
+    {
+      "a": "ff",
+      "b": "7f",
+      "description": "1 bit different (high)",
+      "distance": 1
+    },
+    {
+      "a": "0123456789abcdef",
+      "b": "fedcba9876543210",
+      "description": "Reversed hex (16 hex chars = 64 bits total)",
+      "distance": 64
+    },
+    {
+      "a": "aaaaaaaaaaaaaaaa",
+      "b": "5555555555555555",
+      "description": "All 64 bits different (a=1010, 5=0101)",
+      "distance": 64
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "algorithm": "cos(PI * distance / total_bits)",
+  "description": "Cosine similarity estimation from Hamming distance",
+  "vectors": [
+    {
+      "cosine_similarity": 1.0,
+      "description": "Identical signatures (cosine = 1.0)",
+      "distance": 0,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": 6.123233995736766e-17,
+      "description": "Half bits different (cosine = 0.0)",
+      "distance": 128,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": -1.0,
+      "description": "Opposite signatures (cosine = -1.0)",
+      "distance": 256,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": 0.7071067811865476,
+      "description": "Quarter bits different (cosine ≈ 0.707)",
+      "distance": 64,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": -0.7071067811865475,
+      "description": "Three quarters different (cosine ≈ -0.707)",
+      "distance": 192,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": 0.9238795325112867,
+      "description": "12.5% different",
+      "distance": 32,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": 0.9807852804032304,
+      "description": "6.25% different",
+      "distance": 16,
+      "total_bits": 256
+    },
+    {
+      "cosine_similarity": 0.9999247018391445,
+      "description": "Single bit different",
+      "distance": 1,
+      "total_bits": 256
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  # Gate on CI passing
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  # Build Python wheel + sdist
+  build-python:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools
+        run: pip install hatch
+      - name: Build wheel and sdist
+        run: make package-python
+      - name: Verify wheel installs
+        run: |
+          python -m venv /tmp/test-env
+          /tmp/test-env/bin/pip install packages/python/dist/*.whl
+          /tmp/test-env/bin/python -c "import odin_sig; print(odin_sig.__version__)"
+      - name: Create customer zip
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p /tmp/0din-sig-python-${VERSION}
+          cp packages/python/dist/*.whl /tmp/0din-sig-python-${VERSION}/
+          cp packages/python/dist/*.tar.gz /tmp/0din-sig-python-${VERSION}/
+          cp packages/python/INSTALL.md /tmp/0din-sig-python-${VERSION}/ 2>/dev/null || true
+          cd /tmp && zip -r 0din-sig-python-${VERSION}.zip 0din-sig-python-${VERSION}/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: |
+            packages/python/dist/*
+            /tmp/0din-sig-python-*.zip
+
+  # Package Rust crate
+  build-rust:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Package crate
+        run: make package-rust
+      - name: Create customer zip
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p /tmp/odin-sig-rust-${VERSION}
+          cp packages/rust/target/package/odin-sig-${VERSION}.crate /tmp/odin-sig-rust-${VERSION}/
+          cp packages/rust/README.md /tmp/odin-sig-rust-${VERSION}/
+          cd /tmp && zip -r odin-sig-rust-${VERSION}.zip odin-sig-rust-${VERSION}/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rust-dist
+          path: |
+            packages/rust/target/package/*.crate
+            /tmp/odin-sig-rust-*.zip
+
+  # Package TypeScript npm tarball
+  build-typescript:
+    needs: [ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: cd packages/typescript && npm ci
+      - name: Build and package
+        run: make package-typescript
+      - name: Create customer zip
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p /tmp/0din-sig-typescript-${VERSION}
+          cp packages/typescript/*.tgz /tmp/0din-sig-typescript-${VERSION}/
+          cp packages/typescript/README.md /tmp/0din-sig-typescript-${VERSION}/
+          cd /tmp && zip -r 0din-sig-typescript-${VERSION}.zip 0din-sig-typescript-${VERSION}/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: typescript-dist
+          path: |
+            packages/typescript/*.tgz
+            /tmp/0din-sig-typescript-*.zip
+
+  # Create GitHub Release with all artifacts
+  release:
+    needs: [build-python, build-rust, build-typescript]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # Required to create releases
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Collect release files
+        run: |
+          mkdir -p release-files
+          # Python
+          cp artifacts/python-dist/packages/python/dist/*.whl release-files/
+          cp artifacts/python-dist/packages/python/dist/*.tar.gz release-files/
+          cp artifacts/python-dist/tmp/0din-sig-python-*.zip release-files/
+          # Rust
+          cp artifacts/rust-dist/packages/rust/target/package/*.crate release-files/
+          cp artifacts/rust-dist/tmp/odin-sig-rust-*.zip release-files/
+          # TypeScript
+          cp artifacts/typescript-dist/packages/typescript/*.tgz release-files/
+          cp artifacts/typescript-dist/tmp/0din-sig-typescript-*.zip release-files/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-files/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+            # Tags like v0.2.0-beta.1 → prerelease=true

@@ -1,0 +1,46 @@
+# Rust
+/packages/rust/target/
+/packages/rust/Cargo.lock
+*.rs.bk
+
+# Python
+/packages/python/__pycache__/
+/packages/python/*.py[cod]
+/packages/python/*$py.class
+/packages/python/.pytest_cache/
+/packages/python/.coverage
+/packages/python/htmlcov/
+/packages/python/dist/
+/packages/python/build/
+/packages/python/*.egg-info/
+/packages/python/.mypy_cache/
+/packages/python/.ruff_cache/
+/packages/python/.hatch/
+
+# TypeScript
+/packages/typescript/node_modules/
+/packages/typescript/dist/
+/packages/typescript/*.tgz
+/packages/typescript/.turbo/
+
+# Documentation
+/docs/node_modules/
+/docs/.docusaurus/
+/docs/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+.env
+.env.local

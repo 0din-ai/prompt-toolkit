@@ -1,0 +1,438 @@
+{
+  "algorithm": "seed = (family << 48) XOR (bit << 24) XOR dim; sign = splitmix64(seed) & 1 ? +1 : -1",
+  "description": "sign_for(family, bit, dim) test vectors",
+  "vectors": [
+    {
+      "bit": 0,
+      "dim": 0,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 1,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 10,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 100,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 383,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 1535,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 0,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 1,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 10,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 100,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 383,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 1535,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 0,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 1,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 10,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 100,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 383,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 1535,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 0,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 1,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 10,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 100,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 383,
+      "family": 0,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 1535,
+      "family": 0,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 0,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 1,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 10,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 100,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 383,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 1535,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 0,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 1,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 10,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 100,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 383,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 1535,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 0,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 1,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 10,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 100,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 383,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 1535,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 0,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 1,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 10,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 255,
+      "dim": 100,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 383,
+      "family": 1,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 1535,
+      "family": 1,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 0,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 1,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 10,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 0,
+      "dim": 100,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 383,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 0,
+      "dim": 1535,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 0,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 1,
+      "dim": 1,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 10,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 100,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 383,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 1,
+      "dim": 1535,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 0,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 1,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 10,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 100,
+      "family": 2,
+      "sign": 1
+    },
+    {
+      "bit": 127,
+      "dim": 383,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 127,
+      "dim": 1535,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 0,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 1,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 10,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 100,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 383,
+      "family": 2,
+      "sign": -1
+    },
+    {
+      "bit": 255,
+      "dim": 1535,
+      "family": 2,
+      "sign": -1
+    }
+  ]
+}

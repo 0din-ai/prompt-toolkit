@@ -1,0 +1,82 @@
+{
+  "algorithm": "Quantize to 6 decimals, format as JSON array with space after comma, SHA256 hash",
+  "description": "Canonical SHA256 hash of normalized embeddings",
+  "note": "Whole numbers must include .0 (e.g., [1.0, 2.0])",
+  "vectors": [
+    {
+      "description": "Simple 3-element vector",
+      "expected_json": "[0.1, 0.2, 0.3]",
+      "expected_sha256": "9a04781069052282acb2e95529c7f5bcd85149ab2ec559c550dce80b81ceb04e",
+      "input": [
+        0.10000000149011612,
+        0.20000000298023224,
+        0.30000001192092896
+      ]
+    },
+    {
+      "description": "High precision (6-decimal quantization)",
+      "expected_json": "[0.123457, 0.987654, -0.111111]",
+      "expected_sha256": "939cac39b5886ae89213f3db06102874acf411f6c6f7021c6b33297f1d5f39ea",
+      "input": [
+        0.12345679104328156,
+        0.9876543283462524,
+        -0.1111111119389534
+      ]
+    },
+    {
+      "description": "Sub-6-decimal jitter (should match next)",
+      "expected_json": "[0.123456, 1.0]",
+      "expected_sha256": "730da253c365cc40fb4b319971547d2f33b13de3469e917da1cdbd624f8b1a2a",
+      "input": [
+        0.12345600128173828,
+        1.0
+      ]
+    },
+    {
+      "description": "Sub-6-decimal jitter variant",
+      "expected_json": "[0.123456, 1.0]",
+      "expected_sha256": "730da253c365cc40fb4b319971547d2f33b13de3469e917da1cdbd624f8b1a2a",
+      "input": [
+        0.12345600128173828,
+        1.0
+      ]
+    },
+    {
+      "description": "Whole numbers (must include .0)",
+      "expected_json": "[1.0, 2.0, 3.0]",
+      "expected_sha256": "d4ab5ad55f1dc0ffe69d38b31485c73e876a35d927e8659d701a83e1777e1941",
+      "input": [
+        1.0,
+        2.0,
+        3.0
+      ]
+    },
+    {
+      "description": "Zero and negative zero",
+      "expected_json": "[0.0, -0.0, 0.5]",
+      "expected_sha256": "e585d632f3d9d04b8bc7ee1ed6ed8570d57475b14b6387d0b29416eee944af0d",
+      "input": [
+        0.0,
+        -0.0,
+        0.5
+      ]
+    },
+    {
+      "description": "Ten evenly-spaced values",
+      "expected_json": "[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]",
+      "expected_sha256": "24660bbfc4254f4f71b750212c2132f483171f491f96070af86bb5351d6f01d6",
+      "input": [
+        0.0,
+        0.10000000149011612,
+        0.20000000298023224,
+        0.30000001192092896,
+        0.4000000059604645,
+        0.5,
+        0.6000000238418579,
+        0.699999988079071,
+        0.800000011920929,
+        0.8999999761581421
+      ]
+    }
+  ]
+}
