@@ -1,4 +1,4 @@
-.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript
+.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript showcase showcase-install
 
 # Default target
 .DEFAULT_GOAL := help
@@ -309,3 +309,30 @@ version: ## Display version information
 	@echo "  Rust:       $(shell cd packages/rust && cargo metadata --no-deps --format-version 1 2>/dev/null | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)"
 	@echo "  Python:     $(shell cd packages/python && python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "0.1.0")"
 	@echo "  TypeScript: $(shell cd packages/typescript && node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")"
+
+##@ Showcase (0DIN-1029)
+
+showcase-install: ## Install showcase benchmark dependencies
+	@echo "$(CYAN)Installing showcase dependencies...$(RESET)"
+	@pip install -e "packages/python[onnx]"
+	@pip install -r demos/requirements.txt
+	@echo "$(GREEN)✅ Showcase dependencies installed$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)To start pgvector (optional):$(RESET)"
+	@echo "  docker compose -f demos/docker-compose.yml up -d"
+
+showcase: ## Run the signature capabilities showcase benchmark
+	@if [ -z "$(DATA)" ]; then \
+		echo "$(RED)Error: DATA is required$(RESET)"; \
+		echo "Usage: make showcase DATA=path/to/threat-feed.json"; \
+		echo "       make showcase DATA=path/to/threat-feed.json LIMIT=5000"; \
+		echo "       make showcase DATA=path/to/threat-feed.json PHASE=query"; \
+		exit 1; \
+	fi
+	@echo "$(CYAN)Running Signature Capabilities Showcase...$(RESET)"
+	@python demos/showcase.py \
+		--data $(DATA) \
+		$(if $(LIMIT),--limit $(LIMIT),) \
+		$(if $(PHASE),--phase $(PHASE),) \
+		$(if $(USE_CACHE),--use-cache,) \
+		$(if $(SKIP_PGVECTOR),--skip-pgvector,)

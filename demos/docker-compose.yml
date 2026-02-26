@@ -1,0 +1,19 @@
+services:
+  pgvector:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_DB: showcase
+      POSTGRES_USER: showcase
+      POSTGRES_PASSWORD: showcase
+    ports:
+      - "5433:5432"   # 5433 to avoid conflict with any local Postgres
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U showcase -d showcase"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgvector_data:

@@ -47,3 +47,6 @@ Thumbs.db
 *.tmp
 .env
 .env.local
+demos/cache/*.npz
+demos/cache/*.json
+demos/cache/*.db
