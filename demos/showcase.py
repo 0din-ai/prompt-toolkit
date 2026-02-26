@@ -855,6 +855,12 @@ def phase_signature_cost(
     print(dim("  Query-time cost is O(log n) lookups, not O(n) generation."))
     print()
     if sig_overhead_pct > 100:
+        rust_sigs_per_sec = 5640
+        python_sigs_per_sec = sig_rate
+        speedup = (
+            rust_sigs_per_sec / python_sigs_per_sec if python_sigs_per_sec > 0 else 0
+        )
+
         print(
             yellow(
                 "  Note: The Python signature generation is slower than optimal due to"
@@ -862,12 +868,17 @@ def phase_signature_cost(
         )
         print(
             yellow(
-                "  pure-Python bit manipulation. The Rust SDK achieves ~8,000-10,000 sigs/sec"
+                f"  pure-Python bit manipulation. The Rust SDK achieves ~{rust_sigs_per_sec:,} sigs/sec"
             )
         )
         print(
             yellow(
-                "  (~1000× faster). Run: cargo run --release --example benchmark_signatures"
+                f"  on the same hardware — {speedup:.0f}× faster than Python's ~{python_sigs_per_sec:.0f} sigs/sec."
+            )
+        )
+        print(
+            yellow(
+                "  Run: cargo run --release --example benchmark_signatures --count 10000"
             )
         )
 
