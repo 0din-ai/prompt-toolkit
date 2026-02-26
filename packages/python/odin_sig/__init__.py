@@ -42,6 +42,7 @@ Algorithm:
     - Hamming distance → cosine similarity via cos(π × d/n)
 """
 
+from odin_sig._accel import NATIVE_AVAILABLE
 from odin_sig.lsh import (
     LSHFamily,
     cosine_from_hamming,
@@ -67,6 +68,8 @@ from odin_sig.types import (
 __version__ = "0.1.1"
 
 __all__ = [
+    # Native acceleration
+    "NATIVE_AVAILABLE",
     # High-level API
     "sign_text",
     "EmbeddingProvider",

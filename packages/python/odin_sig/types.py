@@ -183,8 +183,8 @@ def parse_signature_string(s: str) -> ParsedSignature:
     return ParsedSignature(version=version, signature=signature)
 
 
-def compute_embedding_sha256(normalized_embedding: list[float]) -> str:
-    """Compute SHA256 hash of normalized embedding.
+def _compute_embedding_sha256_python(normalized_embedding: list[float]) -> str:
+    """Compute SHA256 hash of normalized embedding (pure Python implementation).
 
     This implementation matches the canonical specification:
     1. Quantize each value to 6 decimal places: round(x * 1e6) / 1e6
@@ -226,3 +226,13 @@ def compute_embedding_sha256(normalized_embedding: list[float]) -> str:
     json_str = f"[{', '.join(json_parts)}]"
 
     return hashlib.sha256(json_str.encode()).hexdigest()
+
+
+# Transparent native acceleration
+# Try to use native implementation, fall back to pure Python
+from odin_sig._accel import NATIVE_AVAILABLE
+
+if NATIVE_AVAILABLE:
+    from odin_sig._accel import compute_embedding_sha256
+else:
+    compute_embedding_sha256 = _compute_embedding_sha256_python

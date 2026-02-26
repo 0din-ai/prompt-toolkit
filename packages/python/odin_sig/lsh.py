@@ -55,7 +55,7 @@ def _sign_for(family: int, bit: int, dim: int) -> int:
     return 1 if (h & 1) == 1 else -1
 
 
-def simhash_lsh_multi(
+def _simhash_lsh_multi_python(
     normalized_vector: list[float],
     families: int = 3,
     bits: int = 256,
@@ -134,7 +134,7 @@ def _clean(val: str) -> str:
     return "".join(c for c in val.lower() if c in _valid_hex)
 
 
-def hamming_distance_hex(a: str, b: str) -> int:
+def _hamming_distance_hex_python(a: str, b: str) -> int:
     """Compute Hamming distance between two hex strings.
 
     Each hex character represents 4 bits, so the distance is computed
@@ -167,7 +167,7 @@ def hamming_distance_hex(a: str, b: str) -> int:
     return dist
 
 
-def cosine_from_hamming(distance_bits: int, total_bits: int) -> float:
+def _cosine_from_hamming_python(distance_bits: int, total_bits: int) -> float:
     """Estimate cosine similarity from Hamming distance.
 
     For random hyperplane LSH, the probability that two vectors have
@@ -189,8 +189,8 @@ def cosine_from_hamming(distance_bits: int, total_bits: int) -> float:
     return math.cos(math.pi * p_diff)
 
 
-def normalize_vector(vector: list[float]) -> list[float]:
-    """L2-normalize a vector.
+def _normalize_vector_python(vector: list[float]) -> list[float]:
+    """L2-normalize a vector (pure Python implementation).
 
     Args:
         vector: Input vector
@@ -202,3 +202,22 @@ def normalize_vector(vector: list[float]) -> list[float]:
     if magnitude == 0:
         return vector
     return [x / magnitude for x in vector]
+
+
+# Transparent native acceleration
+# Try to use native implementation, fall back to pure Python
+from odin_sig._accel import NATIVE_AVAILABLE
+
+if NATIVE_AVAILABLE:
+    from odin_sig._accel import (
+        cosine_from_hamming,
+        hamming_distance_hex,
+        normalize_vector,
+        simhash_lsh_multi,
+    )
+else:
+    # Use pure Python implementations
+    simhash_lsh_multi = _simhash_lsh_multi_python
+    normalize_vector = _normalize_vector_python
+    hamming_distance_hex = _hamming_distance_hex_python
+    cosine_from_hamming = _cosine_from_hamming_python
