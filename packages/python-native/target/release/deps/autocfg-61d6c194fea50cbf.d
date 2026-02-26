@@ -1,0 +1,10 @@
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/autocfg-61d6c194fea50cbf.d: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/libautocfg-61d6c194fea50cbf.rlib: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/libautocfg-61d6c194fea50cbf.rmeta: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs:
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs:
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs:
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs:

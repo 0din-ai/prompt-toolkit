@@ -12,6 +12,7 @@
 ///
 /// - `openai` (default) - Enables OpenAI provider
 /// - `onnx` (default) - Enables ONNX provider with tract runtime
+#[cfg(feature = "openai")]
 pub mod openai;
 
 #[cfg(feature = "onnx")]
@@ -20,6 +21,7 @@ pub mod onnx;
 #[cfg(feature = "onnx")]
 pub mod model_cache;
 
+#[cfg(feature = "openai")]
 pub use openai::OpenAIProvider;
 
 #[cfg(feature = "onnx")]

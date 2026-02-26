@@ -1,0 +1,9 @@
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/signal_hook_registry-b7fd906312cc3122.d: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/libsignal_hook_registry-b7fd906312cc3122.rlib: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/sgolub/code/0din/sig-sdk/packages/python-native/target/release/deps/libsignal_hook_registry-b7fd906312cc3122.rmeta: /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs:
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs:
+/Users/sgolub/.asdf/installs/rust/1.91.1/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs:

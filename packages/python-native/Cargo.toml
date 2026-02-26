@@ -1,0 +1,23 @@
+[package]
+name = "odin-sig-python"
+version = "0.1.1"
+edition = "2021"
+rust-version = "1.70"
+authors = ["0din Team"]
+description = "Native Python bindings for odin-sig LSH functions"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/0din/sig-sdk"
+
+[lib]
+name = "odin_sig_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+odin-sig = { path = "../rust", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
