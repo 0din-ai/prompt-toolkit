@@ -577,12 +577,13 @@ async def build_pgvector_db(embeddings: np.ndarray) -> tuple[float, float, bool]
         return 0.0, 0.0, False
 
     import psycopg
-    from pgvector.psycopg import register_vector
+    from pgvector.psycopg import register_vector_async
 
     conn = await psycopg.AsyncConnection.connect(PGVECTOR_DSN, autocommit=True)
-    await register_vector(conn)
 
+    # Create extension BEFORE registering the type
     await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    await register_vector_async(conn)
     await conn.execute("DROP TABLE IF EXISTS items")
     await conn.execute("""
         CREATE TABLE items (
@@ -619,10 +620,10 @@ async def query_pgvector_db(
 ) -> tuple[float, int]:
     """Query pgvector with HNSW. Returns (latency_s, k)."""
     import psycopg
-    from pgvector.psycopg import register_vector
+    from pgvector.psycopg import register_vector_async
 
     conn = await psycopg.AsyncConnection.connect(PGVECTOR_DSN)
-    await register_vector(conn)
+    await register_vector_async(conn)
 
     query_vec = query_embedding.tolist()
     t0 = time.perf_counter()
