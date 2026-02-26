@@ -58,16 +58,33 @@ signatures = simhash_lsh_multi(normalized_vector)
 - **Python**: 3.10 or newer
 - **PyO3**: 0.23+ (automatically handled by maturin)
 
+## Performance
+
+Benchmark results (384-dim vectors, 3 families × 256 bits):
+
+| Implementation | Throughput | Latency | Speedup |
+|---------------|-----------|---------|---------|
+| **Native (Rust)** | 5,685 sigs/sec | 0.18 ms/sig | **653×** |
+| Pure Python | 8.7 sigs/sec | 115 ms/sig | 1× (baseline) |
+
 ## Development
 
 ```bash
-# Run tests against the native extension
-cd ../python
-maturin develop --release -m ../python-native/Cargo.toml
-python -m pytest tests/test_vectors.py -v
+# Build and test
+cd packages/python-native
+python3 -m venv .venv
+source .venv/bin/activate
+pip install maturin
+PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 maturin develop --release
 
-# Benchmark
-python demos/benchmark_native.py
+# Run benchmark
+python3 benchmark.py
+
+# Run tests (from Python SDK directory)
+cd ../python
+source ../python-native/.venv/bin/activate
+pip install pytest
+python -m pytest tests/test_vectors.py -v
 ```
 
 ## Architecture
