@@ -8,7 +8,7 @@ services:
     ports:
       - "5433:5432"   # 5433 to avoid conflict with any local Postgres
     volumes:
-      - pgvector_data:/var/lib/postgresql/data
+      - pgvector_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U showcase -d showcase"]
       interval: 5s

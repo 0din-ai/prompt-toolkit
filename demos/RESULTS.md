@@ -43,7 +43,7 @@ is a known and acceptable LSH property for the use cases we care about.
 |-------|----------|--------------|
 | **A** | **Signatures + Band Index** | `odin_sig` (our SDK) + Python `sqlite3` — zero external dependencies |
 | **B** | **sqlite-vec brute-force KNN** | `sqlite-vec` pip package — scans every row |
-| **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker — not run in this benchmark (Docker not available) |
+| **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker — enterprise vector DB with ANN indexing |
 
 ---
 
@@ -95,15 +95,16 @@ overhead is acceptable since:
 
 ### 3. Ingestion Performance
 
-| N items | Signatures | sqlite-vec | Speedup |
-|---------|-----------|------------|---------|
-| 1,000   | 9.0ms     | 13.1ms     | 1.5×    |
-| 3,714   | **34.8ms** | 56.5ms    | **1.6×** |
+| N items | Signatures (total) | sqlite-vec | pgvector (insert+HNSW) |
+|---------|-------------------|------------|------------------------|
+| 1,000   | 9.2ms             | 14.2ms     | 483.0ms                |
+| 3,714   | **43.8ms**        | 53.8ms     | **1.85s**              |
 
-Throughput: **~107,000 prompts/second** for signatures at full scale.
+Throughput: **~85,000 items/second** for signatures at full scale.
 
-Signatures are faster to ingest because the band-index rows are written
-alongside each insert — no separate index-build step.
+**pgvector is 42× slower** due to HNSW index build time (separate step after inserts).
+Signatures are faster because band-index rows are written inline during insert
+— no separate index-build step needed.
 
 ---
 
@@ -111,12 +112,12 @@ alongside each insert — no separate index-build step.
 
 This is where the story gets interesting.
 
-| DB Size | Sig p50 | Sig p95 | Sig p99 | Vec p50 | Vec p95 | Vec p99 |
-|---------|---------|---------|---------|---------|---------|---------|
-| 1,000   | 0.47ms  | 1.1ms   | 1.7ms   | 0.44ms  | 0.59ms  | 1.3ms   |
-| 3,714   | **1.1ms** | 4.1ms | 5.1ms   | **1.1ms** | 1.3ms | 2.2ms   |
+| DB Size | Sig p50 | Sig p95 | Sig p99 | Vec p50 | Vec p95 | Vec p99 | PG p50 | PG p95 | PG p99 |
+|---------|---------|---------|---------|---------|---------|---------|--------|--------|--------|
+| 1,000   | 0.50ms  | 1.1ms   | 1.6ms   | 0.34ms  | 0.50ms  | 0.81ms  | 2.6ms  | 4.5ms  | 6.3ms  |
+| 3,714   | **0.93ms** | 4.0ms | 5.7ms | **0.87ms** | 1.2ms | 1.4ms | **3.0ms** | 5.3ms | 6.9ms |
 
-**Wall-clock latency is the same.** But look at what's happening underneath:
+**Signatures and sqlite-vec have similar wall-clock latency** at this scale (both ~1ms p50). **pgvector is 3× slower** (3.0ms p50). But look at what's happening underneath:
 
 | DB Size | Sig candidates | Vec candidates | Ratio |
 |---------|---------------|----------------|-------|
@@ -296,25 +297,24 @@ cargo run --release --example benchmark_signatures -- --count 10000
 Expected output:
 ```
 Generating 10,000 signatures (384-dim random vectors)...
-Time: 1.234s
-Throughput: 8,100 signatures/sec
-Per-signature: 0.123ms
+Time: 1.760s
+Throughput: 5683 signatures/sec
+Per-signature: 0.176ms
 
-Note: Python SDK achieves ~9 sigs/sec on the same hardware (900× slower)
+Note: Python SDK achieves ~9 sigs/sec on the same hardware (631× slower)
 ```
 
 ---
 
 ## Open Items
 
-- [ ] **pgvector results** — Run with Docker to complete the three-way comparison.
-      Expected: HNSW query latency ~0.5ms with ~100 candidates, but requires
-      Docker + 3-param tuning (m, ef_construction, ef_search).
-- [ ] **Larger dataset** — At 3,714 items both approaches are SQLite I/O bound.
+- [x] **pgvector results** — ✅ Complete! Query latency is 3.0ms p50 (3× slower than signatures/sqlite-vec),
+      ingestion is 1.85s for 3,714 items (42× slower due to HNSW index build).
+- [ ] **Larger dataset** — At 3,714 items both signatures and sqlite-vec are SQLite I/O bound.
       A 50K–100K item dataset would reveal the algorithmic scaling gap more
       clearly. Can synthesize from existing prompts or pull from prod.
-- [ ] **Accuracy tuning** — F1 of 0.752 is below the 0.90+ cited in 0DIN-1021.
-      Increasing LSH bands (16→32) or bits (256→512) should improve recall with
-      modest latency trade-off.
+- [ ] **Accuracy tuning** — F1 of 0.752 is acceptable for candidate generation but below
+      the 0.90+ cited in 0DIN-1021. Increasing LSH bands (16→32) or bits (256→512)
+      should improve recall with modest latency trade-off.
 - [ ] **Benchmark script is reproducible** — `demos/showcase.py` is committed to
       `sig-sdk`. Anyone with the threat feed JSON can reproduce these numbers.
