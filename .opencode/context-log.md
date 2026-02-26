@@ -676,3 +676,63 @@ tests/test_vectors.py::TestSignatureFormat::test_signature_format_vectors PASSED
 **Significance**: The Rust and Python implementations are **mathematically equivalent**. Users can switch between them transparently.
 
 **Next**: Phase 11e — Benchmark and document the speedup
+
+### Phase 11e: Benchmark and document ✅ COMPLETE (feb346a)
+
+**Benchmark results** (384-dim vectors, 3 families × 256 bits × 16 bands):
+
+| Implementation | Throughput | Latency | Speedup |
+|---------------|-----------|---------|---------|
+| **Native (Rust)** | 5,685 sigs/sec | 0.18 ms/sig | **653×** |
+| Pure Python | 8.7 sigs/sec | 115 ms/sig | 1× (baseline) |
+
+**What was done**:
+1. Created `benchmark.py` in `packages/python-native/`
+2. Ran benchmark: 1,000 iterations each
+3. Updated Python SDK README:
+   - Added `[native]` installation option
+   - Added performance comparison table
+   - Documented `NATIVE_AVAILABLE` flag
+4. Updated python-native README with benchmark results
+
+**Key insights**:
+- **653× speedup** is even better than the estimated 627×
+- Pure Python: ~115ms per signature (bottleneck for real-time use)
+- Native Rust: ~0.18ms per signature (suitable for production)
+- **Transparent**: Just install `odin-sig-native` and code runs faster
+- **Bit-identical**: All 7 test vectors pass
+
+**Production readiness**:
+- ✅ Native extension builds on macOS ARM64 (Python 3.14)
+- ✅ Bit-identical results with pure Python
+- ✅ Transparent fallback if native not available
+- ✅ Zero API changes — drop-in replacement
+- ✅ 653× faster signature generation
+
+---
+
+## Phase 11 Summary: Python/Rust Hybrid Bindings ✅ COMPLETE
+
+**Goal achieved**: ~653× speedup for Python SDK via transparent Rust acceleration
+
+**Commits**:
+1. `d181940` - Phase 11a: Scaffold PyO3 native extension crate
+2. `7a710bc` - Phase 11c: Wire transparent Rust fallback in Python SDK
+3. `25c2289` - Phase 11d: Verify native bindings produce bit-identical results
+4. `feb346a` - Phase 11e: Add native extension benchmarks and documentation
+
+**Total time**: ~1.5 hours (as estimated)
+
+**What we built**:
+- `packages/python-native/` — PyO3/maturin crate (5 functions, 2 pyclasses)
+- `packages/python/odin_sig/_accel.py` — transparent dispatcher
+- `[native]` optional dependency in `pyproject.toml`
+- Benchmark script and documentation
+
+**Key technical decisions**:
+- Separate crate (not feature flag) to keep `odin-sig` clean
+- Duck-type compatible `LshFamily` pyclass (not dict conversion)
+- `PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1` for Python 3.14
+- Fixed openai provider feature gate bug in Rust lib
+
+**Result**: Users can now `pip install 0din-sig[native]` and get 653× faster signature generation with **zero code changes**.
