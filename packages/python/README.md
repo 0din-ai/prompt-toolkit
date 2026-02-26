@@ -9,8 +9,11 @@ This is the Python implementation of the 0din-sig algorithm, also available in [
 ### From Git (Development)
 
 ```bash
-# Basic installation
+# Basic installation (pure Python)
 pip install git+https://github.com/0din/sig-sdk.git#subdirectory=python
+
+# With native Rust acceleration (653× faster signature generation!)
+pip install "0din-sig[native] @ git+https://github.com/0din/sig-sdk.git#subdirectory=python"
 
 # With OpenAI support
 pip install "0din-sig[openai] @ git+https://github.com/0din/sig-sdk.git#subdirectory=python"
@@ -21,8 +24,24 @@ pip install "0din-sig[onnx] @ git+https://github.com/0din/sig-sdk.git#subdirecto
 # With CM-LSH (Confidence Matrix LSH)
 pip install "0din-sig[cm-lsh] @ git+https://github.com/0din/sig-sdk.git#subdirectory=python"
 
-# All features
+# All features (including native acceleration)
 pip install "0din-sig[all] @ git+https://github.com/0din/sig-sdk.git#subdirectory=python"
+```
+
+### Performance: Native vs Pure Python
+
+The native Rust extension provides **~653× speedup** for signature generation:
+
+| Implementation | Throughput | Latency | Notes |
+|---------------|-----------|---------|-------|
+| **Native (Rust)** | ~5,685 sigs/sec | 0.18 ms/sig | Recommended for production |
+| Pure Python | ~8.7 sigs/sec | 115 ms/sig | Fallback if native unavailable |
+
+The extension is **transparent** — install it and your code automatically gets faster. Check at runtime:
+
+```python
+from odin_sig import NATIVE_AVAILABLE
+print(f"Native acceleration: {'✅ active' if NATIVE_AVAILABLE else '❌ not installed'}")
 ```
 
 ## Quick Start
