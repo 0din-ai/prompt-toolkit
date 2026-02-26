@@ -36,6 +36,7 @@ dirs = { version = "5.0", optional = true }
 tokio = { version = "1.40", features = ["full", "test-util"] }
 approx = "0.5"
 tempfile = "3.26"
+rand = "0.8"
 
 [[example]]
 name = "generate_vectors"
@@ -71,3 +72,8 @@ required-features = ["cm-lsh"]
 name = "sign_text"
 path = "examples/sign_text.rs"
 required-features = ["onnx"]
+
+[[example]]
+name = "benchmark_signatures"
+path = "examples/benchmark_signatures.rs"
+required-features = []

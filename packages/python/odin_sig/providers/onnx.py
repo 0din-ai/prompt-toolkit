@@ -155,11 +155,20 @@ class OnnxProvider:
             return_tensors="np",
         )
 
-        # Run inference
+        # Run inference — include token_type_ids if the model requires it.
+        # XLM-RoBERTa tokenizers don't produce token_type_ids, but the ONNX
+        # model may still expect them; supply a zero tensor in that case.
+        input_ids = inputs["input_ids"].astype(np.int64)
         onnx_inputs = {
-            "input_ids": inputs["input_ids"].astype(np.int64),
+            "input_ids": input_ids,
             "attention_mask": inputs["attention_mask"].astype(np.int64),
         }
+        required_names = {inp.name for inp in self._session.get_inputs()}
+        if "token_type_ids" in required_names:
+            if "token_type_ids" in inputs:
+                onnx_inputs["token_type_ids"] = inputs["token_type_ids"].astype(np.int64)
+            else:
+                onnx_inputs["token_type_ids"] = np.zeros_like(input_ids)
 
         outputs = self._session.run(None, onnx_inputs)
         last_hidden_state = outputs[0]  # Shape: [batch_size, seq_len, hidden_size]
