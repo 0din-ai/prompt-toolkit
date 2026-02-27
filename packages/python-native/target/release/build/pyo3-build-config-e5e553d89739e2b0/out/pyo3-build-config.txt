@@ -1,11 +1,11 @@
 implementation=CPython
-version=3.14
+version=3.13
 shared=true
-abi3=true
-lib_name=python3.14
-lib_dir=/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/lib
-executable=/Users/sgolub/code/0din/sig-sdk/packages/python-native/.venv/bin/python
+abi3=false
+lib_name=python3.13
+lib_dir=/Users/sgolub/.asdf/installs/python/3.13.9/lib
+executable=/Users/sgolub/.asdf/installs/python/3.13.9/bin/python3
 pointer_width=64
 build_flags=
-python_framework_prefix=/opt/homebrew/opt/python@3.14/Frameworks
+python_framework_prefix=
 suppress_build_script_link_lines=false
