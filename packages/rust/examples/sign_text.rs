@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("   \"{}\"", prompt);
 
             // Generate signature using sign_text()
-            let result = sign_text(prompt, &provider, SignatureVersion::V1, None).await?;
+            let result = sign_text(prompt, SignatureVersion::V1, Some(&provider), None).await?;
 
             println!("   Signature: {}", result.to_signature_string());
             println!("   Provider:  {}", result.provider);
@@ -64,8 +64,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let prompt_a = "How do I reset my password?";
         let prompt_b = "Please help me reset my login credentials";
 
-        let result_a = sign_text(prompt_a, &provider, SignatureVersion::V1, None).await?;
-        let result_b = sign_text(prompt_b, &provider, SignatureVersion::V1, None).await?;
+        let result_a = sign_text(prompt_a, SignatureVersion::V1, Some(&provider), None).await?;
+        let result_b = sign_text(prompt_b, SignatureVersion::V1, Some(&provider), None).await?;
 
         // Extract signatures for comparison
         let sig_a = &result_a.lsh.signatures[0].signature;
