@@ -940,3 +940,48 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Phase 12c Complete** ✅ - Custom error types added to Python and TypeScript
 
 **Next**: Phase 12d - Fix stale documentation
+
+## Phase 12d: Fix Stale Documentation Complete ✅ (5cd0071)
+
+**Checkpoint**: 2024-03-02 13:00
+
+**Commit**: `5cd0071` - docs: Fix stale documentation across all files
+
+**What changed**: Fixed 6 categories of stale/inaccurate documentation identified in the plan.
+
+**Files modified**:
+
+1. **Python `__init__.py`**: Updated docstring Quick Start example
+   - Changed `sign_text()` call to use keyword-only args (`provider=provider, version=...`)
+   - Matches actual function signature with `*,` separator
+
+2. **Docusaurus `intro.md`**: Updated test counts
+   - Total: 61 → 109 passing tests
+   - Rust: 52 → 50 (corrected)
+   - Python: 20 → 32 (added 12 from Phase 12a/b/c)
+   - TypeScript: 16 → 27 (added 11 from Phase 12a/b/c)
+
+3. **VALIDATION.md**: Fixed multiple inconsistencies
+   - Summary table: Updated test counts to 109 total (50/32/27)
+   - TypeScript coverage: Changed "Core LSH" → "Core + CM-LSH" (TS does have CM-LSH)
+   - Line 129: Removed "No CM-LSH yet" note, added correct precision note
+   - Footer: Updated total tests from 61 to 109
+
+4. **Docusaurus `config.ts`**: Fixed footer package links
+   - Added `/packages/` prefix to all three language links
+   - `/tree/main/rust` → `/tree/main/packages/rust` (and python, typescript)
+
+5. **Python `lsh.py`**: Renamed `MASK64` → `_MASK64`
+   - Marks as internal implementation detail (not public API)
+   - Updated all 4 usages in `_splitmix64()` function
+
+6. **Python `types.py`**: Removed unused `Literal` import
+   - Import was present but never used in the file
+
+**Impact**: All cosmetic/correctness fixes, no functional changes
+
+**Test status**: No new tests needed (documentation-only changes)
+
+**Phase 12d Complete** ✅ - All stale documentation corrected
+
+**Next**: Phase 12e - Complete Docusaurus pages (15 pages to write/expand)
