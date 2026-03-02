@@ -1145,3 +1145,23 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Total documentation**: ~6,212 lines added across 11 pages
 
 **Next**: Create guides/performance.md with consolidated benchmark data
+
+**Commit**: 12e.12: NEW guides/performance.md (785 lines)
+- Comprehensive performance benchmark guide
+- TL;DR comparison table (7/8 dimensions won by signatures)
+- Benchmark methodology: 3,714 real prompts, 3 approaches
+- Results by dimension: setup, signature cost, ingestion, query latency, storage, accuracy, ops
+- Key insights: 44× candidate reduction, 0.6% overhead with native, 3× storage efficiency
+- Performance tuning: latency, storage, accuracy optimization
+- Scaling recommendations: 100K-1M items (sharding, read replicas)
+- Comparison tables: vs exact cosine, vs HNSW, vs other LSH
+- Open questions: larger datasets, accuracy tuning, CM-LSH benchmarks
+- Reproduction instructions from demos/showcase.py
+- **Tests**: All existing tests still passing (109 total)
+
+**What changed**: Created comprehensive performance guide consolidating all benchmark data from demos/RESULTS.md
+
+**Total Phase 12e progress**: 12/15 tasks complete (80%)
+**Total documentation**: ~6,997 lines across 12 pages
+
+**Next**: Create guides/migration.md (legacy systems → new SDK, V0→V1)
