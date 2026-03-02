@@ -158,14 +158,16 @@ def parse_signature_string(s: str) -> ParsedSignature:
         ParsedSignature with version and signature
 
     Raises:
-        ValueError: If format is invalid or version unsupported
+        InvalidInputError: If format is invalid or version unsupported
     """
+    from odin_sig.error import InvalidInputError
+
     if not s.startswith("0din-"):
-        raise ValueError(f"Invalid signature prefix: {s}")
+        raise InvalidInputError(f"Invalid signature prefix: {s}")
 
     parts = s.split(":", 1)
     if len(parts) != 2:
-        raise ValueError(f"Invalid signature format: {s}")
+        raise InvalidInputError(f"Invalid signature format: {s}")
 
     version_str = parts[0][5:]  # Remove "0din-" prefix
     signature = parts[1]
@@ -174,11 +176,11 @@ def parse_signature_string(s: str) -> ParsedSignature:
     try:
         version = SignatureVersion(version_str)
     except ValueError:
-        raise ValueError(f"Unsupported signature version: {version_str}")
+        raise InvalidInputError(f"Unsupported signature version: {version_str}")
 
     # Validate hex signature
     if not re.match(r"^[0-9a-f]+$", signature):
-        raise ValueError(f"Invalid hex signature: {signature}")
+        raise InvalidInputError(f"Invalid hex signature: {signature}")
 
     return ParsedSignature(version=version, signature=signature)
 

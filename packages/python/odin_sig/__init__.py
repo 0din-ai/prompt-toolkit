@@ -43,6 +43,13 @@ Algorithm:
 """
 
 from odin_sig._accel import NATIVE_AVAILABLE
+from odin_sig.error import (
+    ConfigError,
+    InvalidInputError,
+    ModelError,
+    ProviderError,
+    SigError,
+)
 from odin_sig.hasher import Hasher
 from odin_sig.hashers import SimHashLsh, get_hasher
 from odin_sig.lsh import (
@@ -89,6 +96,12 @@ __all__ = [
     "Hasher",
     "SimHashLsh",
     "get_hasher",
+    # Error types
+    "SigError",
+    "ConfigError",
+    "ProviderError",
+    "ModelError",
+    "InvalidInputError",
     # Types
     "SignatureVersion",
     "HashAlgorithm",
