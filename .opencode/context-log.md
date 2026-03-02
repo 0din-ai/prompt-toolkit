@@ -903,3 +903,40 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Test status**: All 11 error tests pass (syntax validated)
 
 **Next**: Phase 12c.2 - Add SigError classes to TypeScript
+
+## Phase 12c.2: TypeScript Error Types Complete ✅ (4089877)
+
+**Checkpoint**: 2024-03-02 12:45
+
+**Commit**: `4089877` - feat(typescript): Add SigError exception classes
+
+**What changed**: Added custom error class hierarchy to TypeScript SDK, achieving complete parity with Rust and Python error handling.
+
+**Files created**:
+- `src/error.ts` - SigError base class + 4 specialized error classes
+  - `SigError` - Base error class with prototype chain restoration
+  - `ConfigError` - Invalid LSH configuration
+  - `ProviderError` - Embedding provider failures
+  - `ModelError` - ONNX model loading/inference errors
+  - `InvalidInputError` - Malformed inputs
+- `test/error.test.ts` - 11 tests covering all error types
+
+**Files modified**:
+- `src/index.ts` - Exported all 5 error classes
+- `src/types.ts` - Added `InvalidInputError` import, updated `parseSignatureString()` to throw `InvalidInputError` instead of generic `Error`
+
+**API parity achieved** - All three languages now have matching error hierarchies:
+
+| Error Type       | Rust          | Python               | TypeScript           |
+| ---------------- | ------------- | -------------------- | -------------------- |
+| Base error       | `SigError`    | `SigError` ✅        | `SigError` ✅        |
+| Invalid input    | variant       | `InvalidInputError` ✅ | `InvalidInputError` ✅ |
+| Config error     | variant       | `ConfigError` ✅      | `ConfigError` ✅      |
+| Provider failure | variant       | `ProviderError` ✅    | `ProviderError` ✅    |
+| Model error      | variant       | `ModelError` ✅       | `ModelError` ✅       |
+
+**Test status**: All 11 TypeScript error tests pass with Jest
+
+**Phase 12c Complete** ✅ - Custom error types added to Python and TypeScript
+
+**Next**: Phase 12d - Fix stale documentation
