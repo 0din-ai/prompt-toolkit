@@ -28,7 +28,7 @@ class MockProvider implements EmbeddingProvider {
     return this.dims;
   }
 
-  async generateEmbedding(text: string): Promise<EmbeddingResult> {
+  async generateEmbedding(_text: string): Promise<EmbeddingResult> {
     // Return a pre-normalized test embedding
     const embedding = new Array(this.dims).fill(0.5);
     return {
