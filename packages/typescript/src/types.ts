@@ -260,3 +260,52 @@ export function computeEmbeddingSha256(normalizedEmbedding: number[]): string {
 
   return crypto.createHash('sha256').update(jsonStr).digest('hex');
 }
+
+/**
+ * Metadata about a prompt in a comparison.
+ */
+export interface PromptInfo {
+  /** Preview of the prompt text (truncated) */
+  preview: string;
+  /** Full length of the prompt in characters */
+  length: number;
+  /** Formatted signature string */
+  signature: string;
+}
+
+/**
+ * Quality metrics for a signature comparison.
+ */
+export interface QualityStats {
+  /** Absolute error between estimated and true cosine */
+  absoluteError: number;
+  /** Signed error (estimated - true) */
+  signedError: number;
+  /** Squared error */
+  squaredError: number;
+  /** Human-readable quality rating */
+  qualityRating: string;
+}
+
+/**
+ * Result of comparing two signatures.
+ * 
+ * Contains metadata about both prompts, distance metrics, and optional
+ * quality statistics.
+ */
+export interface ComparisonResult {
+  /** Information about first prompt */
+  promptA: PromptInfo;
+  /** Information about second prompt */
+  promptB: PromptInfo;
+  /** Hamming distance between signatures in bits */
+  hammingDistance: number;
+  /** Estimated cosine similarity from Hamming distance */
+  cosineSimilarity: number;
+  /** LSH configuration used */
+  lshConfig: LshConfig;
+  /** Optional quality statistics if ground truth available */
+  qualityStats?: QualityStats;
+  /** Optional timing information in milliseconds */
+  timingMs?: number;
+}

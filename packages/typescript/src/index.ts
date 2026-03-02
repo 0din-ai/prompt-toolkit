@@ -71,6 +71,7 @@ export {
   cosineFromHamming,
   normalizeVector,
   type LSHFamily,
+  type LshConfig,
 } from './lsh';
 
 // Types and utilities
@@ -81,6 +82,9 @@ export {
   type EmbeddingResult,
   type LshOutput,
   type SignatureResult,
+  type ComparisonResult,
+  type PromptInfo,
+  type QualityStats,
   resolveVersion,
   embeddingDimensions,
   versionToAlgorithm,
