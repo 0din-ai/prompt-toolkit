@@ -4,13 +4,13 @@
 
 The 0din-sig SDK has been successfully implemented across three languages (Rust, Python, TypeScript) with **full cross-language compatibility** validated against canonical test vectors.
 
-**Status**: ✅ All implementations passing (61 total tests)
+**Status**: ✅ All implementations passing (109 total tests)
 
 | Language   | Test Suites | Tests Passing | Coverage |
 |------------|-------------|---------------|----------|
-| Rust       | 8 suites    | 43 tests      | Core + CM-LSH |
-| Python     | 11 suites   | 11 tests      | Core + CM-LSH |
-| TypeScript | 7 suites    | 7 tests       | Core LSH |
+| Rust       | 8 suites    | 50 tests      | Core + CM-LSH |
+| Python     | 7 suites    | 32 tests      | Core + CM-LSH |
+| TypeScript | 7 suites    | 27 tests      | Core + CM-LSH |
 
 ## Validation Methodology
 
@@ -126,7 +126,7 @@ Time:        0.556 s
 **Precision Notes**:
 - Core LSH: Exact match (no floating-point sensitivity)
 - BigInt precision: Required for integers >2^53 (handled correctly)
-- No CM-LSH implementation yet (TypeScript only has core LSH from thor)
+- CM-LSH: Available with HybridCMLSH class (within 5% bit difference vs Rust/Python)
 
 ## Algorithm Consistency
 
@@ -297,5 +297,5 @@ All implementations validate the `0din-v{N}:{signature}` format:
 
 **Generated**: 2024-02-24  
 **Test Vectors**: `spec/test-vectors/` (8 files, 124 test cases)  
-**Total Tests**: 61 passing across 3 languages  
+**Total Tests**: 109 passing across 3 languages (50 Rust + 32 Python + 27 TypeScript)  
 **Validation Status**: ✅ PASSED

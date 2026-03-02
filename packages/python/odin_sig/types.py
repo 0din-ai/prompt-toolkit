@@ -5,7 +5,7 @@ import json
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .lsh import LSHFamily

@@ -14,9 +14,8 @@ Quick Start (High-Level API):
     >>> # Generate signature from text
     >>> result = await sign_text(
     ...     "How do I reset my password?",
-    ...     provider,
-    ...     SignatureVersion.V1,
-    ...     None,
+    ...     provider=provider,
+    ...     version=SignatureVersion.V1,
     ... )
     >>> print(result.signature_string)
     0din-v1:8d000000ac854dae...
