@@ -167,7 +167,7 @@ CM-LSH has **slightly different results** across languages due to:
 
 **Impact:** ~5% bit difference in `hashB` (confidence bits)
 - `hashA` (direction bits) remains identical
-- Similarity estimates differ by <0.01 (negligible)
+- Similarity estimates differ by &lt;0.01 (negligible)
 
 **Conclusion:** CM-LSH variance is **acceptable** for production use. The confidence bits are advisory, not critical.
 
@@ -373,7 +373,7 @@ confident = (abs(proj) > threshold)
 - Direction bits (`hashA`) remain identical
 - Calibration adjusts for minor differences
 
-**Measured impact:** ~5% bit difference in confidence hash, <1% impact on similarity estimates.
+**Measured impact:** ~5% bit difference in confidence hash, &lt;1% impact on similarity estimates.
 
 ---
 

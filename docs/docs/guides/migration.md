@@ -2,6 +2,9 @@
 sidebar_position: 5
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Migration Guide
 
 Migrate from legacy systems (heimdall, thor, research) to the unified 0din-sig SDK, or upgrade from V0 to V1 signatures.
