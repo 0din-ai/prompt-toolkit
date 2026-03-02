@@ -2,6 +2,9 @@
 sidebar_position: 4
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Performance Benchmarks
 
 Comprehensive performance analysis comparing LSH signatures against vector database alternatives.

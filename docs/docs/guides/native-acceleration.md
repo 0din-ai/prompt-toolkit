@@ -50,7 +50,7 @@ pip install -e '.[native]'
 ```
 
 The `[native]` extra installs:
-- `maturin>=1.0,<2.0` - Build tool for Rust Python extensions
+- `maturin>=1.0,\<2.0` - Build tool for Rust Python extensions
 - `odin-sig-native` - The Rust PyO3 extension (built from `packages/rust`)
 
 ### Option 2: Pure Python (Fallback)
