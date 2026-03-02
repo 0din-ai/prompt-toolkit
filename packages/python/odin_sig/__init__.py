@@ -43,6 +43,8 @@ Algorithm:
 """
 
 from odin_sig._accel import NATIVE_AVAILABLE
+from odin_sig.hasher import Hasher
+from odin_sig.hashers import SimHashLsh, get_hasher
 from odin_sig.lsh import (
     LSHFamily,
     cosine_from_hamming,
@@ -83,6 +85,10 @@ __all__ = [
     "hamming_distance_hex",
     "cosine_from_hamming",
     "LSHFamily",
+    # Hasher abstraction
+    "Hasher",
+    "SimHashLsh",
+    "get_hasher",
     # Types
     "SignatureVersion",
     "HashAlgorithm",
