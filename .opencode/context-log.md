@@ -1188,3 +1188,15 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Total documentation**: ~7,777 lines across 13 pages
 
 **Next**: Update docs/sidebars.ts to add all new pages (HIGH PRIORITY)
+
+**Commit**: 12e.14: Update docs/sidebars.ts
+- Added 4 new API Reference pages: providers, signature-format, errors, cm-lsh-api
+- Added 3 new Guide pages: native-acceleration, performance, migration
+- Sidebar now includes all 13 documentation pages created in Phase 12e
+- **Tests**: All existing tests still passing (109 total)
+
+**What changed**: Updated Docusaurus sidebar configuration to expose all new documentation
+
+**Total Phase 12e progress**: 14/15 tasks complete (93%)
+
+**Next**: Verify Docusaurus build (npm run build) - final task before Phase 12e completion
