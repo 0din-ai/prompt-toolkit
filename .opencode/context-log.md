@@ -1241,3 +1241,19 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **PHASE 12f COMPLETE**: Rust README
 
 **Next**: Phase 12g - Auto-Generated API Docs (cargo doc, pdoc, typedoc)
+
+**Commit**: 12g.1-12g.3: Set up auto-generated API docs
+- Added Makefile targets for API documentation generation:
+  * docs-rust: cargo doc --all-features --no-deps → docs/static/api/rust/
+  * docs-python: pdoc odin_sig → docs/static/api/python/
+  * docs-typescript: typedoc src/index.ts → docs/static/api/typescript/
+- Updated main `docs` target to build all three API docs before Docusaurus
+- Added pdoc>=14.0.0 to Python dev dependencies
+- Added typedoc^0.25.0 to TypeScript devDependencies
+- **Tests**: All existing tests still passing (109 total)
+
+**What changed**: Infrastructure for auto-generated API documentation ready
+
+**Phase 12g progress**: 3/3 tasks complete (100%) ✅ (targets added, ready to run)
+
+**Next**: Test the doc generation targets and commit

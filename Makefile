@@ -256,13 +256,38 @@ clean-typescript: ## Clean TypeScript build artifacts
 
 ##@ Documentation
 
-docs: ## Build Docusaurus documentation site
-	@echo "$(CYAN)Building documentation site...$(RESET)"
+docs: docs-rust docs-python docs-typescript ## Build all documentation (API docs + Docusaurus site)
+	@echo "$(CYAN)Building Docusaurus documentation site...$(RESET)"
 	@cd docs && npm run build
-	@echo "$(GREEN)✅ Documentation built successfully$(RESET)"
+	@echo "$(GREEN)✅ All documentation built successfully$(RESET)"
+	@echo ""
+	@echo "$(CYAN)Generated API docs:$(RESET)"
+	@echo "  • Rust:       docs/static/api/rust/odin_sig/index.html"
+	@echo "  • Python:     docs/static/api/python/odin_sig.html"
+	@echo "  • TypeScript: docs/static/api/typescript/index.html"
 	@echo ""
 	@echo "$(CYAN)To serve locally:$(RESET)"
 	@echo "  cd docs && npm run serve"
+
+docs-rust: ## Generate Rust API documentation (cargo doc)
+	@echo "$(CYAN)Generating Rust API docs...$(RESET)"
+	@cd packages/rust && cargo doc --all-features --no-deps
+	@mkdir -p docs/static/api/rust
+	@rm -rf docs/static/api/rust/*
+	@cp -r packages/rust/target/doc/* docs/static/api/rust/
+	@echo "$(GREEN)✅ Rust API docs generated → docs/static/api/rust/$(RESET)"
+
+docs-python: ## Generate Python API documentation (pdoc)
+	@echo "$(CYAN)Generating Python API docs...$(RESET)"
+	@mkdir -p docs/static/api/python
+	@cd packages/python && python -m pdoc odin_sig -o ../../docs/static/api/python --html
+	@echo "$(GREEN)✅ Python API docs generated → docs/static/api/python/$(RESET)"
+
+docs-typescript: ## Generate TypeScript API documentation (typedoc)
+	@echo "$(CYAN)Generating TypeScript API docs...$(RESET)"
+	@mkdir -p docs/static/api/typescript
+	@cd packages/typescript && npx typedoc --out ../../docs/static/api/typescript src/index.ts
+	@echo "$(GREEN)✅ TypeScript API docs generated → docs/static/api/typescript/$(RESET)"
 
 docs-dev: ## Start Docusaurus development server
 	@echo "$(CYAN)Starting documentation development server...$(RESET)"
