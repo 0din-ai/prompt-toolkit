@@ -53,11 +53,14 @@ from odin_sig.lsh import (
 from odin_sig.provider import EmbeddingProvider
 from odin_sig.sign import sign_text
 from odin_sig.types import (
+    ComparisonResult,
     EmbeddingResult,
     HashAlgorithm,
     LshConfig,
     LshOutput,
     ParsedSignature,
+    PromptInfo,
+    QualityStats,
     SignatureResult,
     SignatureVersion,
     compute_embedding_sha256,
@@ -87,6 +90,9 @@ __all__ = [
     "LshOutput",
     "EmbeddingResult",
     "ParsedSignature",
+    "ComparisonResult",
+    "PromptInfo",
+    "QualityStats",
     # Signature utilities
     "signature_string",
     "parse_signature_string",
