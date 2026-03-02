@@ -46,6 +46,7 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// use odin_sig::{sign_text, SignatureVersion};
 /// use odin_sig::providers::{OnnxProvider, ModelCache};
+/// use odin_sig::provider::EmbeddingProvider;
 ///
 /// let cache = ModelCache::new()?;
 /// let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -55,7 +56,7 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 ///     Some(&provider),
 ///     None,
 /// ).await?;
-/// provider.close().await?;
+/// provider.close().await?; // EmbeddingProvider trait method
 /// # Ok(())
 /// # }
 /// ```
