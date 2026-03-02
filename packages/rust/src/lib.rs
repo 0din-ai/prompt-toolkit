@@ -25,8 +25,8 @@
 //! // Generate signature from text
 //! let result = sign_text(
 //!     "How do I reset my password?",
-//!     &provider,
 //!     SignatureVersion::V1,
+//!     Some(&provider),
 //!     None,
 //! ).await?;
 //!
