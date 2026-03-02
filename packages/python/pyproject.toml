@@ -101,6 +101,21 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 
+# Ignore missing imports for optional dependencies
+[[tool.mypy.overrides]]
+module = [
+    "openai",
+    "openai.*",
+    "onnxruntime",
+    "onnxruntime.*",
+    "transformers",
+    "transformers.*",
+    "odin_sig_native",
+    "sklearn",
+    "sklearn.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
