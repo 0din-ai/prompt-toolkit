@@ -286,9 +286,9 @@ impl Hasher for HybridCMLSH {
 /// Generate deterministic random hyperplanes for LSH.
 pub fn gen_hyperplanes(family: usize, bits: usize, dims: usize) -> Vec<Vec<f32>> {
     let mut hp = vec![vec![0.0f32; dims]; bits];
-    for b in 0..bits {
-        for d in 0..dims {
-            hp[b][d] = sign_for(family, b, d);
+    for (b, row) in hp.iter_mut().enumerate().take(bits) {
+        for (d, val) in row.iter_mut().enumerate().take(dims) {
+            *val = sign_for(family, b, d);
         }
     }
     hp
@@ -313,16 +313,16 @@ pub fn create_default_cm_lsh(dimensions: usize, family: usize) -> HybridCMLSH {
 
     // PCA: identity for first itq_dims dimensions
     let mut pca = vec![vec![0.0f32; dimensions]; 256];
-    for i in 0..itq_dims {
+    for (i, row) in pca.iter_mut().enumerate().take(itq_dims) {
         if i < dimensions {
-            pca[i][i] = 1.0;
+            row[i] = 1.0;
         }
     }
 
     // Rotation: identity
     let mut rotation = vec![vec![0.0f32; 256]; 256];
-    for i in 0..256 {
-        rotation[i][i] = 1.0;
+    for (i, row) in rotation.iter_mut().enumerate().take(256) {
+        row[i] = 1.0;
     }
 
     let itq = ITQParams {

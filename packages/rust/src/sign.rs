@@ -18,12 +18,12 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 ///
 /// * `text` - The text prompt to sign
 /// * `version` - Signature version (use `SignatureVersion::Latest` for the latest model).
-///              If provider is given, version is inferred from provider dimensions
-///              unless explicitly specified for validation.
+///   If provider is given, version is inferred from provider dimensions
+///   unless explicitly specified for validation.
 /// * `provider` - Optional embedding provider. If `None`, auto-constructs the appropriate
-///               provider based on version:
-///               - V1: `OnnxProvider` (requires model cached, `onnx` feature enabled)
-///               - V0: `OpenAIProvider` (requires `OPENAI_API_KEY` env var, `openai` feature enabled)
+///   provider based on version:
+///   - V1: `OnnxProvider` (requires model cached, `onnx` feature enabled)
+///   - V0: `OpenAIProvider` (requires `OPENAI_API_KEY` env var, `openai` feature enabled)
 /// * `config` - Optional LSH configuration (defaults to 3 families, 256 bits, 16 bands)
 ///
 /// # Examples

@@ -46,7 +46,7 @@ impl ModelCache {
     /// # Arguments
     ///
     /// * `model_id` - HuggingFace model ID (e.g., "intfloat/multilingual-e5-small")
-    ///                or local directory path (e.g., "models/v1")
+    ///   or local directory path (e.g., "models/v1")
     /// * `filename` - Filename within the model repo (e.g., "onnx/model.onnx")
     ///
     /// # Returns
