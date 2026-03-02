@@ -64,6 +64,10 @@ export { signText } from './sign';
 // Provider interface (for custom implementations)
 export { type EmbeddingProvider } from './provider';
 
+// Hasher abstraction
+export { type Hasher } from './hasher';
+export { getHasher, SimHashLsh } from './hashers';
+
 // Core LSH functions
 export {
   simhashLshMulti,
