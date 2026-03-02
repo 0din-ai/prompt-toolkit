@@ -43,8 +43,8 @@ struct OpenAIEmbeddingRequest {
 /// # Example
 ///
 /// ```no_run
-/// use heimdall_core::providers::OpenAIProvider;
-/// use heimdall_core::provider::EmbeddingProvider;
+/// use odin_sig::providers::OpenAIProvider;
+/// use odin_sig::provider::EmbeddingProvider;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let provider = OpenAIProvider::new(
