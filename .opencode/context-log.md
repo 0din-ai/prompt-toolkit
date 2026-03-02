@@ -1165,3 +1165,26 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Total documentation**: ~6,997 lines across 12 pages
 
 **Next**: Create guides/migration.md (legacy systems → new SDK, V0→V1)
+
+**Commit**: 12e.13: NEW guides/migration.md (780 lines)
+- Complete migration guide for legacy systems → new SDK
+- From heimdall-core (Rust) → odin-sig package
+- From thor (TypeScript) → @0din/sig package  
+- From research/signature_cli (Python) → 0din-sig package
+- Breaking changes summary (versioned format, error types, keyword args)
+- V0→V1 migration process (6 steps: prepare, regenerate, schema, queries, validate, deprecate)
+- Cannot do gradual migration (incompatible embedding spaces)
+- Legacy format migration (raw hex → versioned strings)
+- Database schema migration (SQLite, PostgreSQL)
+- Compatibility matrix (cross-version, cross-language)
+- Testing after migration (smoke tests, regression, performance)
+- Rollback plan (restore backups, revert code)
+- Migration time estimates (10K: 5min, 100K: 51min, 1M: 8.5hrs)
+- **Tests**: All existing tests still passing (109 total)
+
+**What changed**: Created comprehensive migration guide consolidating legacy system transitions and V0→V1 upgrade path
+
+**Total Phase 12e progress**: 13/15 tasks complete (87%)
+**Total documentation**: ~7,777 lines across 13 pages
+
+**Next**: Update docs/sidebars.ts to add all new pages (HIGH PRIORITY)
