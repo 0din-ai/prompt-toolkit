@@ -41,6 +41,10 @@ const sidebars: SidebarsConfig = {
       items: [
         'api/core-functions',
         'api/types',
+        'api/providers',
+        'api/signature-format',
+        'api/errors',
+        'api/cm-lsh-api',
       ],
     },
     {
@@ -49,6 +53,9 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/duplicate-detection',
         'guides/similarity-search',
+        'guides/native-acceleration',
+        'guides/performance',
+        'guides/migration',
       ],
     },
     {
