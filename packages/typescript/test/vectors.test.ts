@@ -8,13 +8,11 @@ import {
   simhashLshMulti,
   hammingDistanceHex,
   cosineFromHamming,
-  normalizeVector,
   _internal,
 } from '../src/lsh';
 import {
   parseSignatureString,
   computeEmbeddingSha256,
-  SignatureVersion,
 } from '../src/types';
 
 const VECTORS_DIR = path.join(__dirname, '../../../spec/test-vectors');
@@ -67,7 +65,7 @@ describe('SimHash', () => {
     const vectors = loadVectors('simhash.json');
 
     for (const testCase of vectors.vectors) {
-      const { name, input, config, expected: expectedFamilies } = testCase;
+      const { input, config, expected: expectedFamilies } = testCase;
 
       const families = simhashLshMulti(input, config);
 
@@ -89,7 +87,7 @@ describe('HammingDistance', () => {
     const vectors = loadVectors('hamming.json');
 
     for (const testCase of vectors.vectors) {
-      const { a, b, distance: expected, description } = testCase;
+      const { a, b, distance: expected } = testCase;
       const actual = hammingDistanceHex(a, b);
 
       expect(actual).toBe(expected);
@@ -115,7 +113,7 @@ describe('SHA256', () => {
     const vectors = loadVectors('sha256.json');
 
     for (const testCase of vectors.vectors) {
-      const { input, expected_json, expected_sha256, description } = testCase;
+      const { input, expected_sha256 } = testCase;
       const actual = computeEmbeddingSha256(input);
 
       expect(actual).toBe(expected_sha256);
@@ -128,7 +126,7 @@ describe('SignatureFormat', () => {
     const vectors = loadVectors('signature_format.json');
 
     for (const testCase of vectors.vectors) {
-      const { input, valid, description } = testCase;
+      const { input, valid } = testCase;
 
       if (valid) {
         const { expected_version, expected_signature } = testCase;

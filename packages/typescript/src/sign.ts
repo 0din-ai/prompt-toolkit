@@ -9,7 +9,6 @@ import {
   LshOutput,
   SignatureResult,
   SignatureVersion,
-  getSignatureString,
 } from './types';
 
 /**

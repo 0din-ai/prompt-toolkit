@@ -109,8 +109,7 @@ export class OnnxProvider implements EmbeddingProvider {
     // Create a simple tokenizer wrapper
     const tokenizer = new Tokenizer(tokenizerData);
 
-    // Get dimensions from model output shape
-    const outputShape = session.outputNames[0];
+    // Use default dimensions (model output shape not needed here)
     const dimensions = OnnxProvider.DEFAULT_DIMENSIONS;
 
     // Load input prefix from config

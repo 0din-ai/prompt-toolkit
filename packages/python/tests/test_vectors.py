@@ -173,6 +173,8 @@ class TestSignatureFormat:
                 assert result.version.value == expected_version, f"{description}: version mismatch"
                 assert result.signature == expected_sig, f"{description}: signature mismatch"
             else:
-                # Should raise ValueError
-                with pytest.raises(ValueError):
+                # Should raise InvalidInputError (custom error from Phase 12c)
+                from odin_sig.error import InvalidInputError
+
+                with pytest.raises(InvalidInputError):
                     parse_signature_string(input_str)
