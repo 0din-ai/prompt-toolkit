@@ -985,3 +985,105 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Phase 12d Complete** ✅ - All stale documentation corrected
 
 **Next**: Phase 12e - Complete Docusaurus pages (15 pages to write/expand)
+
+## Phase 12e: Complete Docusaurus Pages (7 of 15 complete) 🔄 IN PROGRESS
+
+**Started**: 2024-03-02 13:15
+
+**Commits completed** (7 pages, 3,982 lines of documentation):
+
+1. `cd11dc9` - 12e.1: api/core-functions.md (expanded to 435 lines)
+2. `13992c1` - 12e.2: api/types.md (expanded to 565 lines)
+3. `3349792` - 12e.3: NEW api/providers.md (455 lines)
+4. `fef05af` - 12e.4: NEW api/cm-lsh-api.md (702 lines)
+5. `86e9173` - 12e.5: NEW api/signature-format.md (437 lines)
+6. `4829591` - 12e.6: NEW api/errors.md (612 lines)
+7. `1cb413e` - 12e.7: concepts/cm-lsh.md (expanded to 469 lines)
+
+**What changed**: Created comprehensive API reference documentation covering all core functionality.
+
+### API Reference Pages (6/6 complete) ✅
+
+**core-functions.md**: All 9 core functions documented
+- High-level: `sign_text()`
+- Low-level LSH: `simhash_lsh_multi()`
+- Utilities: `normalize_vector()`, `hamming_distance_hex()`, `cosine_from_hamming()`, `compute_embedding_sha256()`
+- Multi-language tabs, examples, parameter descriptions
+
+**types.md**: All 17 public types documented
+- Configuration: `LshConfig`
+- Versions: `SignatureVersion`, `HashAlgorithm`
+- LSH outputs: `LshFamily`, `LshOutput`
+- Signatures: `ParsedSignature`, `SignatureResult`
+- Embeddings: `EmbeddingResult`
+- Comparison: `PromptInfo`, `QualityStats`, `ComparisonResult`
+- Hasher: `Hasher` protocol/trait/interface
+- Errors: `SigError` hierarchy
+
+**providers.md**: Full provider API reference
+- `EmbeddingProvider` interface specification
+- `OpenAIProvider`: Constructor, configuration, env vars, cost/latency
+- `OnnxProvider`: Factory method, model auto-download, performance
+- `ModelCache`: Cache directory, environment overrides, thread safety
+- Custom provider implementation guide
+
+**cm-lsh-api.md**: Complete CM-LSH API
+- `HybridCMLSH` class: All 6 methods (`hash`, `sim`, `cmp`, `isDup`, `verifyLshTs`, constructor)
+- Factory functions: `createDefaultCmLsh()`, `genHyperplanes()`
+- Type definitions: `DualHash`, `ITQParams`, `HybridParams`, `CalibratorConfig`
+- Multi-language examples and algorithm explanations
+
+**signature-format.md**: Format specification
+- EBNF grammar from spec/VERSIONING.md
+- API functions: `signatureString()`, `parseSignatureString()`
+- Validation rules and error cases
+- Database storage recommendations with SQL schemas
+- Band-based indexing for similarity search
+- Migration guide from legacy formats
+
+**errors.md**: Error handling guide
+- Error hierarchy: `SigError` base + 5 specialized types
+- Common causes and examples for each error type
+- Error handling patterns: retry with backoff, graceful degradation, validation
+- Best practices: catch specific first, type guards, resource cleanup
+- Multi-language error handling examples
+
+### Concept Pages (1/2 expanded) 🔄
+
+**cm-lsh.md**: Complete algorithm explanation
+- Architecture with ASCII diagram
+- Algorithm details: projections, confidence thresholding, weighted similarity
+- When to use CM-LSH vs standard LSH
+- Performance characteristics: accuracy (+9-12%), storage, computation
+- Cross-language consistency notes
+- Usage examples and availability
+
+**cross-language.md**: TODO (currently 31 lines, needs expansion)
+
+### Configuration Pages (0/1 expanded) ⏳
+
+**getting-started/configuration.md**: TODO (currently 38 lines, needs expansion)
+
+### Guide Pages (0/5 created/expanded) ⏳
+
+- **similarity-search.md**: TODO (stub, needs full guide)
+- **native-acceleration.md**: TODO (NEW, needs creation)
+- **performance.md**: TODO (NEW, needs creation)
+- **migration.md**: TODO (NEW, needs creation)
+
+### Remaining Tasks (8 pages):
+
+- 12e.8: Complete concepts/cross-language.md
+- 12e.9: Complete getting-started/configuration.md  
+- 12e.10: Complete guides/similarity-search.md
+- 12e.11: NEW guides/native-acceleration.md
+- 12e.12: NEW guides/performance.md
+- 12e.13: NEW guides/migration.md
+- 12e.14: Update sidebars.ts (add all new pages)
+- 12e.15: Verify docusaurus build
+
+**Total documentation added**: ~3,982 lines across 7 pages
+
+**Status**: API Reference complete ✅, Concepts 50% complete, Guides 0% complete
+
+**Next**: Continue with remaining concept/guide pages, then update sidebars
