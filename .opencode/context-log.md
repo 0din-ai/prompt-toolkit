@@ -1087,3 +1087,61 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Status**: API Reference complete ✅, Concepts 50% complete, Guides 0% complete
 
 **Next**: Continue with remaining concept/guide pages, then update sidebars
+
+### 2024-03-02 15:45 - Phase 12e.8-12e.11 (Concept & Guide Pages)
+
+**Commit**: 12e.8: concepts/cross-language.md
+- Expanded from 31 lines to 474 lines
+- Complete validation methodology and implementation matrix
+- Test vector categories and validation tools
+- Cross-language consistency verification
+- **Tests**: All existing tests still passing (109 total)
+
+**Commit**: 12e.9: getting-started/configuration.md  
+- Expanded from 38 lines to 528 lines
+- Complete configuration guide with all parameters
+- Environment variables and precedence rules
+- Multi-language configuration examples
+- Production deployment best practices
+- **Tests**: All existing tests still passing (109 total)
+
+**Commit**: 12e.10: guides/similarity-search.md
+- Expanded from stub to 585 lines
+- Complete ANN search implementation guide
+- Database schemas (PostgreSQL, SQLite)
+- Indexing, querying, and ranking phases
+- Performance tuning and scaling analysis
+- **Tests**: All existing tests still passing (109 total)
+
+**Commit**: 12e.11: NEW guides/native-acceleration.md (643 lines)
+- Complete native Rust acceleration guide
+- Performance comparison: 592× speedup (native vs pure Python)
+- Installation options and verification
+- What's accelerated: core signature generation, band extraction
+- Real-world benchmark data from demos/RESULTS.md
+- Troubleshooting section for common build issues
+- Implementation details: PyO3 bindings, automatic fallback, validation
+- Future work: GPU acceleration, WASM compilation
+- **Tests**: All existing tests still passing (109 total)
+
+**What changed**: 
+- Completed 3 concept/guide pages (cross-language, configuration, similarity-search)
+- Created NEW native-acceleration guide with full performance analysis
+- Total documentation added: ~2,230 lines across 4 pages
+
+**Status**: 
+- API Reference: 6/6 complete ✅
+- Concepts: 2/2 complete ✅
+- Configuration: 1/1 complete ✅
+- Guides: 2/5 complete (similarity-search ✅, native-acceleration ✅)
+
+**Remaining tasks**:
+- 12e.12: NEW guides/performance.md (comprehensive benchmarks)
+- 12e.13: NEW guides/migration.md (legacy → new SDK)
+- 12e.14: Update sidebars.ts (add all new pages)
+- 12e.15: Verify docusaurus build (no broken links)
+
+**Total Phase 12e progress**: 11/15 tasks complete (73%)
+**Total documentation**: ~6,212 lines added across 11 pages
+
+**Next**: Create guides/performance.md with consolidated benchmark data
