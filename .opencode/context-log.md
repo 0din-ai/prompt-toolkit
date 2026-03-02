@@ -836,3 +836,70 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 **Test status**: All existing tests still pass, new type tests pass across all three languages
 
 **Next**: Phase 12b - Add Hasher abstraction to Python and TypeScript
+
+## Phase 12b: Hasher Abstraction Complete ✅ (9d15dd6, 0156472)
+
+**Checkpoint**: 2024-02-24 18:15
+
+**Commits**:
+- `9d15dd6` - feat(python): Add Hasher protocol and get_hasher() factory
+- `0156472` - feat(typescript): Add Hasher interface and getHasher() factory
+
+**What changed**: Added `Hasher` abstraction pattern to Python and TypeScript matching Rust's trait-based design.
+
+### Python (12b.1)
+- Created `hasher.py` with `Hasher` Protocol (structural typing)
+- Created `hashers/__init__.py` with `get_hasher(algorithm)` factory
+- Created `hashers/lsh.py` with `SimHashLsh` class implementing the protocol
+- Exported from `__init__.py`: `Hasher`, `SimHashLsh`, `get_hasher`
+- Added `test_hasher.py` with 6 tests — all pass
+
+### TypeScript (12b.2)
+- Created `hasher.ts` with `Hasher` interface
+- Created `hashers/index.ts` with `getHasher(algorithm)` factory
+- Created `hashers/lsh.ts` with `SimHashLsh` class implementing interface
+- Exported from `index.ts`: `Hasher`, `SimHashLsh`, `getHasher`
+- Added `test/hasher.test.ts` with 5 tests — all pass
+
+**Architecture**: All three languages now share the same abstraction pattern for pluggable hash algorithms:
+- Rust: `Hasher` trait + `get_hasher()` function
+- Python: `Hasher` Protocol + `get_hasher()` function  
+- TypeScript: `Hasher` interface + `getHasher()` function
+
+**Test status**: All tests pass (11 new tests total)
+
+**Next**: Phase 12c - Add SigError exception hierarchy
+
+## Phase 12c.1: Python Error Types Complete ✅ (cfa77b5)
+
+**Checkpoint**: 2024-03-02 12:30
+
+**Commit**: `cfa77b5` - feat(python): Add SigError exception hierarchy
+
+**What changed**: Added custom exception hierarchy to Python SDK, matching Rust's SigError enum pattern (but using Python exception idioms).
+
+**Files created**:
+- `odin_sig/error.py` - SigError base class + 4 specialized exceptions
+  - `SigError` - Base exception class
+  - `InvalidInputError` - Malformed inputs (signatures, embeddings, configs)
+  - `ProviderError` - Embedding provider failures
+  - `HashError` - Hashing failures
+  - `ComparisonError` - Comparison operation failures
+- `tests/test_error.py` - 11 tests covering all error types
+
+**Files modified**:
+- `odin_sig/__init__.py` - Exported all 5 error classes
+- `odin_sig/types.py` - Updated `parse_signature_string()` to raise `InvalidInputError` instead of generic `ValueError`
+
+**API parity status**:
+| Error Type       | Rust          | Python               | TypeScript    |
+| ---------------- | ------------- | -------------------- | ------------- |
+| Base error       | `SigError`    | `SigError` ✅        | ❌ (pending)  |
+| Invalid input    | variant       | `InvalidInputError` ✅ | ❌            |
+| Provider failure | variant       | `ProviderError` ✅    | ❌            |
+| Hash failure     | variant       | `HashError` ✅        | ❌            |
+| Comparison error | variant       | `ComparisonError` ✅  | ❌            |
+
+**Test status**: All 11 error tests pass (syntax validated)
+
+**Next**: Phase 12c.2 - Add SigError classes to TypeScript
