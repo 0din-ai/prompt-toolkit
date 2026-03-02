@@ -68,8 +68,8 @@ async fn test_cross_validation_v1() -> Result<()> {
     // Generate signature
     let result = sign_text(
         "test prompt",
-        &provider,
         SignatureVersion::V1,
+        Some(&provider),
         None,
     )
     .await?;
@@ -105,8 +105,8 @@ async fn test_cross_validation_v0() -> Result<()> {
     // Generate signature
     let result = sign_text(
         "test prompt",
-        &provider,
         SignatureVersion::V0,
+        Some(&provider),
         None,
     )
     .await?;
@@ -176,8 +176,8 @@ async fn test_cross_validation_different_vectors() -> Result<()> {
 
     let result = sign_text(
         "test prompt",
-        &provider,
         SignatureVersion::V1,
+        Some(&provider),
         None,
     )
     .await?;
