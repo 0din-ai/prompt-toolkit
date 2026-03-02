@@ -167,12 +167,12 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 
 ## Project Status
 
-✅ **Production Ready** — All three language implementations validated with 68 passing tests
+✅ **Production Ready** — All three language implementations validated with 109 passing tests
 
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
-| Rust | `odin-sig` | ✅ Ready | 52 passing |
-| Python | `0din-sig` | ✅ Ready | 20 passing |
-| TypeScript | `@0din/sig` | ✅ Ready | 16 passing |
+| Rust | `odin-sig` | ✅ Ready | 50 passing |
+| Python | `0din-sig` | ✅ Ready | 32 passing |
+| TypeScript | `@0din/sig` | ✅ Ready | 27 passing |
 
 See the [Validation Report](https://github.com/0din/sig-sdk/blob/main/VALIDATION.md) for detailed cross-language validation results.

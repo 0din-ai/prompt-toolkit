@@ -25,16 +25,16 @@ class LSHFamily:
     bands: list[str] = field(default_factory=list)  # contiguous slices of hex
 
 
-MASK64 = (1 << 64) - 1
+_MASK64 = (1 << 64) - 1
 
 
 def _splitmix64(x: int) -> int:
     """SplitMix64 hash function for deterministic random generation."""
-    z = (x + 0x9E3779B97F4A7C15) & MASK64
-    z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & MASK64
-    z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & MASK64
+    z = (x + 0x9E3779B97F4A7C15) & _MASK64
+    z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & _MASK64
+    z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & _MASK64
     z = z ^ (z >> 31)
-    return z & MASK64
+    return z & _MASK64
 
 
 def _sign_for(family: int, bit: int, dim: int) -> int:

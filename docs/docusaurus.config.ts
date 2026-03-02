@@ -108,15 +108,15 @@ const config: Config = {
           items: [
             {
               label: 'Rust (odin-sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/rust',
+              href: 'https://github.com/0din/sig-sdk/tree/main/packages/rust',
             },
             {
               label: 'Python (0din-sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/python',
+              href: 'https://github.com/0din/sig-sdk/tree/main/packages/python',
             },
             {
               label: 'TypeScript (@0din/sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/typescript',
+              href: 'https://github.com/0din/sig-sdk/tree/main/packages/typescript',
             },
           ],
         },
