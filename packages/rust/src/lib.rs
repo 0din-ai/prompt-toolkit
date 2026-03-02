@@ -107,7 +107,8 @@ pub use lsh::{
 };
 pub use sign::sign_text;
 pub use types::{
-    EmbeddingResult, HashAlgorithm, LshConfig, LshFamily, ParsedSignature, SignatureResult,
+    parse_signature_string, signature_string, ComparisonResult, EmbeddingResult, HashAlgorithm,
+    LshConfig, LshFamily, LshOutput, ParsedSignature, PromptInfo, QualityStats, SignatureResult,
     SignatureVersion,
 };
 

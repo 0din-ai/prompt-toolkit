@@ -443,6 +443,32 @@ impl ParsedSignature {
     }
 }
 
+/// Format a signature string in 0din format
+///
+/// Creates a signature string from a version and hex signature.
+///
+/// # Arguments
+///
+/// * `version` - The signature version (V0, V1, or Latest)
+/// * `signature` - The hex-encoded signature string
+///
+/// # Returns
+///
+/// Formatted signature string: `0din-v{N}:<signature>`
+///
+/// # Example
+///
+/// ```
+/// use odin_sig::{signature_string, SignatureVersion};
+///
+/// let sig = signature_string(SignatureVersion::V1, "abcd1234");
+/// assert_eq!(sig, "0din-v1:abcd1234");
+/// ```
+pub fn signature_string(version: SignatureVersion, signature: &str) -> String {
+    let version = version.resolve();
+    format!("0din-{}:{}", version, signature)
+}
+
 /// Parse a signature string in 0din format
 ///
 /// Format:
