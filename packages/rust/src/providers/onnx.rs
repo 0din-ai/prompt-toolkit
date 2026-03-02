@@ -16,7 +16,7 @@
 //! Enable the `onnx` feature in your `Cargo.toml`:
 //!
 //! ```toml
-//! heimdall-core = { version = "0.1", features = ["onnx"] }
+//! odin-sig = { version = "0.1", features = ["onnx"] }
 //! ```
 //!
 //! ## Example
@@ -24,8 +24,8 @@
 //! ```no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use heimdall_core::providers::{OnnxProvider, ModelCache};
-//! use heimdall_core::provider::EmbeddingProvider;
+//! use odin_sig::providers::{OnnxProvider, ModelCache};
+//! use odin_sig::provider::EmbeddingProvider;
 //!
 //! let cache = ModelCache::new()?;
 //! let provider = OnnxProvider::new(&cache, None, None).await?;

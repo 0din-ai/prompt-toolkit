@@ -75,7 +75,7 @@ impl SignatureVersion {
     /// # Example
     ///
     /// ```
-    /// use heimdall_core::types::SignatureVersion;
+    /// use odin_sig::types::SignatureVersion;
     ///
     /// assert_eq!(SignatureVersion::V0.resolve(), SignatureVersion::V0);
     /// assert_eq!(SignatureVersion::V1.resolve(), SignatureVersion::V1);
@@ -117,7 +117,7 @@ impl SignatureVersion {
     /// # Example
     ///
     /// ```
-    /// use heimdall_core::types::SignatureVersion;
+    /// use odin_sig::types::SignatureVersion;
     ///
     /// assert_eq!(SignatureVersion::V0.embedding_dimensions(), 1536);
     /// assert_eq!(SignatureVersion::V1.embedding_dimensions(), 384);
