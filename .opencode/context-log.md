@@ -769,3 +769,36 @@ Signature overhead: 0.6% of embedding time
 - Documented installation via `pip install 0din-sig[native]`
 
 **Conclusion**: Native Rust acceleration is production-ready and verified in the full end-to-end pipeline. The 592× speedup makes signature generation negligible compared to embedding generation.
+
+## Add ODIN_SIG_NO_NATIVE Environment Variable ✅ (80f4535)
+
+**Checkpoint**: 2024-02-24 16:30
+
+**Commit**: `80f4535` - feat(python): Add ODIN_SIG_NO_NATIVE env var to force pure-Python mode
+
+**What changed**: Added environment variable to allow users to disable native Rust acceleration even when `odin-sig-native` is installed.
+
+**Implementation**:
+- Modified `packages/python/odin_sig/_accel.py`
+- Added `ODIN_SIG_NO_NATIVE` check at module import time
+- Supports truthy values: `1`, `true`, `yes` (case-insensitive)
+- If set, skips native extension import entirely and uses pure Python
+
+**Usage**:
+```bash
+# Default: use native if available
+python3 script.py
+
+# Force pure Python mode
+ODIN_SIG_NO_NATIVE=1 python3 script.py
+```
+
+**Why this is useful**:
+- **Debugging**: Compare Rust vs Python outputs for validation
+- **Benchmarking**: Measure actual speedup on specific workloads
+- **Testing**: Ensure pure-Python path doesn't bitrot
+- **Compatibility**: Workaround for platforms where native builds fail
+
+**Test status**: Verified pure Python mode still works correctly
+
+**Next**: TBD (awaiting user direction)

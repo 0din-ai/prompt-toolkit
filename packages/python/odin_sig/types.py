@@ -228,6 +228,42 @@ def _compute_embedding_sha256_python(normalized_embedding: list[float]) -> str:
     return hashlib.sha256(json_str.encode()).hexdigest()
 
 
+@dataclass
+class PromptInfo:
+    """Metadata about a prompt in a comparison."""
+
+    preview: str
+    length: int
+    signature: str
+
+
+@dataclass
+class QualityStats:
+    """Quality metrics for a signature comparison."""
+
+    absolute_error: float
+    signed_error: float
+    squared_error: float
+    quality_rating: str
+
+
+@dataclass
+class ComparisonResult:
+    """Result of comparing two signatures.
+
+    Contains metadata about both prompts, distance metrics, and optional
+    quality statistics.
+    """
+
+    prompt_a: PromptInfo
+    prompt_b: PromptInfo
+    hamming_distance: int
+    cosine_similarity: float
+    lsh_config: LshConfig
+    quality_stats: QualityStats | None = None
+    timing_ms: float | None = None
+
+
 # Transparent native acceleration
 # Try to use native implementation, fall back to pure Python
 from odin_sig._accel import NATIVE_AVAILABLE
