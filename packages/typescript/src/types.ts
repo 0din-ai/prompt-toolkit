@@ -3,6 +3,7 @@
  */
 
 import * as crypto from 'crypto';
+import { InvalidInputError } from './error';
 
 /**
  * Signature version enumeration.
@@ -183,12 +184,12 @@ export function signatureString(version: SignatureVersion, signature: string): s
  */
 export function parseSignatureString(s: string): ParsedSignature {
   if (!s.startsWith('0din-')) {
-    throw new Error(`Invalid signature prefix: ${s}`);
+    throw new InvalidInputError(`Invalid signature prefix: ${s}`);
   }
 
   const parts = s.split(':', 2);
   if (parts.length !== 2) {
-    throw new Error(`Invalid signature format: ${s}`);
+    throw new InvalidInputError(`Invalid signature format: ${s}`);
   }
 
   const versionStr = parts[0].slice(5); // Remove "0din-" prefix
@@ -196,12 +197,12 @@ export function parseSignatureString(s: string): ParsedSignature {
 
   // Validate version
   if (!Object.values(SignatureVersion).includes(versionStr as SignatureVersion)) {
-    throw new Error(`Unsupported signature version: ${versionStr}`);
+    throw new InvalidInputError(`Unsupported signature version: ${versionStr}`);
   }
 
   // Validate hex signature
   if (!/^[0-9a-f]+$/.test(signature)) {
-    throw new Error(`Invalid hex signature: ${signature}`);
+    throw new InvalidInputError(`Invalid hex signature: ${signature}`);
   }
 
   return {

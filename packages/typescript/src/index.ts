@@ -68,6 +68,15 @@ export { type EmbeddingProvider } from './provider';
 export { type Hasher } from './hasher';
 export { getHasher, SimHashLsh } from './hashers';
 
+// Error types
+export {
+  SigError,
+  ConfigError,
+  ProviderError,
+  ModelError,
+  InvalidInputError,
+} from './error';
+
 // Core LSH functions
 export {
   simhashLshMulti,
