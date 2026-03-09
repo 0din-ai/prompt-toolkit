@@ -1399,3 +1399,98 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 - Documentation will be live at https://0din-ai.github.io/signature-sdk/
 
 **Status**: Phase 13 COMPLETE! All 8 commits successful. Rename complete across all implementations, docs, and CI/CD. GitHub Pages workflow ready.
+
+## Phase 14: Release CI Workflow (2026-03-09) - IN PROGRESS
+
+**Goal**: Build comprehensive release workflow with multi-platform maturin builds and commented-out registry publish jobs.
+
+**Plan**: `.opencode/plans/14-release-workflow.md`
+
+### Checkpoint 1 (86540cd): Fix release.yml import bug
+- Fixed line 29: `odin_sig.__version__` → `signature_sdk.__version__`
+- Leftover from Phase 13 rename
+- All tests still passing
+
+**Next**: Rewrite release.yml with version-check + maturin build jobs
+
+### Checkpoint 2 (f2f6db1): Add version-check + maturin multi-platform builds
+- Added version-check job: validates tag against 5 package versions (Rust, Python, Python __init__, Python-native, TypeScript)
+- Added 5 maturin build jobs:
+  - build-native-linux: x86_64 + aarch64 (manylinux, matrix)
+  - build-native-macos: x86_64 (macos-13) + arm64 (macos-latest, matrix)
+  - build-native-windows: x86_64 (windows-latest)
+  - build-native-sdist: source distribution
+- All target Python 3.10, 3.11, 3.12, 3.13
+- Expanded release job to collect ~20 native wheels across 5 platforms
+- Total artifacts per release: pure Python (wheel + sdist) + native wheels + Rust crate + TypeScript tarball + customer zips
+- All build jobs depend on both version-check and ci
+
+**Next**: Add commented-out publish jobs for PyPI, crates.io, npm
+
+### Checkpoint 3 (64920fe): Add commented-out registry publish jobs
+- Added publish-pypi: Pure Python package via PyPI trusted publishing (OIDC)
+- Added publish-pypi-native: Native wheels via PyPI trusted publishing (OIDC)
+- Added publish-crates: Rust crate via cargo publish + token
+- Added publish-npm: TypeScript package via npm publish + token/OIDC
+- All jobs include detailed TODO comments with setup instructions
+- All jobs depend on release job completing
+- Ready to uncomment when secrets/publishers are configured
+
+**Next**: Update bump-version.sh to include python-native versions
+
+### Checkpoint 4 (b105739): Update bump-version.sh to include python-native
+- Added python-native/pyproject.toml version sync
+- Added python-native/Cargo.toml version sync
+- Script now syncs 6 version locations (was 4)
+- Updated usage message, version display, verification, git commands
+- Confirmation message: "three packages" → "six versions"
+
+**Phase 14 Status**: ✅ COMPLETE
+
+## Phase 14 Summary: Release CI Workflow ✅ COMPLETE
+
+**Total commits**: 4
+- 86540cd: Fix release.yml import bug (odin_sig → signature_sdk)
+- f2f6db1: Add version-check + maturin multi-platform builds
+- 64920fe: Add commented-out registry publish jobs
+- b105739: Update bump-version.sh to include python-native
+
+**What we built**:
+
+1. **Version validation** — Fail-fast job comparing tag to all 5 package versions
+2. **Maturin multi-platform builds** — 5 jobs building native wheels for:
+   - Linux x86_64 + aarch64 (manylinux)
+   - macOS x86_64 (Intel) + arm64 (Apple Silicon)
+   - Windows x86_64
+   - Source distribution
+   - All targeting Python 3.10-3.13
+3. **Expanded release job** — Collects ~20 native wheels + pure Python + Rust + TypeScript
+4. **Commented-out publish jobs** — 4 jobs ready to uncomment:
+   - publish-pypi (pure Python, trusted publishing)
+   - publish-pypi-native (native wheels, trusted publishing)
+   - publish-crates (cargo publish with token)
+   - publish-npm (npm publish with token/OIDC)
+5. **Version sync script** — Now syncs 6 version locations including python-native
+
+**Ready for release**:
+- Tag push with `v*` triggers full build pipeline
+- All artifacts collected into GitHub Release
+- Publish jobs ready to enable when secrets/publishers configured
+- Version consistency enforced by CI
+
+**Next steps** (when ready to publish):
+1. Configure PyPI trusted publishers for signature-sdk and signature-sdk-native
+2. Add CRATES_IO_TOKEN secret to repository
+3. Add NPM_TOKEN secret to repository
+4. Uncomment publish jobs in release.yml
+5. Push v0.2.0 tag to trigger first release
+
+### Post-Push Fix (ee8accc): CI cross-validate failure
+
+**Issue**: cross-validate job failed trying to install `signature-sdk[all]` which includes `signature-sdk-native` dependency, but native package not published to PyPI yet.
+
+**Fix**: Changed `.github/workflows/ci.yml` line 77 from `[all]` to `[dev]` to skip the unpublished native extension dependency.
+
+**Commit**: ee8accc - "fix(ci): change cross-validate to use [dev] instead of [all]"
+
+CI should now pass - the cross-validate job will use pure Python implementation for testing, which is sufficient for validation purposes.

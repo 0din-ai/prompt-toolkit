@@ -21,7 +21,7 @@ class ModelCache:
         >>> print(f"Models cached at: {model_dir}")
     """
 
-    DEFAULT_CACHE_DIR = "~/.cache/odin-sig/models"
+    DEFAULT_CACHE_DIR = "~/.cache/signature-sdk/models"
     ENV_VAR = "SIGNATURE_SDK_MODEL_CACHE"
 
     def __init__(self, cache_dir: Optional[str] = None):

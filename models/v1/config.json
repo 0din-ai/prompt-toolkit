@@ -43,7 +43,7 @@
     "readme": "README.md"
   },
   "download": {
-    "huggingface_repo": "TBD",
+    "huggingface_repo": "0dinai/jailbreak-embeddings-small",
     "local_path": "../signature-sdk/models/v1",
     "cache_dir_default": "~/.cache/signature-sdk/models/v1",
     "cache_dir_env_var": "SIGNATURE_SDK_MODEL_CACHE",

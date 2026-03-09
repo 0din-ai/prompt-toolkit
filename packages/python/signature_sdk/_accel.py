@@ -5,7 +5,7 @@ and exposes its functions. If the native extension is not available, it
 sets NATIVE_AVAILABLE to False and the pure Python implementations are used.
 
 The native extension can be installed via:
-    pip install odin-sig-native
+    pip install signature-sdk-native
 
 Or by building from source:
     cd packages/python-native
