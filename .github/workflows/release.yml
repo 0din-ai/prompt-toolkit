@@ -5,13 +5,76 @@ on:
     tags: ['v*']
 
 jobs:
+  # Validate that tag version matches all package versions
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Extract tag version
+        id: tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+      
+      - name: Check version consistency
+        run: |
+          TAG_VERSION="${{ steps.tag.outputs.VERSION }}"
+          echo "Tag version: $TAG_VERSION"
+          echo ""
+          
+          # Extract versions from all sources
+          RUST_VERSION=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          PYTHON_VERSION=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/signature_sdk/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
+          PYTHON_NATIVE_VERSION=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TS_VERSION=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          
+          echo "Package versions:"
+          echo "  Rust:                $RUST_VERSION"
+          echo "  Python:              $PYTHON_VERSION"
+          echo "  Python __init__:     $PYTHON_INIT_VERSION"
+          echo "  Python-native:       $PYTHON_NATIVE_VERSION"
+          echo "  TypeScript:          $TS_VERSION"
+          echo ""
+          
+          # Check for mismatches
+          FAIL=0
+          if [ "$RUST_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ ERROR: Rust version ($RUST_VERSION) does not match tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          if [ "$PYTHON_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ ERROR: Python version ($PYTHON_VERSION) does not match tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          if [ "$PYTHON_INIT_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ ERROR: Python __init__ version ($PYTHON_INIT_VERSION) does not match tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          if [ "$PYTHON_NATIVE_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ ERROR: Python-native version ($PYTHON_NATIVE_VERSION) does not match tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          if [ "$TS_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ ERROR: TypeScript version ($TS_VERSION) does not match tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          
+          if [ $FAIL -eq 1 ]; then
+            echo ""
+            echo "Version mismatch detected. Run 'scripts/bump-version.sh $TAG_VERSION' to sync versions."
+            exit 1
+          fi
+          
+          echo "✅ All versions match tag $TAG_VERSION"
+
   # Gate on CI passing
   ci:
+    needs: [version-check]
     uses: ./.github/workflows/ci.yml
 
-  # Build Python wheel + sdist
+  # Build Python pure wheel + sdist
   build-python:
-    needs: [ci]
+    needs: [version-check, ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,9 +106,91 @@ jobs:
             dist/*.tar.gz
             /tmp/signature-sdk-python-*.zip
 
+  # Build Python-native wheels for Linux (x86_64 + aarch64)
+  build-native-linux:
+    needs: [version-check, ci]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - arch: x86_64
+            manylinux: auto
+          - arch: aarch64
+            manylinux: auto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
+          manylinux: ${{ matrix.target.manylinux }}
+          target: ${{ matrix.target.arch }}
+          working-directory: packages/python-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-${{ matrix.target.arch }}
+          path: packages/python-native/dist/*.whl
+
+  # Build Python-native wheels for macOS (x86_64 + arm64)
+  build-native-macos:
+    needs: [version-check, ci]
+    strategy:
+      matrix:
+        target:
+          - runner: macos-13        # Intel
+            arch: x86_64
+          - runner: macos-latest    # Apple Silicon
+            arch: aarch64
+    runs-on: ${{ matrix.target.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
+          target: ${{ matrix.target.arch }}-apple-darwin
+          working-directory: packages/python-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-macos-${{ matrix.target.arch }}
+          path: packages/python-native/dist/*.whl
+
+  # Build Python-native wheels for Windows (x86_64)
+  build-native-windows:
+    needs: [version-check, ci]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
+          target: x86_64-pc-windows-msvc
+          working-directory: packages/python-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-windows-x86_64
+          path: packages/python-native/dist/*.whl
+
+  # Build Python-native source distribution
+  build-native-sdist:
+    needs: [version-check, ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+          working-directory: packages/python-native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-sdist
+          path: packages/python-native/dist/*.tar.gz
+
   # Package Rust crate
   build-rust:
-    needs: [ci]
+    needs: [version-check, ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +213,7 @@ jobs:
 
   # Package TypeScript npm tarball
   build-typescript:
-    needs: [ci]
+    needs: [version-check, ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +240,15 @@ jobs:
 
   # Create GitHub Release with all artifacts
   release:
-    needs: [build-python, build-rust, build-typescript]
+    needs: [
+      build-python,
+      build-native-linux,
+      build-native-macos,
+      build-native-windows,
+      build-native-sdist,
+      build-rust,
+      build-typescript
+    ]
     runs-on: ubuntu-latest
     permissions:
       contents: write    # Required to create releases
@@ -109,16 +262,30 @@ jobs:
       - name: Collect release files
         run: |
           mkdir -p release-files
-          # Python
-          cp artifacts/python-dist/dist/*.whl release-files/
-          cp artifacts/python-dist/dist/*.tar.gz release-files/
-          cp artifacts/python-dist/tmp/signature-sdk-python-*.zip release-files/
+          
+          # Python pure
+          cp artifacts/python-dist/dist/*.whl release-files/ || true
+          cp artifacts/python-dist/dist/*.tar.gz release-files/ || true
+          cp artifacts/python-dist/tmp/signature-sdk-python-*.zip release-files/ || true
+          
+          # Python-native wheels (all platforms)
+          cp artifacts/native-linux-x86_64/*.whl release-files/ || true
+          cp artifacts/native-linux-aarch64/*.whl release-files/ || true
+          cp artifacts/native-macos-x86_64/*.whl release-files/ || true
+          cp artifacts/native-macos-aarch64/*.whl release-files/ || true
+          cp artifacts/native-windows-x86_64/*.whl release-files/ || true
+          cp artifacts/native-sdist/*.tar.gz release-files/ || true
+          
           # Rust
-          cp artifacts/rust-dist/dist/*.crate release-files/
-          cp artifacts/rust-dist/tmp/signature-sdk-rust-*.zip release-files/
+          cp artifacts/rust-dist/dist/*.crate release-files/ || true
+          cp artifacts/rust-dist/tmp/signature-sdk-rust-*.zip release-files/ || true
+          
           # TypeScript
-          cp artifacts/typescript-dist/dist/*.tgz release-files/
-          cp artifacts/typescript-dist/tmp/signature-sdk-typescript-*.zip release-files/
+          cp artifacts/typescript-dist/dist/*.tgz release-files/ || true
+          cp artifacts/typescript-dist/tmp/signature-sdk-typescript-*.zip release-files/ || true
+          
+          echo "Release files:"
+          ls -lh release-files/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
