@@ -295,3 +295,95 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
             # Tags like v0.2.0-beta.1 → prerelease=true
+
+  # Publish to PyPI (pure Python package)
+  # TODO: Enable this job once PyPI trusted publisher is configured
+  # publish-pypi:
+  #   needs: [release]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write   # Required for PyPI trusted publishing (OIDC)
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: python-dist
+  #         path: dist/
+  #     - name: Publish to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         packages-dir: dist/dist/
+  #         # Trusted publishing - no token needed, configured in PyPI project settings
+  #         # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+
+  # Publish to PyPI (native wheels)
+  # TODO: Enable this job once PyPI trusted publisher is configured for signature-sdk-native
+  # publish-pypi-native:
+  #   needs: [release]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write   # Required for PyPI trusted publishing (OIDC)
+  #   steps:
+  #     - name: Download all native artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: native-dist/
+  #     - name: Collect wheels
+  #       run: |
+  #         mkdir -p dist/
+  #         cp native-dist/native-linux-x86_64/*.whl dist/
+  #         cp native-dist/native-linux-aarch64/*.whl dist/
+  #         cp native-dist/native-macos-x86_64/*.whl dist/
+  #         cp native-dist/native-macos-aarch64/*.whl dist/
+  #         cp native-dist/native-windows-x86_64/*.whl dist/
+  #         cp native-dist/native-sdist/*.tar.gz dist/
+  #         ls -lh dist/
+  #     - name: Publish to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       # Trusted publishing - no token needed, configured in PyPI project settings
+  #       # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+
+  # Publish to crates.io
+  # TODO: Enable this job once CRATES_IO_TOKEN secret is added to repository
+  # publish-crates:
+  #   needs: [release]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - name: Publish to crates.io
+  #       run: |
+  #         cd packages/rust
+  #         cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+  #       # Create token at https://crates.io/settings/tokens
+  #       # Add as repository secret: Settings > Secrets and variables > Actions > New repository secret
+  #       # Name: CRATES_IO_TOKEN
+
+  # Publish to npm
+  # TODO: Enable this job once NPM_TOKEN secret is added to repository
+  # publish-npm:
+  #   needs: [release]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write   # Required for npm provenance (OIDC)
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+  #         registry-url: 'https://registry.npmjs.org'
+  #     - name: Download TypeScript artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: typescript-dist
+  #         path: dist/
+  #     - name: Publish to npm
+  #       run: |
+  #         cd packages/typescript
+  #         npm publish --access public --provenance
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #       # Create token at https://www.npmjs.com/settings/USERNAME/tokens
+  #       # Select "Automation" type for CI/CD
+  #       # Add as repository secret: Settings > Secrets and variables > Actions > New repository secret
+  #       # Name: NPM_TOKEN
+  #       # For OIDC without token, see: https://docs.npmjs.com/generating-provenance-statements
