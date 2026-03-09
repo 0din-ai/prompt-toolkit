@@ -6,25 +6,25 @@
 ## Install from wheel
 
 ```bash
-pip install 0din_sig-<VERSION>-py3-none-any.whl
+pip install signature_sdk-<VERSION>-py3-none-any.whl
 ```
 
-Replace `<VERSION>` with the version number (e.g., `0.1.0`).
+Replace `<VERSION>` with the version number (e.g., `0.1.1`).
 
 ## Install with optional features
 
 ```bash
 # OpenAI embeddings (API-based)
-pip install "0din_sig-<VERSION>-py3-none-any.whl[openai]"
+pip install "signature_sdk-<VERSION>-py3-none-any.whl[openai]"
 
 # ONNX embeddings (local, no API key needed)
-pip install "0din_sig-<VERSION>-py3-none-any.whl[onnx]"
+pip install "signature_sdk-<VERSION>-py3-none-any.whl[onnx]"
 
 # Confidence Matrix LSH (higher accuracy)
-pip install "0din_sig-<VERSION>-py3-none-any.whl[cm-lsh]"
+pip install "signature_sdk-<VERSION>-py3-none-any.whl[cm-lsh]"
 
 # All features
-pip install "0din_sig-<VERSION>-py3-none-any.whl[all]"
+pip install "signature_sdk-<VERSION>-py3-none-any.whl[all]"
 ```
 
 ## Quick Start
