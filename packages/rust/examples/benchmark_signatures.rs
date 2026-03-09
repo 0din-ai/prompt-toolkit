@@ -13,7 +13,7 @@
 //!   Throughput: 8,100 signatures/sec
 //!   Per-signature: 0.123ms
 
-use odin_sig::{simhash_lsh_multi, LshConfig};
+use signature_sdk::{simhash_lsh_multi, LshConfig};
 use rand::Rng;
 use std::time::Instant;
 

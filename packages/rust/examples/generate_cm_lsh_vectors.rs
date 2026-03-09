@@ -6,7 +6,7 @@
 //! Run with: cargo run --example generate_cm_lsh_vectors --features cm-lsh
 
 #[cfg(feature = "cm-lsh")]
-use odin_sig::create_default_cm_lsh;
+use signature_sdk::create_default_cm_lsh;
 use serde_json::json;
 use std::fs;
 

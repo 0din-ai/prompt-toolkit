@@ -3,9 +3,9 @@
 //! This test verifies that the same input produces identical signatures
 //! across Rust, Python, and TypeScript implementations.
 
-use odin_sig::{sign_text, EmbeddingResult, SignatureVersion};
-use odin_sig::provider::EmbeddingProvider;
-use odin_sig::error::Result;
+use signature_sdk::{sign_text, EmbeddingResult, SignatureVersion};
+use signature_sdk::provider::EmbeddingProvider;
+use signature_sdk::error::Result;
 use async_trait::async_trait;
 
 /// Mock provider that returns a fixed embedding for cross-validation.
@@ -41,8 +41,8 @@ impl EmbeddingProvider for FixedEmbeddingProvider {
 
     async fn generate_embedding(&self, _text: &str) -> Result<EmbeddingResult> {
         // Return the fixed embedding (already normalized since all values are equal)
-        let normalized = odin_sig::lsh::normalize_vector(&self.embedding);
-        let sha256 = odin_sig::lsh::compute_embedding_sha256(&normalized);
+        let normalized = signature_sdk::lsh::normalize_vector(&self.embedding);
+        let sha256 = signature_sdk::lsh::compute_embedding_sha256(&normalized);
 
         Ok(EmbeddingResult {
             embedding: self.embedding.clone(),
@@ -153,8 +153,8 @@ async fn test_cross_validation_different_vectors() -> Result<()> {
         }
 
         async fn generate_embedding(&self, _text: &str) -> Result<EmbeddingResult> {
-            let normalized = odin_sig::lsh::normalize_vector(&self.embedding);
-            let sha256 = odin_sig::lsh::compute_embedding_sha256(&normalized);
+            let normalized = signature_sdk::lsh::normalize_vector(&self.embedding);
+            let sha256 = signature_sdk::lsh::compute_embedding_sha256(&normalized);
 
             Ok(EmbeddingResult {
                 embedding: self.embedding.clone(),

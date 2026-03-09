@@ -9,7 +9,7 @@
 //! Run with: cargo run --example cm_lsh_example --features cm-lsh
 
 #[cfg(feature = "cm-lsh")]
-use odin_sig::{create_default_cm_lsh, normalize_vector};
+use signature_sdk::{create_default_cm_lsh, normalize_vector};
 
 #[cfg(not(feature = "cm-lsh"))]
 fn main() {

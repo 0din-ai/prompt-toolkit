@@ -1,10 +1,10 @@
 [package]
-name = "odin-sig"
+name = "signature-sdk"
 version = "0.1.1"
 edition = "2021"
 description = "LSH signature generation for AI prompt similarity detection"
 license = "MIT"
-repository = "https://github.com/0din/sig-sdk"
+repository = "https://github.com/0din-ai/signature-sdk"
 keywords = ["lsh", "similarity", "embeddings", "signature", "hashing"]
 categories = ["algorithms", "cryptography"]
 

@@ -8,10 +8,10 @@
 //! cargo run --example sign_text --features onnx
 //! ```
 
-use odin_sig::{sign_text, SignatureVersion};
+use signature_sdk::{sign_text, SignatureVersion};
 
 #[cfg(feature = "onnx")]
-use odin_sig::{
+use signature_sdk::{
     provider::EmbeddingProvider,
     providers::{ModelCache, OnnxProvider},
 };
@@ -72,8 +72,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let sig_b = &result_b.lsh.signatures[0].signature;
 
         // Compute similarity
-        let distance = odin_sig::hamming_distance_hex(sig_a, sig_b);
-        let similarity = odin_sig::cosine_from_hamming(distance, 256);
+        let distance = signature_sdk::hamming_distance_hex(sig_a, sig_b);
+        let similarity = signature_sdk::cosine_from_hamming(distance, 256);
 
         println!("Prompt A: \"{}\"", prompt_a);
         println!("Prompt B: \"{}\"", prompt_b);
