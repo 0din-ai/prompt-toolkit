@@ -26,7 +26,7 @@ jobs:
         run: |
           python -m venv /tmp/test-env
           /tmp/test-env/bin/pip install dist/*.whl
-          /tmp/test-env/bin/python -c "import signature_sdk; print(odin_sig.__version__)"
+          /tmp/test-env/bin/python -c "import signature_sdk; print(signature_sdk.__version__)"
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
