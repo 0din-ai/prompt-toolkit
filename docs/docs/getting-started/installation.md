@@ -4,23 +4,23 @@ sidebar_position: 1
 
 # Installation
 
-Install 0din-sig for your preferred language. All three implementations provide identical functionality and signatures.
+Install signature-sdk for your preferred language. All three implementations provide identical functionality and signatures.
 
 ## Rust
 
-Add `odin-sig` to your `Cargo.toml`:
+Add `signature-sdk` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-odin-sig = { git = "https://github.com/0din/sig-sdk" }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk" }
 ```
 
 ### Feature Flags
 
 ```toml
 [dependencies]
-odin-sig = { 
-  git = "https://github.com/0din/sig-sdk",
+signature-sdk = { 
+  git = "https://github.com/0din-ai/signature-sdk",
   features = ["openai", "onnx", "cm-lsh"]
 }
 ```
@@ -42,26 +42,26 @@ cargo build
 Install via pip with git dependency:
 
 ```bash
-pip install "0din-sig @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 ```
 
 ### Optional Dependencies
 
 ```bash
 # Core LSH only (no embeddings)
-pip install "0din-sig[dev] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[dev] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # With OpenAI support
-pip install "0din-sig[openai] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[openai] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # With ONNX support
-pip install "0din-sig[onnx] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[onnx] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # With CM-LSH support
-pip install "0din-sig[cm-lsh] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[cm-lsh] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # All features
-pip install "0din-sig[all] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 ```
 
 ### Requirements
@@ -72,8 +72,8 @@ pip install "0din-sig[all] @ git+https://github.com/0din/sig-sdk#subdirectory=pa
 ### Verify Installation
 
 ```python
-import odin_sig
-print(odin_sig.__version__)
+import signature_sdk
+print(signature_sdk.__version__)
 ```
 
 ## TypeScript
@@ -81,13 +81,13 @@ print(odin_sig.__version__)
 Install via npm with git dependency:
 
 ```bash
-npm install "github:0din/sig-sdk#main" --workspace=typescript
+npm install "github:0din-ai/signature-sdk#main" --workspace=typescript
 ```
 
 Or with Yarn:
 
 ```bash
-yarn add "github:0din/sig-sdk#main"
+yarn add "github:0din-ai/signature-sdk#main"
 ```
 
 ### Requirements
@@ -98,8 +98,8 @@ yarn add "github:0din/sig-sdk#main"
 ### Verify Installation
 
 ```typescript
-import { simhashLshMulti } from '@0din/sig';
-console.log('0din-sig installed successfully');
+import { simhashLshMulti } from '@0din/signature-sdk';
+console.log('signature-sdk installed successfully');
 ```
 
 ## Development Installation
@@ -109,7 +109,7 @@ If you're contributing to the SDK or need the latest unreleased changes:
 ### Clone Repository
 
 ```bash
-git clone https://github.com/0din/sig-sdk.git
+git clone https://github.com/0din-ai/signature-sdk.git
 cd sig-sdk
 ```
 
@@ -136,7 +136,7 @@ Runs all 61 tests across the three implementations.
 
 - **[Quick Start](./quick-start)** — Generate your first signature
 - **[Configuration](./configuration)** — Configure embedding providers and LSH parameters
-- **[Examples](https://github.com/0din/sig-sdk/tree/main/packages/rust/examples)** — See runnable examples
+- **[Examples](https://github.com/0din-ai/signature-sdk/tree/main/packages/rust/examples)** — See runnable examples
 
 ## Troubleshooting
 
@@ -146,7 +146,7 @@ If the ONNX model fails to download on first use:
 
 1. Check internet connection
 2. Manually download from [HuggingFace](https://huggingface.co/intfloat/multilingual-e5-small)
-3. Place in `~/.cache/odin-sig/models/v1/`
+3. Place in `~/.cache/signature-sdk/models/v1/`
 
 ### Python: NumPy Import Error
 
@@ -177,4 +177,4 @@ The SDK is currently available via git dependencies only. Publication to officia
 - 🔲 **PyPI** (Python)
 - 🔲 **npm** (TypeScript)
 
-Follow the [GitHub repository](https://github.com/0din/sig-sdk) for updates.
+Follow the [GitHub repository](https://github.com/0din-ai/signature-sdk) for updates.

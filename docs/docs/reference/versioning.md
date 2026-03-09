@@ -6,7 +6,7 @@ sidebar_position: 2
 
 The complete versioning specification is available in the repository.
 
-See [spec/VERSIONING.md](https://github.com/0din/sig-sdk/blob/main/spec/VERSIONING.md) for:
+See [spec/VERSIONING.md](https://github.com/0din-ai/signature-sdk/blob/main/spec/VERSIONING.md) for:
 
 - Version registry (V0, V1, Latest)
 - Compatibility rules

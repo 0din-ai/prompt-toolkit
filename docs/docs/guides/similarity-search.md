@@ -160,8 +160,8 @@ import TabItem from '@theme/TabItem';
 ```python
 import asyncio
 import asyncpg
-from odin_sig import sign_text, SignatureVersion, parse_signature_string
-from odin_sig.providers import ModelCache, OnnxProvider
+from signature_sdk import sign_text, SignatureVersion, parse_signature_string
+from signature_sdk.providers import ModelCache, OnnxProvider
 
 async def index_document(pool, text: str, provider):
     """Index a single document."""
@@ -212,8 +212,8 @@ async def index_corpus(texts: list[str]):
 
 ```typescript
 import { Pool } from 'pg';
-import { signText, SignatureVersion, parseSignatureString } from '@0din/sig';
-import { ModelCache, OnnxProvider } from '@0din/sig/providers';
+import { signText, SignatureVersion, parseSignatureString } from '@0din/signature-sdk';
+import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
 
 async function indexDocument(
   pool: Pool,
@@ -276,7 +276,7 @@ async function indexCorpus(texts: string[]): Promise<number[]> {
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import hamming_distance_hex, cosine_from_hamming
+from signature_sdk import hamming_distance_hex, cosine_from_hamming
 
 async def search_similar(pool, query: str, provider, top_k: int = 10, threshold: float = 0.7):
     """Find top-k similar documents to query."""

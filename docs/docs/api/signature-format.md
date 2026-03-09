@@ -68,7 +68,7 @@ pub fn signature_string(version: SignatureVersion, signature: &str) -> String
 
 **Example:**
 ```rust
-use odin_sig::{signature_string, SignatureVersion};
+use signature_sdk::{signature_string, SignatureVersion};
 
 let sig = "8d000000ac854dae7f3b9c1e...";
 let formatted = signature_string(SignatureVersion::V1, sig);
@@ -84,7 +84,7 @@ def signature_string(version: SignatureVersion, signature: str) -> str
 
 **Example:**
 ```python
-from odin_sig import signature_string, SignatureVersion
+from signature_sdk import signature_string, SignatureVersion
 
 sig = "8d000000ac854dae7f3b9c1e..."
 formatted = signature_string(SignatureVersion.V1, sig)
@@ -100,7 +100,7 @@ function signatureString(version: SignatureVersion, signature: string): string
 
 **Example:**
 ```typescript
-import { signatureString, SignatureVersion } from '@0din/sig';
+import { signatureString, SignatureVersion } from '@0din/signature-sdk';
 
 const sig = "8d000000ac854dae7f3b9c1e...";
 const formatted = signatureString(SignatureVersion.V1, sig);
@@ -134,7 +134,7 @@ pub fn parse_signature_string(s: &str) -> Result<ParsedSignature, SigError>
 
 **Example:**
 ```rust
-use odin_sig::parse_signature_string;
+use signature_sdk::parse_signature_string;
 
 let parsed = parse_signature_string("0din-v1:8d000000ac854dae...")?;
 println!("Version: {:?}", parsed.version);  // V1
@@ -165,7 +165,7 @@ def parse_signature_string(s: str) -> ParsedSignature
 
 **Example:**
 ```python
-from odin_sig import parse_signature_string
+from signature_sdk import parse_signature_string
 
 parsed = parse_signature_string("0din-v1:8d000000ac854dae...")
 print(f"Version: {parsed.version}")    # V1
@@ -196,7 +196,7 @@ function parseSignatureString(s: string): ParsedSignature
 
 **Example:**
 ```typescript
-import { parseSignatureString } from '@0din/sig';
+import { parseSignatureString } from '@0din/signature-sdk';
 
 const parsed = parseSignatureString("0din-v1:8d000000ac854dae...");
 console.log(`Version: ${parsed.version}`);    // "v1"
@@ -415,4 +415,4 @@ Migrating from V0 to V1 requires **regenerating signatures** from original text.
 - [Core Functions](./core-functions) - `signature_string()` and `parse_signature_string()`
 - [Errors](./errors) - `InvalidInputError` details
 - [Signature Versions](../concepts/signature-versions) - V0 vs V1 compatibility
-- [VERSIONING.md](https://github.com/0din/sig-sdk/blob/main/spec/VERSIONING.md) - Complete specification
+- [VERSIONING.md](https://github.com/0din-ai/signature-sdk/blob/main/spec/VERSIONING.md) - Complete specification

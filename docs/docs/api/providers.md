@@ -97,7 +97,7 @@ impl OpenAIProvider {
 
 **Example:**
 ```rust
-use odin_sig::providers::OpenAIProvider;
+use signature_sdk::providers::OpenAIProvider;
 
 let provider = OpenAIProvider::new(
     std::env::var("OPENAI_API_KEY")?,
@@ -131,7 +131,7 @@ class OpenAIProvider:
 
 **Example:**
 ```python
-from odin_sig.providers import OpenAIProvider
+from signature_sdk.providers import OpenAIProvider
 import os
 
 provider = OpenAIProvider(
@@ -158,7 +158,7 @@ class OpenAIProvider implements EmbeddingProvider {
 
 **Example:**
 ```typescript
-import { OpenAIProvider } from '@0din/sig/providers';
+import { OpenAIProvider } from '@0din/signature-sdk/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -187,21 +187,21 @@ const provider = new OpenAIProvider({
 
 ```toml
 [dependencies]
-odin-sig = { version = "0.1", features = ["openai"] }
+signature-sdk = { version = "0.1", features = ["openai"] }
 ```
 
 </TabItem>
 <TabItem value="python" label="Python">
 
 ```bash
-pip install '0din-sig[openai]'
+pip install 'signature-sdk[openai]'
 ```
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/sig openai
+npm install @0din/signature-sdk openai
 ```
 
 </TabItem>
@@ -230,7 +230,7 @@ impl OnnxProvider {
 
 **Example:**
 ```rust
-use odin_sig::providers::{ModelCache, OnnxProvider};
+use signature_sdk::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -254,7 +254,7 @@ class OnnxProvider:
 
 **Example:**
 ```python
-from odin_sig.providers import ModelCache, OnnxProvider
+from signature_sdk.providers import ModelCache, OnnxProvider
 
 cache = ModelCache()
 provider = await OnnxProvider.new(cache)
@@ -277,7 +277,7 @@ class OnnxProvider implements EmbeddingProvider {
 
 **Example:**
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/sig/providers';
+import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(cache);
@@ -307,21 +307,21 @@ const provider = await OnnxProvider.create(cache);
 
 ```toml
 [dependencies]
-odin-sig = { version = "0.1", features = ["onnx"] }
+signature-sdk = { version = "0.1", features = ["onnx"] }
 ```
 
 </TabItem>
 <TabItem value="python" label="Python">
 
 ```bash
-pip install '0din-sig[onnx]'
+pip install 'signature-sdk[onnx]'
 ```
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/sig onnxruntime-node
+npm install @0din/signature-sdk onnxruntime-node
 ```
 
 </TabItem>
@@ -348,7 +348,7 @@ impl ModelCache {
 
 **Example:**
 ```rust
-use odin_sig::providers::ModelCache;
+use signature_sdk::providers::ModelCache;
 
 // Use default cache directory
 let cache = ModelCache::new()?;
@@ -370,7 +370,7 @@ class ModelCache:
 
 **Example:**
 ```python
-from odin_sig.providers import ModelCache
+from signature_sdk.providers import ModelCache
 
 # Use default cache directory
 cache = ModelCache()
@@ -392,7 +392,7 @@ class ModelCache {
 
 **Example:**
 ```typescript
-import { ModelCache } from '@0din/sig/providers';
+import { ModelCache } from '@0din/signature-sdk/providers';
 
 // Use default cache directory
 const cache = new ModelCache();
@@ -407,17 +407,17 @@ const cache = new ModelCache('/path/to/cache');
 ### Cache Directory
 
 **Default Location:**
-- Linux/macOS: `~/.cache/odin-sig/models/`
-- Windows: `%LOCALAPPDATA%\odin-sig\models\`
+- Linux/macOS: `~/.cache/signature-sdk/models/`
+- Windows: `%LOCALAPPDATA%\signature-sdk\models\`
 
 **Override via Environment Variable:**
 ```bash
-export ODIN_SIG_MODEL_CACHE=/path/to/cache
+export SIGNATURE_SDK_MODEL_CACHE=/path/to/cache
 ```
 
 **Directory Structure:**
 ```
-~/.cache/odin-sig/models/
+~/.cache/signature-sdk/models/
 ├── v1/
 │   ├── config.json          # Model metadata
 │   ├── model.onnx           # ONNX model (~150MB)
@@ -441,7 +441,7 @@ You can implement custom providers for any embedding source:
 
 ```rust
 use async_trait::async_trait;
-use odin_sig::{EmbeddingProvider, EmbeddingResult, SigError};
+use signature_sdk::{EmbeddingProvider, EmbeddingResult, SigError};
 
 pub struct CustomProvider {
     // Your provider fields
@@ -493,8 +493,8 @@ impl EmbeddingProvider for CustomProvider {
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import EmbeddingProvider, EmbeddingResult
-from odin_sig import normalize_vector, compute_embedding_sha256
+from signature_sdk import EmbeddingProvider, EmbeddingResult
+from signature_sdk import normalize_vector, compute_embedding_sha256
 
 class CustomProvider:
     def name(self) -> str:
@@ -538,7 +538,7 @@ import {
   EmbeddingResult,
   normalizeVector,
   computeEmbeddingSha256
-} from '@0din/sig';
+} from '@0din/signature-sdk';
 
 class CustomProvider implements EmbeddingProvider {
   name(): string {

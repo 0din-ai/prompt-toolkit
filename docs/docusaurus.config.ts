@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: '0din-sig',
+  title: 'signature-sdk',
   tagline: 'Multi-language LSH signature SDK for AI prompt similarity detection',
   favicon: 'img/favicon.ico',
 
@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://0din.github.io',
+  url: 'https://0din-ai.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/sig-sdk/',
+  baseUrl: '/signature-sdk/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: '0din', // Usually your GitHub org/user name.
-  projectName: 'sig-sdk', // Usually your repo name.
+  organizationName: '0din-ai', // Usually your GitHub org/user name.
+  projectName: 'signature-sdk', // Usually your repo name.
 
   onBrokenLinks: 'warn', // Changed from 'throw' to allow build with broken links
 
@@ -42,7 +42,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/', // Serve docs at the root
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/0din/sig-sdk/tree/main/docs/',
+          editUrl: 'https://github.com/0din-ai/signature-sdk/tree/main/docs/',
         },
         blog: false, // Disable blog for now
         theme: {
@@ -59,9 +59,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: '0din-sig',
+      title: 'signature-sdk',
       logo: {
-        alt: '0din-sig Logo',
+        alt: 'signature-sdk Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -77,7 +77,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/0din/sig-sdk',
+          href: 'https://github.com/0din-ai/signature-sdk',
           label: 'GitHub',
           position: 'right',
         },
@@ -107,16 +107,16 @@ const config: Config = {
           title: 'Packages',
           items: [
             {
-              label: 'Rust (odin-sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/packages/rust',
+              label: 'Rust (signature-sdk)',
+              href: 'https://github.com/0din-ai/signature-sdk/tree/main/packages/rust',
             },
             {
-              label: 'Python (0din-sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/packages/python',
+              label: 'Python (signature-sdk)',
+              href: 'https://github.com/0din-ai/signature-sdk/tree/main/packages/python',
             },
             {
-              label: 'TypeScript (@0din/sig)',
-              href: 'https://github.com/0din/sig-sdk/tree/main/packages/typescript',
+              label: 'TypeScript (@0din/signature-sdk)',
+              href: 'https://github.com/0din-ai/signature-sdk/tree/main/packages/typescript',
             },
           ],
         },
@@ -125,7 +125,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/0din/sig-sdk',
+              href: 'https://github.com/0din-ai/signature-sdk',
             },
             {
               label: 'Specification',

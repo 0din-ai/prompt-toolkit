@@ -616,7 +616,7 @@ pub enum SigError {
 
 ```python
 class SigError(Exception):
-    """Base exception for odin-sig operations."""
+    """Base exception for signature-sdk operations."""
 
 # Specialized exceptions:
 class ConfigError(SigError): ...
