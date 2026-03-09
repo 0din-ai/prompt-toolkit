@@ -1,20 +1,20 @@
 /**
- * Error types for odin-sig operations.
+ * Error types for signature-sdk operations.
  *
  * All errors inherit from SigError base class for easy catching.
  * @module error
  */
 
 /**
- * Base error class for all odin-sig operations.
+ * Base error class for all signature-sdk operations.
  *
- * All exceptions thrown by the odin-sig library inherit from this base class,
+ * All exceptions thrown by the signature-sdk library inherit from this base class,
  * making it easy to catch all library-specific errors.
  *
  * @example
  * ```typescript
  * try {
- *   // some odin-sig operation
+ *   // some signature-sdk operation
  * } catch (error) {
  *   if (error instanceof SigError) {
  *     console.error(`Signature operation failed: ${error.message}`);
@@ -38,7 +38,7 @@ export class SigError extends Error {
  *
  * @example
  * ```typescript
- * import { LshConfig } from 'odin-sig';
+ * import { LshConfig } from 'signature-sdk';
  * // Invalid configuration would throw ConfigError
  * ```
  */
@@ -92,7 +92,7 @@ export class ModelError extends SigError {
  *
  * @example
  * ```typescript
- * import { parseSignatureString } from 'odin-sig';
+ * import { parseSignatureString } from 'signature-sdk';
  * try {
  *   parseSignatureString('invalid');
  * } catch (error) {

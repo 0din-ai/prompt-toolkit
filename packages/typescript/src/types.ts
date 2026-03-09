@@ -155,7 +155,7 @@ export function algorithmToVersion(algorithm: HashAlgorithm): SignatureVersion {
  * 
  * @example
  * ```typescript
- * import { signatureString, SignatureVersion } from '@0din/sig';
+ * import { signatureString, SignatureVersion } from '@0din/signature-sdk';
  * 
  * const sig = signatureString(SignatureVersion.V1, 'abcd1234');
  * console.log(sig); // "0din-v1:abcd1234"
@@ -175,7 +175,7 @@ export function signatureString(version: SignatureVersion, signature: string): s
  * 
  * @example
  * ```typescript
- * import { parseSignatureString } from '@0din/sig';
+ * import { parseSignatureString } from '@0din/signature-sdk';
  * 
  * const parsed = parseSignatureString('0din-v1:abcd1234');
  * console.log(parsed.version); // 'v1'
@@ -232,7 +232,7 @@ export function parseSignatureString(s: string): ParsedSignature {
  * 
  * @example
  * ```typescript
- * import { computeEmbeddingSha256 } from '@0din/sig';
+ * import { computeEmbeddingSha256 } from '@0din/signature-sdk';
  * 
  * const hash = computeEmbeddingSha256([0.1, 0.2, 0.3]);
  * console.log(hash); // SHA256 hash as hex string
