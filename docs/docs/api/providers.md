@@ -419,14 +419,15 @@ export SIGNATURE_SDK_MODEL_CACHE=/path/to/cache
 ```
 ~/.cache/signature-sdk/models/
 ├── v1/
+│   ├── onnx/
+│   │   └── model_O4.onnx    # ONNX model optimized (~235MB)
 │   ├── config.json          # Model metadata
-│   ├── model.onnx           # ONNX model (~150MB)
 │   ├── tokenizer.json       # Tokenizer config
 │   └── special_tokens_map.json
 └── .locks/                  # Download lock files
 ```
 
-**Storage Requirements:** ~150MB per model version
+**Storage Requirements:** ~250MB per model version (optimized model)
 
 **Thread Safety:** ModelCache handles concurrent access via file locks
 

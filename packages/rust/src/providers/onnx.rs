@@ -91,8 +91,9 @@ impl OnnxProvider {
     /// Input prefix required by E5 models.
     pub const INPUT_PREFIX: &'static str = "query: ";
 
-    /// ONNX model filename (optimized version).
-    const ONNX_MODEL_FILE: &'static str = "onnx/model.onnx";
+    /// ONNX model filenames (prefer optimized, fall back to unoptimized).
+    const ONNX_MODEL_FILE_OPTIMIZED: &'static str = "onnx/model_O4.onnx";
+    const ONNX_MODEL_FILE_UNOPTIMIZED: &'static str = "onnx/model.onnx";
 
     /// Create a new ONNX provider.
     ///
@@ -118,8 +119,17 @@ impl OnnxProvider {
 
         info!("Initializing ONNX provider with model: {}", model_name);
 
-        // Download model and tokenizer
-        let model_path = cache.get_model(&model_name, Self::ONNX_MODEL_FILE).await?;
+        // Try optimized model first, fall back to unoptimized
+        let model_path = match cache.get_model(&model_name, Self::ONNX_MODEL_FILE_OPTIMIZED).await {
+            Ok(path) => {
+                debug!("Using optimized ONNX model (model_O4.onnx)");
+                path
+            }
+            Err(_) => {
+                debug!("Optimized model not found, trying unoptimized (model.onnx)");
+                cache.get_model(&model_name, Self::ONNX_MODEL_FILE_UNOPTIMIZED).await?
+            }
+        };
         let tokenizer_path = cache.get_tokenizer(&model_name).await?;
 
         info!("Loading ONNX model from: {}", model_path.display());
