@@ -1,6 +1,6 @@
 """Tests for error types."""
 
-from odin_sig import (
+from signature_sdk import (
     ConfigError,
     InvalidInputError,
     ModelError,

@@ -9,8 +9,8 @@ from typing import Optional
 class ModelCache:
     """Manages local caching of ONNX models.
 
-    The cache directory defaults to ~/.cache/odin-sig/models/v1/ but can be
-    overridden via the ODIN_SIG_MODEL_CACHE environment variable.
+    The cache directory defaults to ~/.cache/signature-sdk/models/v1/ but can be
+    overridden via the SIGNATURE_SDK_MODEL_CACHE environment variable.
 
     Args:
         cache_dir: Optional custom cache directory path
@@ -22,7 +22,7 @@ class ModelCache:
     """
 
     DEFAULT_CACHE_DIR = "~/.cache/odin-sig/models"
-    ENV_VAR = "ODIN_SIG_MODEL_CACHE"
+    ENV_VAR = "SIGNATURE_SDK_MODEL_CACHE"
 
     def __init__(self, cache_dir: Optional[str] = None):
         """Initialize model cache.

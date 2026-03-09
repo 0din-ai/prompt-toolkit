@@ -9,7 +9,7 @@ This example demonstrates:
 Run with: python python/examples/similarity_comparison.py
 """
 
-from odin_sig import (
+from signature_sdk import (
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,

@@ -10,7 +10,7 @@ Run with: python python/examples/duplicate_detection.py
 """
 
 from collections import defaultdict
-from odin_sig import (
+from signature_sdk import (
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,

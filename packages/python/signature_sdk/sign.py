@@ -59,7 +59,7 @@ async def sign_text(
         0din-v0:363b24ee2b817354...
 
         Advanced - bring your own provider (version inferred):
-        >>> from odin_sig.providers import ModelCache, OnnxProvider
+        >>> from signature_sdk.providers import ModelCache, OnnxProvider
         >>> cache = ModelCache()
         >>> provider = await OnnxProvider.new(cache)
         >>> result = await sign_text(
@@ -160,7 +160,7 @@ async def _create_provider_for_version(
         except ImportError as e:
             raise ImportError(
                 "V1 signatures require the ONNX provider. "
-                "Install with: pip install '0din-sig[onnx]'"
+                "Install with: pip install 'signature-sdk[onnx]'"
             ) from e
 
         cache = ModelCache()
@@ -173,7 +173,7 @@ async def _create_provider_for_version(
         except ImportError as e:
             raise ImportError(
                 "V0 signatures require the OpenAI provider. "
-                "Install with: pip install '0din-sig[openai]'"
+                "Install with: pip install 'signature-sdk[openai]'"
             ) from e
 
         api_key = os.environ.get("OPENAI_API_KEY")

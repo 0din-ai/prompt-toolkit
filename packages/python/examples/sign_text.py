@@ -15,7 +15,7 @@ import sys
 # Add parent directory to path for local development
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from odin_sig import (
+from signature_sdk import (
     cosine_from_hamming,
     hamming_distance_hex,
     sign_text,
@@ -28,7 +28,7 @@ async def onnx_example():
     print("=== ONNX Provider Example ===\n")
 
     try:
-        from odin_sig.providers import ModelCache, OnnxProvider
+        from signature_sdk.providers import ModelCache, OnnxProvider
     except ImportError as e:
         print(f"Error: {e}")
         print("\nInstall ONNX dependencies with:")
@@ -119,7 +119,7 @@ async def openai_example():
         return
 
     try:
-        from odin_sig.providers import OpenAIProvider
+        from signature_sdk.providers import OpenAIProvider
     except ImportError as e:
         print(f"Error: {e}")
         print("\nInstall OpenAI dependencies with:")

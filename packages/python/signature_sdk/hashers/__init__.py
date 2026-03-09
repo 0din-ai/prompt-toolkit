@@ -1,8 +1,8 @@
 """Hash algorithm implementations."""
 
-from odin_sig.hashers.lsh import SimHashLsh
-from odin_sig.hasher import Hasher
-from odin_sig.types import HashAlgorithm
+from signature_sdk.hashers.lsh import SimHashLsh
+from signature_sdk.hasher import Hasher
+from signature_sdk.types import HashAlgorithm
 
 
 def get_hasher(algorithm: HashAlgorithm) -> Hasher:
@@ -18,7 +18,7 @@ def get_hasher(algorithm: HashAlgorithm) -> Hasher:
         ValueError: If the algorithm is not supported
 
     Example:
-        >>> from odin_sig import get_hasher, HashAlgorithm
+        >>> from signature_sdk import get_hasher, HashAlgorithm
         >>> hasher = get_hasher(HashAlgorithm.LSH)
         >>> print(hasher.name())
         'lsh'

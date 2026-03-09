@@ -206,10 +206,10 @@ def _normalize_vector_python(vector: list[float]) -> list[float]:
 
 # Transparent native acceleration
 # Try to use native implementation, fall back to pure Python
-from odin_sig._accel import NATIVE_AVAILABLE
+from signature_sdk._accel import NATIVE_AVAILABLE
 
 if NATIVE_AVAILABLE:
-    from odin_sig._accel import (
+    from signature_sdk._accel import (
         cosine_from_hamming,
         hamming_distance_hex,
         normalize_vector,
