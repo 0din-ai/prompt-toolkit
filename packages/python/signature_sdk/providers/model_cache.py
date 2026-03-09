@@ -79,17 +79,24 @@ class ModelCache:
         if not model_dir.exists():
             return False
 
-        # Check for required files
+        # Check for required files (prefer optimized model, accept either)
+        has_optimized = (model_dir / "onnx" / "model_O4.onnx").exists()
+        has_unoptimized = (model_dir / "onnx" / "model.onnx").exists()
+
         required_files = [
-            "onnx/model.onnx",
             "tokenizer.json",
             "config.json",
         ]
 
-        return all((model_dir / f).exists() for f in required_files)
+        return (has_optimized or has_unoptimized) and all(
+            (model_dir / f).exists() for f in required_files
+        )
 
     def get_model_path(self, version: str = "v1") -> Path:
         """Get the path to the ONNX model file.
+
+        Prefers the optimized model (model_O4.onnx) if available,
+        falls back to the unoptimized model (model.onnx).
 
         Args:
             version: Model version (default: "v1")
@@ -97,7 +104,14 @@ class ModelCache:
         Returns:
             Path to the ONNX model file
         """
-        return self.model_directory(version) / "onnx" / "model.onnx"
+        model_dir = self.model_directory(version)
+        optimized_path = model_dir / "onnx" / "model_O4.onnx"
+        unoptimized_path = model_dir / "onnx" / "model.onnx"
+
+        # Prefer optimized model (smaller, faster inference)
+        if optimized_path.exists():
+            return optimized_path
+        return unoptimized_path
 
     def get_tokenizer_path(self, version: str = "v1") -> Path:
         """Get the path to the tokenizer file.

@@ -77,25 +77,40 @@ export class ModelCache {
       return false;
     }
 
-    // Check for required files
-    const requiredFiles = [
-      path.join('onnx', 'model.onnx'),
-      'tokenizer.json',
-      'config.json',
-    ];
+    // Check for required files (prefer optimized model, accept either)
+    const hasOptimized = fs.existsSync(
+      path.join(modelDir, 'onnx', 'model_O4.onnx')
+    );
+    const hasUnoptimized = fs.existsSync(
+      path.join(modelDir, 'onnx', 'model.onnx')
+    );
 
-    return requiredFiles.every((file) =>
-      fs.existsSync(path.join(modelDir, file))
+    const requiredFiles = ['tokenizer.json', 'config.json'];
+
+    return (
+      (hasOptimized || hasUnoptimized) &&
+      requiredFiles.every((file) => fs.existsSync(path.join(modelDir, file)))
     );
   }
 
   /**
    * Get the path to the ONNX model file.
    *
+   * Prefers the optimized model (model_O4.onnx) if available,
+   * falls back to the unoptimized model (model.onnx).
+   *
    * @param version - Model version (default: "v1")
    */
   getModelPath(version: string = 'v1'): string {
-    return path.join(this.modelDirectory(version), 'onnx', 'model.onnx');
+    const modelDir = this.modelDirectory(version);
+    const optimizedPath = path.join(modelDir, 'onnx', 'model_O4.onnx');
+    const unoptimizedPath = path.join(modelDir, 'onnx', 'model.onnx');
+
+    // Prefer optimized model (smaller, faster inference)
+    if (fs.existsSync(optimizedPath)) {
+      return optimizedPath;
+    }
+    return unoptimizedPath;
   }
 
   /**

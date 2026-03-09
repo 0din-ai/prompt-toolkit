@@ -271,7 +271,7 @@ git clone <repo>
 pip install -e "packages/python[onnx]"
 pip install -r demos/requirements.txt
 
-# Copy ONNX model to ~/.cache/odin-sig/models/v1/onnx/model.onnx
+# Copy ONNX model to ~/.cache/signature-sdk/models/v1/onnx/model_O4.onnx
 # (or set SIGNATURE_SDK_MODEL_DIR env var)
 
 # Run

@@ -243,7 +243,8 @@ async def generate_embeddings(prompts: list[str]) -> tuple[np.ndarray, float]:
     except FileNotFoundError:
         print(red("\n  ONNX model not found."))
         print("  Download the model and place it at:")
-        print(f"  {cache.model_directory('v1')}/onnx/model.onnx")
+        print(f"  {cache.model_directory('v1')}/onnx/model_O4.onnx (optimized)")
+        print(f"  or {cache.model_directory('v1')}/onnx/model.onnx (unoptimized)")
         sys.exit(1)
 
     print(f"  Model: {provider.name()} ({provider.model()})")
