@@ -50,3 +50,6 @@ Thumbs.db
 demos/cache/*.npz
 demos/cache/*.json
 demos/cache/*.db
+
+# OpenCode
+.opencode/
