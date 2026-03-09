@@ -263,7 +263,7 @@ docs: docs-rust docs-python docs-typescript ## Build all documentation (API docs
 	@echo ""
 	@echo "$(CYAN)Generated API docs:$(RESET)"
 	@echo "  • Rust:       docs/static/api/rust/signature_sdk/index.html"
-	@echo "  • Python:     docs/static/api/python/odin_sig.html"
+	@echo "  • Python:     docs/static/api/python/signature_sdk.html"
 	@echo "  • TypeScript: docs/static/api/typescript/index.html"
 	@echo ""
 	@echo "$(CYAN)To serve locally:$(RESET)"

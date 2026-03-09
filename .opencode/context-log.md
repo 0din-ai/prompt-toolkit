@@ -1316,3 +1316,86 @@ ODIN_SIG_NO_NATIVE=1 python3 script.py
 - Fixed clippy warnings: needless_range_loop (4), doc_overindented_list_items (6)
 
 **Next Step**: Phase 12 is COMPLETE! All documentation written, all tests passing, CI green.
+
+### 2026-03-09 - Phase 13: Rename to signature-sdk + GitHub Pages Deployment (COMPLETE ✅)
+
+**Goal**: Rename SDK from odin-sig/0din-sig/@0din/sig to signature-sdk across all implementations, fix cache path inconsistencies, and set up GitHub Pages deployment.
+
+**Commit 1**: refactor(rust): rename crate from odin-sig to signature-sdk
+- Renamed crate: `odin-sig` → `signature-sdk`
+- Updated repository URL: `0din/sig-sdk` → `0din-ai/signature-sdk`
+- Fixed cache path bug: `~/.cache/heimdall/` → `~/.cache/signature-sdk/`
+- Updated env var: `HEIMDALL_MODEL_CACHE` → `SIGNATURE_SDK_MODEL_CACHE`
+- Updated all imports, examples, tests, doc comments
+- All 51 tests pass, clippy clean
+
+**Commit 2**: refactor(python): rename package from 0din-sig to signature-sdk
+- Renamed package directory: `odin_sig/` → `signature_sdk/` (git mv)
+- Updated PyPI name: `0din-sig` → `signature-sdk`
+- Updated pyproject.toml: package name, dependency refs, mypy overrides
+- Updated cache paths: `~/.cache/odin-sig/` → `~/.cache/signature-sdk/`
+- Updated env vars: `ODIN_SIG_*` → `SIGNATURE_SDK_*`
+- Updated all imports across 14 Python source files, 7 tests, 5 examples
+- Updated dependency: `odin-sig-native` → `signature-sdk-native`
+- All 43 tests pass
+
+**Commit 3**: refactor(python-native): rename from odin-sig-native to signature-sdk-native
+- Renamed crate: `odin-sig-python` → `signature-sdk-python`
+- Renamed PyPI package: `odin-sig-native` → `signature-sdk-native`
+- Updated lib name: `odin_sig_native` → `signature_sdk_native`
+- Updated PyO3 module name: `fn odin_sig_native` → `fn signature_sdk_native`
+- Updated Rust dependency path (now references `signature-sdk`)
+- Regenerated Cargo.lock
+- Cargo check passes
+
+**Commit 4**: refactor(typescript): rename package from @0din/sig to @0din/signature-sdk
+- Renamed npm package: `@0din/sig` → `@0din/signature-sdk`
+- Updated all import paths in JSDoc examples
+- Updated cache paths: `~/.cache/odin-sig/` → `~/.cache/signature-sdk/`
+- Updated env var: `ODIN_SIG_MODEL_CACHE` → `SIGNATURE_SDK_MODEL_CACHE`
+- Regenerated package-lock.json
+- All 44 tests pass, build succeeds
+
+**Commit 5**: refactor(root): rename root files and CI/CD workflows to signature-sdk
+- Updated README.md, VALIDATION.md, Makefile, bump-version.sh
+- Updated models/v1/config.json cache paths
+- Updated spec/SPEC.md and spec/VERSIONING.md
+- Updated demos directory
+- Updated .github/workflows/ci.yml and release.yml
+- Updated .github/CI.md and CONTRIBUTING.md
+- All repo URLs: `0din/sig-sdk` → `0din-ai/signature-sdk`
+
+**Commit 6**: docs: rename all documentation to signature-sdk
+- Updated docusaurus.config.ts:
+  - title: `'0din-sig'` → `'signature-sdk'`
+  - url: `0din.github.io` → `0din-ai.github.io`
+  - baseUrl: `/sig-sdk/` → `/signature-sdk/`
+  - organizationName: `'0din'` → `'0din-ai'`
+  - projectName: `'sig-sdk'` → `'signature-sdk'`
+- Updated ~18 markdown files in docs/docs/
+- Docs build succeeds
+
+**Commit 7**: ci: add GitHub Pages deployment workflow
+- Created .github/workflows/deploy-docs.yml
+- Uses actions/deploy-pages@v4 (modern approach, no gh-pages branch)
+- Builds on push to main or manual dispatch
+- Requires repo admin to enable Pages with 'GitHub Actions' source
+
+**Commit 8**: chore: fix remaining stragglers in pre-commit and Makefile
+- Fixed .pre-commit-config.yaml mypy path
+- Fixed Makefile doc output path reference
+
+**Verification**:
+- Rust: 51 tests pass, clippy clean, cargo doc succeeds
+- Python: 43 tests pass, mypy clean (1 pre-existing optional dep warning)
+- TypeScript: 44 tests pass, build succeeds, lint clean (13 pre-existing warnings)
+- Docs: Docusaurus build succeeds
+- Grep check: No `odin_sig`/`odin-sig`/`@0din/sig` in source (only in cache/build artifacts)
+
+**Next Steps**:
+- Push commits to GitHub
+- Repo admin: Enable GitHub Pages with "GitHub Actions" source in repo settings
+- Pages will deploy automatically on next push to main
+- Documentation will be live at https://0din-ai.github.io/signature-sdk/
+
+**Status**: Phase 13 COMPLETE! All 8 commits successful. Rename complete across all implementations, docs, and CI/CD. GitHub Pages workflow ready.
