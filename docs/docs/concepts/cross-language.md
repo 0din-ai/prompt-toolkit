@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Cross-Language Compatibility
 
-One of the core design principles of 0din-sig is **bit-perfect cross-language compatibility**: all three implementations (Rust, Python, TypeScript) produce identical signatures from identical inputs.
+One of the core design principles of signature-sdk is **bit-perfect cross-language compatibility**: all three implementations (Rust, Python, TypeScript) produce identical signatures from identical inputs.
 
 ## Guarantees
 
@@ -232,7 +232,7 @@ GitHub Actions runs all test suites on every commit:
 - Cross-validation check (all vectors match)
 ```
 
-**Badge Status:** ![Tests](https://github.com/0din/sig-sdk/workflows/test/badge.svg)
+**Badge Status:** ![Tests](https://github.com/0din-ai/signature-sdk/workflows/test/badge.svg)
 
 ---
 
@@ -244,7 +244,7 @@ GitHub Actions runs all test suites on every commit:
 <TabItem value="rust" label="Rust">
 
 ```rust
-use odin_sig::{simhash_lsh_multi, normalize_vector, LshConfig};
+use signature_sdk::{simhash_lsh_multi, normalize_vector, LshConfig};
 
 let vector = vec![0.5, 0.5, 0.5, 0.5];
 let normalized = normalize_vector(&vector);
@@ -260,7 +260,7 @@ println!("Family 0: {}", families[0].signature);
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import simhash_lsh_multi, normalize_vector
+from signature_sdk import simhash_lsh_multi, normalize_vector
 
 vector = [0.5, 0.5, 0.5, 0.5]
 normalized = normalize_vector(vector)
@@ -275,7 +275,7 @@ print(f"Family 0: {families[0].signature}")
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/sig';
+import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);
@@ -297,7 +297,7 @@ console.log(`Family 0: ${families[0].signature}`);
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import normalize_vector, compute_embedding_sha256
+from signature_sdk import normalize_vector, compute_embedding_sha256
 
 vector = [0.5, 0.5, 0.5, 0.5]
 normalized = normalize_vector(vector)
@@ -413,7 +413,7 @@ confident = (abs(proj) > threshold)
 
 ## See Also
 
-- [VALIDATION.md](https://github.com/0din/sig-sdk/blob/main/VALIDATION.md) - Full validation report
+- [VALIDATION.md](https://github.com/0din-ai/signature-sdk/blob/main/VALIDATION.md) - Full validation report
 - [LSH Overview](./lsh-overview) - Algorithm details
 - [CM-LSH](./cm-lsh) - CM-LSH precision notes
-- [Test Vectors](https://github.com/0din/sig-sdk/tree/main/spec/test-vectors) - Canonical test data
+- [Test Vectors](https://github.com/0din-ai/signature-sdk/tree/main/spec/test-vectors) - Canonical test data

@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Configuration
 
-Comprehensive guide to configuring 0din-sig: LSH parameters, embedding providers, environment variables, and optimization settings.
+Comprehensive guide to configuring signature-sdk: LSH parameters, embedding providers, environment variables, and optimization settings.
 
 ## LSH Configuration
 
@@ -27,7 +27,7 @@ import TabItem from '@theme/TabItem';
 <TabItem value="rust" label="Rust">
 
 ```rust
-use odin_sig::LshConfig;
+use signature_sdk::LshConfig;
 
 // Use defaults
 let config = LshConfig::default();
@@ -45,7 +45,7 @@ let config = LshConfig {
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import LshConfig
+from signature_sdk import LshConfig
 
 # Use defaults
 config = LshConfig()
@@ -59,7 +59,7 @@ config = LshConfig(families=5, bits=512, bands=32)
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { LshConfig } from '@0din/sig';
+import { LshConfig } from '@0din/signature-sdk';
 
 // Use defaults (pass undefined or omit config)
 const config = { families: 3, bits: 256, bands: 16 };
@@ -115,7 +115,7 @@ bits = bands × bits_per_band
 <TabItem value="rust" label="Rust">
 
 ```rust
-use odin_sig::providers::OpenAIProvider;
+use signature_sdk::providers::OpenAIProvider;
 
 let provider = OpenAIProvider::new(
     std::env::var("OPENAI_API_KEY")?,
@@ -129,7 +129,7 @@ let provider = OpenAIProvider::new(
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig.providers import OpenAIProvider
+from signature_sdk.providers import OpenAIProvider
 import os
 
 provider = OpenAIProvider(
@@ -145,7 +145,7 @@ provider = OpenAIProvider(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { OpenAIProvider } from '@0din/sig/providers';
+import { OpenAIProvider } from '@0din/signature-sdk/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -175,7 +175,7 @@ const provider = new OpenAIProvider({
 <TabItem value="rust" label="Rust">
 
 ```rust
-use odin_sig::providers::{ModelCache, OnnxProvider};
+use signature_sdk::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(
@@ -189,7 +189,7 @@ let provider = OnnxProvider::new(
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig.providers import ModelCache, OnnxProvider
+from signature_sdk.providers import ModelCache, OnnxProvider
 
 cache = ModelCache()
 provider = await OnnxProvider.new(
@@ -203,7 +203,7 @@ provider = await OnnxProvider.new(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/sig/providers';
+import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(
@@ -219,12 +219,12 @@ const provider = await OnnxProvider.create(
 **Model Cache:**
 
 Default locations:
-- **Linux/macOS**: `~/.cache/odin-sig/models/`
-- **Windows**: `%LOCALAPPDATA%\odin-sig\models\`
+- **Linux/macOS**: `~/.cache/signature-sdk/models/`
+- **Windows**: `%LOCALAPPDATA%\signature-sdk\models\`
 
 Override via environment variable:
 ```bash
-export ODIN_SIG_MODEL_CACHE=/path/to/cache
+export SIGNATURE_SDK_MODEL_CACHE=/path/to/cache
 ```
 
 Custom cache directory:
@@ -251,18 +251,18 @@ cache = ModelCache(cache_dir=Path("/custom/cache"))
 |----------|-------------|---------|
 | `OPENAI_API_KEY` | OpenAI API authentication key | None (required for OpenAI) |
 | `OPENAI_BASE_URL` | Custom OpenAI API endpoint | https://api.openai.com/v1 |
-| `ODIN_SIG_MODEL_CACHE` | ONNX model cache directory | OS-specific (see above) |
+| `SIGNATURE_SDK_MODEL_CACHE` | ONNX model cache directory | OS-specific (see above) |
 
 ### Python-Specific
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ODIN_SIG_NO_NATIVE` | Disable native Rust extension | `false` |
+| `SIGNATURE_SDK_NO_NATIVE` | Disable native Rust extension | `false` |
 
 **Use Case:** Force pure-Python mode (for debugging or platforms without native builds)
 
 ```bash
-export ODIN_SIG_NO_NATIVE=1
+export SIGNATURE_SDK_NO_NATIVE=1
 python your_script.py  # Uses pure Python, no native acceleration
 ```
 
@@ -278,10 +278,10 @@ For advanced users needing custom CM-LSH parameters:
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig.cm_lsh import HybridCMLSH, HybridParams, CalibratorConfig, ITQParams
+from signature_sdk.cm_lsh import HybridCMLSH, HybridParams, CalibratorConfig, ITQParams
 
 # Create custom hyperplanes
-from odin_sig.cm_lsh import gen_hyperplanes
+from signature_sdk.cm_lsh import gen_hyperplanes
 lsh_ts_planes = gen_hyperplanes(family=0, bits=256, dims=384)
 
 # Create custom ITQ parameters (identity by default)
@@ -332,7 +332,7 @@ Generate multiple independent hash families for higher recall:
 <TabItem value="python" label="Python">
 
 ```python
-from odin_sig import simhash_lsh_multi, LshConfig
+from signature_sdk import simhash_lsh_multi, LshConfig
 
 config = LshConfig(families=5, bits=256, bands=16)
 families = simhash_lsh_multi(normalized_embedding, config=config)
@@ -358,10 +358,10 @@ for i, family in enumerate(families):
 **Installation:**
 ```bash
 # With native acceleration
-pip install 0din-sig
+pip install signature-sdk
 
 # Verify native is available
-python -c "from odin_sig import NATIVE_AVAILABLE; print(NATIVE_AVAILABLE)"
+python -c "from signature_sdk import NATIVE_AVAILABLE; print(NATIVE_AVAILABLE)"
 # Output: True
 ```
 

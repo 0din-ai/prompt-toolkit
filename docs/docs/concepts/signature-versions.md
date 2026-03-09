@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Signature Versions
 
-0din-sig supports two signature versions with different embedding providers.
+signature-sdk supports two signature versions with different embedding providers.
 
 ## Version Comparison
 

@@ -27,7 +27,7 @@ import TabItem from '@theme/TabItem';
 
 ```python
 from collections import defaultdict
-from odin_sig import (
+from signature_sdk import (
     simhash_lsh_multi, normalize_vector,
     hamming_distance_hex, cosine_from_hamming
 )

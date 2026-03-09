@@ -6,7 +6,7 @@ sidebar_position: 1
 
 The complete formal specification is available in the repository.
 
-See [spec/SPEC.md](https://github.com/0din/sig-sdk/blob/main/spec/SPEC.md) for:
+See [spec/SPEC.md](https://github.com/0din-ai/signature-sdk/blob/main/spec/SPEC.md) for:
 
 - Formal algorithm definition
 - Pseudocode for all operations

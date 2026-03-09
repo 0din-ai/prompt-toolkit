@@ -7,17 +7,17 @@ import TabItem from '@theme/TabItem';
 
 # Migration Guide
 
-Migrate from legacy systems (heimdall, thor, research) to the unified 0din-sig SDK, or upgrade from V0 to V1 signatures.
+Migrate from legacy systems (heimdall, thor, research) to the unified signature-sdk SDK, or upgrade from V0 to V1 signatures.
 
 ## Overview
 
-The 0din-sig SDK consolidates three legacy implementations into a unified multi-language SDK:
+The signature-sdk SDK consolidates three legacy implementations into a unified multi-language SDK:
 
 | Legacy System | Language | New Package | Status |
 |---------------|----------|-------------|--------|
-| **heimdall-core** | Rust | `odin-sig` (crate) | Canonical implementation |
-| **thor** | TypeScript | `@0din/sig` (npm) | Feature parity |
-| **research/signature_cli** | Python | `0din-sig` (PyPI) | Feature parity + native acceleration |
+| **heimdall-core** | Rust | `signature-sdk` (crate) | Canonical implementation |
+| **thor** | TypeScript | `@0din/signature-sdk` (npm) | Feature parity |
+| **research/signature_cli** | Python | `signature-sdk` (PyPI) | Feature parity + native acceleration |
 
 **Key improvements**:
 - ✅ Unified API across all languages
@@ -44,12 +44,12 @@ let normalized = normalize_vector(&vector);
 let families = simhash_lsh_multi(&normalized, 3, 256, 16);
 ```
 
-**After** (odin-sig standalone crate):
+**After** (signature-sdk standalone crate):
 ```rust
-use odin_sig::{simhash_lsh_multi, normalize_vector};
-use odin_sig::types::{LshConfig, SignatureVersion};
-use odin_sig::provider::EmbeddingProvider;
-use odin_sig::providers::openai::OpenAIProvider;
+use signature_sdk::{simhash_lsh_multi, normalize_vector};
+use signature_sdk::types::{LshConfig, SignatureVersion};
+use signature_sdk::provider::EmbeddingProvider;
+use signature_sdk::providers::openai::OpenAIProvider;
 
 let vector = vec![0.5, 0.5, 0.5, 0.5];
 let normalized = normalize_vector(&vector);
@@ -58,17 +58,17 @@ let families = simhash_lsh_multi(&normalized, 3, 256, 16);
 
 **Changes**:
 - ✅ **No API changes** — functions, types, and signatures are identical
-- ✅ Update `Cargo.toml`: `heimdall_core` → `odin-sig`
-- ✅ Update imports: `heimdall_core::` → `odin_sig::`
+- ✅ Update `Cargo.toml`: `heimdall_core` → `signature-sdk`
+- ✅ Update imports: `heimdall_core::` → `signature_sdk::`
 - ⚠️ Feature flags renamed: No changes (still `openai`, `onnx`, `cm-lsh`)
 
 **Migration steps**:
 1. Add to `Cargo.toml`:
    ```toml
    [dependencies]
-   odin-sig = { version = "0.1", features = ["openai", "onnx"] }
+   signature-sdk = { version = "0.1", features = ["openai", "onnx"] }
    ```
-2. Find-replace imports: `use heimdall_core::` → `use odin_sig::`
+2. Find-replace imports: `use heimdall_core::` → `use signature_sdk::`
 3. Run tests to verify behavior unchanged
 4. (Optional) Remove internal `heimdall-core` module once migration complete
 
@@ -86,10 +86,10 @@ const normalized = normalizeVector(vector);
 const families = simhashLshMulti(normalized, 3, 256, 16);
 ```
 
-**After** (@0din/sig npm package):
+**After** (@0din/signature-sdk npm package):
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/sig';
-import { LshConfig, SignatureVersion } from '@0din/sig';
+import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+import { LshConfig, SignatureVersion } from '@0din/signature-sdk';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);
@@ -98,14 +98,14 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
 
 **Changes**:
 - ✅ **No API changes** — functions and types are identical
-- ✅ Centralized imports from `@0din/sig` (no relative paths)
+- ✅ Centralized imports from `@0din/signature-sdk` (no relative paths)
 - ✅ TypeScript declarations included (full IntelliSense support)
 - ⚠️ Signature format now versioned (`0din-v1:...`)
 
 **Migration steps**:
 1. Install package:
    ```bash
-   npm install @0din/sig
+   npm install @0din/signature-sdk
    ```
 2. Update imports:
    ```typescript
@@ -114,7 +114,7 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
    import { ... } from './types';
    
    // After
-   import { ... } from '@0din/sig';
+   import { ... } from '@0din/signature-sdk';
    ```
 3. Update signature parsing (if using raw hex):
    ```typescript
@@ -122,7 +122,7 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
    const signature = "8d000000ac854dae...";
    
    // After: versioned format
-   import { signatureString } from '@0din/sig';
+   import { signatureString } from '@0din/signature-sdk';
    const signature = signatureString(families[0], SignatureVersion.V1);
    // Output: "0din-v1:8d000000ac854dae..."
    ```
@@ -143,10 +143,10 @@ normalized = normalize_vector(vector)
 families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
 ```
 
-**After** (0din-sig PyPI package):
+**After** (signature-sdk PyPI package):
 ```python
-from odin_sig import simhash_lsh_multi, normalize_vector
-from odin_sig.types import LshConfig, SignatureVersion
+from signature_sdk import simhash_lsh_multi, normalize_vector
+from signature_sdk.types import LshConfig, SignatureVersion
 
 vector = [0.5, 0.5, 0.5, 0.5]
 normalized = normalize_vector(vector)
@@ -162,7 +162,7 @@ families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
 **Migration steps**:
 1. Install package (with native acceleration):
    ```bash
-   pip install '0din-sig[native,onnx]'
+   pip install 'signature-sdk[native,onnx]'
    ```
 2. Update imports:
    ```python
@@ -171,8 +171,8 @@ families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
    from src.signature_cli.types import ...
    
    # After
-   from odin_sig import ...
-   from odin_sig.types import ...
+   from signature_sdk import ...
+   from signature_sdk.types import ...
    ```
 3. Update function calls to use keyword args:
    ```python
@@ -188,13 +188,13 @@ families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
    signature = "8d000000ac854dae..."
    
    # After: versioned format
-   from odin_sig import signature_string
+   from signature_sdk import signature_string
    signature = signature_string(families[0], SignatureVersion.V1)
    # Output: "0din-v1:8d000000ac854dae..."
    ```
 5. Verify native acceleration is active:
    ```python
-   from odin_sig import NATIVE_AVAILABLE
+   from signature_sdk import NATIVE_AVAILABLE
    print(f"Native: {NATIVE_AVAILABLE}")  # Should be True
    ```
 6. Run tests to verify behavior unchanged
@@ -284,8 +284,8 @@ The following **stay in their respective applications** (not part of the SDK):
    <TabItem value="rust" label="Rust">
    
    ```rust
-   use odin_sig::providers::onnx::OnnxProvider;
-   use odin_sig::types::SignatureVersion;
+   use signature_sdk::providers::onnx::OnnxProvider;
+   use signature_sdk::types::SignatureVersion;
    
    let provider = OnnxProvider::default()?; // Auto-downloads model
    ```
@@ -294,8 +294,8 @@ The following **stay in their respective applications** (not part of the SDK):
    <TabItem value="python" label="Python">
    
    ```python
-   from odin_sig.providers.onnx import get_onnx_provider
-   from odin_sig.types import SignatureVersion
+   from signature_sdk.providers.onnx import get_onnx_provider
+   from signature_sdk.types import SignatureVersion
    
    provider = get_onnx_provider()  # Auto-downloads model
    ```
@@ -304,8 +304,8 @@ The following **stay in their respective applications** (not part of the SDK):
    <TabItem value="typescript" label="TypeScript">
    
    ```typescript
-   import { getOnnxProvider } from '@0din/sig/providers/onnx';
-   import { SignatureVersion } from '@0din/sig';
+   import { getOnnxProvider } from '@0din/signature-sdk/providers/onnx';
+   import { SignatureVersion } from '@0din/signature-sdk';
    
    const provider = await getOnnxProvider(); // Auto-downloads model
    ```
@@ -318,9 +318,9 @@ The following **stay in their respective applications** (not part of the SDK):
 **Batch regeneration script** (Python example):
 
 ```python
-from odin_sig import sign_text
-from odin_sig.types import SignatureVersion
-from odin_sig.providers.onnx import get_onnx_provider
+from signature_sdk import sign_text
+from signature_sdk.types import SignatureVersion
+from signature_sdk.providers.onnx import get_onnx_provider
 import sqlite3
 
 # Initialize provider once (reuse connection)
@@ -364,8 +364,8 @@ conn.close()
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
-from odin_sig import sign_text
-from odin_sig.types import SignatureVersion
+from signature_sdk import sign_text
+from signature_sdk.types import SignatureVersion
 
 def regenerate_signature(content):
     result = sign_text(content, version=SignatureVersion.V1)
@@ -405,7 +405,7 @@ candidates = lookup_similar(query_signature)
 
 **After** (V1, versioned string):
 ```python
-from odin_sig import parse_signature_string
+from signature_sdk import parse_signature_string
 
 # Query with versioned signature
 query_signature = "0din-v1:7f2c8a9d3e1b5f4c..."
@@ -418,8 +418,8 @@ candidates = lookup_similar(parsed.signature)  # Extract hex part
 **Validation script**:
 
 ```python
-from odin_sig import sign_text, parse_signature_string
-from odin_sig.types import SignatureVersion
+from signature_sdk import sign_text, parse_signature_string
+from signature_sdk.types import SignatureVersion
 
 # Test sample documents
 test_docs = [
@@ -480,8 +480,8 @@ If you have **raw hex signatures** without the `0din-` prefix:
 
 ```python
 import sqlite3
-from odin_sig import parse_signature_string
-from odin_sig.types import SignatureVersion
+from signature_sdk import parse_signature_string
+from signature_sdk.types import SignatureVersion
 
 conn = sqlite3.connect("documents.db")
 cur = conn.cursor()
@@ -526,7 +526,7 @@ If you have **custom formats** (e.g., `sig:abc123` or `hash_abc123`):
 **Example**:
 ```python
 import re
-from odin_sig import parse_signature_string
+from signature_sdk import parse_signature_string
 
 def migrate_custom_format(custom_sig: str) -> str:
     # Example: "sig:8d000000ac854dae..." → "0din-v1:8d000000ac854dae..."
@@ -665,9 +665,9 @@ COMMIT;
 | Rust V1 | TypeScript V1 | ✅ Yes | Bit-identical signatures |
 | Python V1 | TypeScript V1 | ✅ Yes | Bit-identical signatures |
 | Rust V0 | Python V0 | ✅ Yes | Bit-identical signatures |
-| Legacy heimdall | odin-sig Rust | ✅ Yes | Same algorithm |
-| Legacy thor | @0din/sig | ✅ Yes | Same algorithm |
-| Legacy research | 0din-sig Python | ✅ Yes | Same algorithm (592× faster with native) |
+| Legacy heimdall | signature-sdk Rust | ✅ Yes | Same algorithm |
+| Legacy thor | @0din/signature-sdk | ✅ Yes | Same algorithm |
+| Legacy research | signature-sdk Python | ✅ Yes | Same algorithm (592× faster with native) |
 
 **Validation**: See `docs/docs/concepts/cross-language.md` for test vector validation methodology.
 
@@ -679,21 +679,21 @@ COMMIT;
 
 **1. Signature generation works**:
 ```python
-from odin_sig import sign_text
+from signature_sdk import sign_text
 result = sign_text("Hello world")
 print(result.signature)  # Should start with "0din-v1:"
 ```
 
 **2. Parsing works**:
 ```python
-from odin_sig import parse_signature_string
+from signature_sdk import parse_signature_string
 parsed = parse_signature_string(result.signature)
 assert parsed.version.value == 1
 ```
 
 **3. Similarity search works**:
 ```python
-from odin_sig import simhash_lsh_multi, hamming_distance_hex
+from signature_sdk import simhash_lsh_multi, hamming_distance_hex
 
 families1 = simhash_lsh_multi([0.5] * 384)
 families2 = simhash_lsh_multi([0.51] * 384)
@@ -711,7 +711,7 @@ assert 0 <= distance <= 256  # Valid Hamming distance
 from src.signature_cli.lsh import simhash_lsh_multi as legacy_simhash
 
 # New SDK
-from odin_sig import simhash_lsh_multi
+from signature_sdk import simhash_lsh_multi
 
 # Test vector
 vector = [0.5] * 384
@@ -731,7 +731,7 @@ for i in range(3):
 **Verify native acceleration** (Python only):
 
 ```python
-from odin_sig import NATIVE_AVAILABLE, simhash_lsh_multi
+from signature_sdk import NATIVE_AVAILABLE, simhash_lsh_multi
 import time
 
 assert NATIVE_AVAILABLE, "Native extension not installed!"
@@ -783,7 +783,7 @@ git checkout <pre-migration-commit> -- src/
 
 ```python
 # Test with V0 signatures
-from odin_sig import parse_signature_string
+from signature_sdk import parse_signature_string
 
 # Should still parse V0 format
 v0_sig = "0din-v0:a3f9c2e1b8d4f7a2..."
@@ -821,7 +821,7 @@ assert parsed.version.value == 0
 ### Quick Migration Checklist
 
 **From legacy systems**:
-- [ ] Install new package (`odin-sig`, `@0din/sig`, or `0din-sig`)
+- [ ] Install new package (`signature-sdk`, `@0din/signature-sdk`, or `signature-sdk`)
 - [ ] Update imports (remove relative paths, use package name)
 - [ ] Update signature format (add `0din-v1:` prefix)
 - [ ] Update function calls (keyword args in Python)
@@ -830,7 +830,7 @@ assert parsed.version.value == 0
 
 **From V0 to V1**:
 - [ ] Back up V0 signatures
-- [ ] Install ONNX model for V1 (`~/.cache/odin-sig/models/v1/`)
+- [ ] Install ONNX model for V1 (`~/.cache/signature-sdk/models/v1/`)
 - [ ] Regenerate all signatures (cannot mix V0 and V1)
 - [ ] Update database schema (versioned format)
 - [ ] Update queries (parse versioned strings)
@@ -840,7 +840,7 @@ assert parsed.version.value == 0
 **Key Takeaways**:
 1. ✅ **Legacy → SDK migration is straightforward** (mostly import path changes)
 2. ⚠️ **V0 → V1 migration requires full regeneration** (incompatible embedding spaces)
-3. ✅ **Native Rust acceleration makes Python 592× faster** (install `0din-sig[native]`)
+3. ✅ **Native Rust acceleration makes Python 592× faster** (install `signature-sdk[native]`)
 4. ✅ **All implementations validated** (109 tests, bit-identical signatures)
 5. ✅ **Rollback plan available** (keep backups, use version control)
 

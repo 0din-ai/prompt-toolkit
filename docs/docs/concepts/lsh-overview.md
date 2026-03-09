@@ -29,7 +29,7 @@ Result: **O(n) instead of O(n²)**
 
 ## SimHash Algorithm
 
-0din-sig uses SimHash via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)):
+signature-sdk uses SimHash via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)):
 
 ```
 Embedding Vector → Normalize → Generate Hyperplanes → 

@@ -3,13 +3,13 @@ sidebar_position: 1
 slug: /
 ---
 
-# Introduction to 0din-sig
+# Introduction to signature-sdk
 
-**0din-sig** is a multi-language SDK for generating LSH (Locality-Sensitive Hashing) signatures from AI prompt embeddings. It provides fast, deterministic similarity detection across three languages: Rust, Python, and TypeScript.
+**signature-sdk** is a multi-language SDK for generating LSH (Locality-Sensitive Hashing) signatures from AI prompt embeddings. It provides fast, deterministic similarity detection across three languages: Rust, Python, and TypeScript.
 
-## What is 0din-sig?
+## What is signature-sdk?
 
-0din-sig implements **SimHash** via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)), a proven algorithm for approximate nearest neighbor search. It converts high-dimensional embedding vectors (384-1536 dimensions) into compact 256-bit binary signatures that preserve cosine similarity.
+signature-sdk implements **SimHash** via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)), a proven algorithm for approximate nearest neighbor search. It converts high-dimensional embedding vectors (384-1536 dimensions) into compact 256-bit binary signatures that preserve cosine similarity.
 
 ### Key Features
 
@@ -51,8 +51,8 @@ import TabItem from '@theme/TabItem';
   <TabItem value="rust" label="Rust">
 
 ```rust
-use odin_sig::{sign_text, SignatureVersion};
-use odin_sig::providers::{ModelCache, OnnxProvider};
+use signature_sdk::{sign_text, SignatureVersion};
+use signature_sdk::providers::{ModelCache, OnnxProvider};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -80,8 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```python
 import asyncio
-from odin_sig import sign_text, SignatureVersion
-from odin_sig.providers import ModelCache, OnnxProvider
+from signature_sdk import sign_text, SignatureVersion
+from signature_sdk.providers import ModelCache, OnnxProvider
 
 async def main():
     # Initialize local ONNX provider (no API key needed)
@@ -106,8 +106,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/sig';
-import { ModelCache, OnnxProvider } from '@0din/sig/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/signature-sdk';
+import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
 
 async function main() {
   // Initialize local ONNX provider (no API key needed)
@@ -138,7 +138,7 @@ For advanced use cases requiring manual embedding management, see the [Core Func
 
 ## How It Works
 
-0din-sig uses a deterministic LSH algorithm:
+signature-sdk uses a deterministic LSH algorithm:
 
 1. **Normalize** embedding to unit length (L2 norm)
 2. **Generate** 256 random hyperplanes (deterministic via SplitMix64 PRNG)
@@ -171,8 +171,8 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
-| Rust | `odin-sig` | ✅ Ready | 50 passing |
-| Python | `0din-sig` | ✅ Ready | 32 passing |
-| TypeScript | `@0din/sig` | ✅ Ready | 27 passing |
+| Rust | `signature-sdk` | ✅ Ready | 50 passing |
+| Python | `signature-sdk` | ✅ Ready | 32 passing |
+| TypeScript | `@0din/signature-sdk` | ✅ Ready | 27 passing |
 
-See the [Validation Report](https://github.com/0din/sig-sdk/blob/main/VALIDATION.md) for detailed cross-language validation results.
+See the [Validation Report](https://github.com/0din-ai/signature-sdk/blob/main/VALIDATION.md) for detailed cross-language validation results.
