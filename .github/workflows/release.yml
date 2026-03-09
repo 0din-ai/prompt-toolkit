@@ -238,6 +238,92 @@ jobs:
             dist/*.tgz
             /tmp/signature-sdk-typescript-*.zip
 
+  # Build design partner deliverable tarball
+  build-deliverable:
+    needs: [
+      version-check,
+      ci,
+      build-python,
+      build-native-linux,
+      build-native-macos,
+      build-native-windows,
+      build-native-sdist
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install huggingface_hub[cli]
+          huggingface-cli --version
+      
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: Copy wheels to expected locations
+        run: |
+          # Python pure wheel
+          mkdir -p packages/python/dist
+          cp artifacts/python-dist/dist/*.whl packages/python/dist/ || true
+          cp artifacts/python-dist/dist/*.tar.gz packages/python/dist/ || true
+          
+          # Native wheels (all platforms)
+          mkdir -p packages/python-native/dist
+          cp artifacts/native-linux-x86_64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-linux-aarch64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-macos-x86_64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-macos-aarch64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-windows-x86_64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-sdist/*.tar.gz packages/python-native/dist/ || true
+          
+          echo "Wheels collected:"
+          ls -lh packages/python/dist/
+          ls -lh packages/python-native/dist/
+      
+      - name: Download model from HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+        run: |
+          mkdir -p /tmp/model-cache
+          
+          # Download model files to temp directory
+          huggingface-cli download 0dinai/jailbreak-embeddings-small \
+            --repo-type model \
+            --local-dir /tmp/model-cache \
+            v1/onnx/model_O4.onnx \
+            v1/tokenizer.json \
+            v1/config.json
+          
+          # Verify files downloaded
+          echo "Model files downloaded:"
+          ls -lhR /tmp/model-cache/
+      
+      - name: Build deliverable tarball
+        run: |
+          cd deliverable
+          ./build-tarball.sh --model-source /tmp/model-cache/v1
+      
+      - name: Calculate checksums
+        run: |
+          cd deliverable
+          sha256sum signature-sdk-deliverable-*.tar.gz > signature-sdk-deliverable-${GITHUB_REF_NAME#v}.tar.gz.sha256
+          cat *.sha256
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deliverable-tarball
+          path: |
+            deliverable/signature-sdk-deliverable-*.tar.gz
+            deliverable/signature-sdk-deliverable-*.tar.gz.sha256
+          retention-days: 90
+
   # Create GitHub Release with all artifacts
   release:
     needs: [
@@ -247,7 +333,8 @@ jobs:
       build-native-windows,
       build-native-sdist,
       build-rust,
-      build-typescript
+      build-typescript,
+      build-deliverable
     ]
     runs-on: ubuntu-latest
     permissions:
@@ -283,6 +370,10 @@ jobs:
           # TypeScript
           cp artifacts/typescript-dist/dist/*.tgz release-files/ || true
           cp artifacts/typescript-dist/tmp/signature-sdk-typescript-*.zip release-files/ || true
+          
+          # Design partner deliverable
+          cp artifacts/deliverable-tarball/*.tar.gz release-files/ || true
+          cp artifacts/deliverable-tarball/*.sha256 release-files/ || true
           
           echo "Release files:"
           ls -lh release-files/
