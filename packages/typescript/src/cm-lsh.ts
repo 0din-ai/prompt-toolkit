@@ -12,7 +12,7 @@
  * - hashB: 512-bit confidence matrix
  * - Calibrated similarity function
  * 
- * Ported from python/odin_sig/cm_lsh.py to match signature_cli code style.
+ * Ported from python/signature_sdk/cm_lsh.py to match signature_cli code style.
  */
 
 import { _internal } from './lsh';

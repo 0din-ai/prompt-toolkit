@@ -9,17 +9,17 @@ import * as os from 'os';
 /**
  * Manages local caching of ONNX models.
  *
- * The cache directory defaults to ~/.cache/odin-sig/models/v1/ but can be
- * overridden via the ODIN_SIG_MODEL_CACHE environment variable.
+ * The cache directory defaults to ~/.cache/signature-sdk/models/v1/ but can be
+ * overridden via the SIGNATURE_SDK_MODEL_CACHE environment variable.
  */
 export class ModelCache {
   private static readonly DEFAULT_CACHE_DIR = path.join(
     os.homedir(),
     '.cache',
-    'odin-sig',
+    'signature-sdk',
     'models'
   );
-  private static readonly ENV_VAR = 'ODIN_SIG_MODEL_CACHE';
+  private static readonly ENV_VAR = 'SIGNATURE_SDK_MODEL_CACHE';
 
   private cacheDir: string;
 

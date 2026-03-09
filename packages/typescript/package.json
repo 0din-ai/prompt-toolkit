@@ -1,5 +1,5 @@
 {
-  "name": "@0din/sig",
+  "name": "@0din/signature-sdk",
   "version": "0.1.1",
   "description": "Multi-language SDK for LSH signature generation for AI prompt similarity detection",
   "main": "dist/index.js",
@@ -28,13 +28,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/0din/sig-sdk.git",
+    "url": "https://github.com/0din-ai/signature-sdk.git",
     "directory": "packages/typescript"
   },
   "bugs": {
-    "url": "https://github.com/0din/sig-sdk/issues"
+    "url": "https://github.com/0din-ai/signature-sdk/issues"
   },
-  "homepage": "https://github.com/0din/sig-sdk/tree/main/typescript",
+  "homepage": "https://github.com/0din-ai/signature-sdk/tree/main/typescript",
   "peerDependencies": {
     "openai": "^4.0.0",
     "onnxruntime-node": "^1.16.0"

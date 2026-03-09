@@ -6,9 +6,9 @@
  * 
  * @example
  * ```typescript
- * import { getHasher, HashAlgorithm } from '@0din/sig';
- * import type { LshConfig } from '@0din/sig/types';
- * import { normalizeVector } from '@0din/sig';
+ * import { getHasher, HashAlgorithm } from '@0din/signature-sdk';
+ * import type { LshConfig } from '@0din/signature-sdk/types';
+ * import { normalizeVector } from '@0din/signature-sdk';
  * 
  * const hasher = getHasher(HashAlgorithm.LSH);
  * const vector = normalizeVector([1.0, 2.0, 3.0]);
