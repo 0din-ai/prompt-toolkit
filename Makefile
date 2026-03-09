@@ -1,4 +1,4 @@
-.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript showcase showcase-install
+.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript deliverable deliverable-with-model showcase showcase-install
 
 # Default target
 .DEFAULT_GOAL := help
@@ -107,6 +107,33 @@ package-typescript: ## Build and pack TypeScript npm tarball
 	@mkdir -p $(DIST_DIR)
 	@cp packages/typescript/*.tgz $(DIST_DIR)/
 	@echo "$(GREEN)✅ TypeScript package built and copied to $(DIST_DIR)/$(RESET)"
+
+##@ Deliverable
+
+deliverable: package-python ## Build design partner deliverable tarball (0DIN-1114)
+	@echo ""
+	@echo "$(CYAN)Building design partner deliverable...$(RESET)"
+	@if [ ! -f deliverable/build-tarball.sh ]; then \
+		echo "$(RED)Error: deliverable/build-tarball.sh not found$(RESET)"; \
+		exit 1; \
+	fi
+	@cd deliverable && ./build-tarball.sh
+	@echo ""
+	@echo "$(GREEN)✅ Deliverable built successfully$(RESET)"
+	@echo "   Location: deliverable/signature-sdk-deliverable-*.tar.gz"
+
+deliverable-with-model: package-python ## Build deliverable with local model (faster, no HF download)
+	@echo ""
+	@echo "$(CYAN)Building design partner deliverable (using local model)...$(RESET)"
+	@if [ ! -d ~/.cache/signature-sdk/models/v1 ]; then \
+		echo "$(YELLOW)Warning: Model not found in cache, will download from HuggingFace$(RESET)"; \
+		cd deliverable && ./build-tarball.sh; \
+	else \
+		cd deliverable && ./build-tarball.sh --model-source ~/.cache/signature-sdk/models/v1; \
+	fi
+	@echo ""
+	@echo "$(GREEN)✅ Deliverable built successfully$(RESET)"
+	@echo "   Location: deliverable/signature-sdk-deliverable-*.tar.gz"
 
 ##@ Test Vectors
 
