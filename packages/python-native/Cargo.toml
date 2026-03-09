@@ -1,20 +1,20 @@
 [package]
-name = "odin-sig-python"
+name = "signature-sdk-python"
 version = "0.1.1"
 edition = "2021"
 rust-version = "1.70"
 authors = ["0din Team"]
-description = "Native Python bindings for odin-sig LSH functions"
+description = "Native Python bindings for signature-sdk LSH functions"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/0din/sig-sdk"
+repository = "https://github.com/0din-ai/signature-sdk"
 
 [lib]
-name = "odin_sig_native"
+name = "signature_sdk_native"
 crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-odin-sig = { path = "../rust", default-features = false }
+signature-sdk = { path = "../rust", default-features = false }
 
 [profile.release]
 opt-level = 3
