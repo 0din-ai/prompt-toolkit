@@ -15,7 +15,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "ONNX provider requires the 'onnxruntime' package. "
-        "Install with: pip install '0din-sig[onnx]'"
+        "Install with: pip install 'signature-sdk[onnx]'"
     ) from e
 
 try:
@@ -23,7 +23,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "ONNX provider requires the 'transformers' package. "
-        "Install with: pip install '0din-sig[onnx]'"
+        "Install with: pip install 'signature-sdk[onnx]'"
     ) from e
 
 

@@ -1,11 +1,11 @@
-"""0din-sig: Multi-language SDK for LSH signature generation.
+"""signature-sdk: Multi-language SDK for LSH signature generation.
 
 This package provides locality-sensitive hashing (LSH) for AI prompt similarity
 detection, with support for both standard LSH and Confidence Matrix LSH (CM-LSH).
 
 Quick Start (High-Level API):
-    >>> from odin_sig import sign_text, SignatureVersion
-    >>> from odin_sig.providers import ModelCache, OnnxProvider
+    >>> from signature_sdk import sign_text, SignatureVersion
+    >>> from signature_sdk.providers import ModelCache, OnnxProvider
     >>>
     >>> # Initialize ONNX provider (local, no API key needed)
     >>> cache = ModelCache()
@@ -21,7 +21,7 @@ Quick Start (High-Level API):
     0din-v1:8d000000ac854dae...
 
 Quick Start (Low-Level API):
-    >>> from odin_sig import simhash_lsh_multi, normalize_vector
+    >>> from signature_sdk import simhash_lsh_multi, normalize_vector
     >>>
     >>> vector = [0.5, 0.5, 0.5, 0.5]
     >>> normalized = normalize_vector(vector)
@@ -41,26 +41,26 @@ Algorithm:
     - Hamming distance → cosine similarity via cos(π × d/n)
 """
 
-from odin_sig._accel import NATIVE_AVAILABLE
-from odin_sig.error import (
+from signature_sdk._accel import NATIVE_AVAILABLE
+from signature_sdk.error import (
     ConfigError,
     InvalidInputError,
     ModelError,
     ProviderError,
     SigError,
 )
-from odin_sig.hasher import Hasher
-from odin_sig.hashers import SimHashLsh, get_hasher
-from odin_sig.lsh import (
+from signature_sdk.hasher import Hasher
+from signature_sdk.hashers import SimHashLsh, get_hasher
+from signature_sdk.lsh import (
     LSHFamily,
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,
     simhash_lsh_multi,
 )
-from odin_sig.provider import EmbeddingProvider
-from odin_sig.sign import sign_text
-from odin_sig.types import (
+from signature_sdk.provider import EmbeddingProvider
+from signature_sdk.sign import sign_text
+from signature_sdk.types import (
     ComparisonResult,
     EmbeddingResult,
     HashAlgorithm,

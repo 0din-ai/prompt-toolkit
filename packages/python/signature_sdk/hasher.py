@@ -2,8 +2,8 @@
 
 from typing import Protocol
 
-from odin_sig.lsh import LSHFamily
-from odin_sig.types import LshConfig
+from signature_sdk.lsh import LSHFamily
+from signature_sdk.types import LshConfig
 
 
 class Hasher(Protocol):
@@ -13,8 +13,8 @@ class Hasher(Protocol):
     and produces LSH signatures suitable for similarity matching.
 
     Example:
-        >>> from odin_sig import get_hasher, HashAlgorithm, LshConfig
-        >>> from odin_sig.lsh import normalize_vector
+        >>> from signature_sdk import get_hasher, HashAlgorithm, LshConfig
+        >>> from signature_sdk.lsh import normalize_vector
         >>>
         >>> hasher = get_hasher(HashAlgorithm.LSH)
         >>> vector = normalize_vector([1.0, 2.0, 3.0])

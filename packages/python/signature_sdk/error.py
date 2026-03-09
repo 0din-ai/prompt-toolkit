@@ -1,15 +1,15 @@
-"""Error types for odin-sig operations."""
+"""Error types for signature-sdk operations."""
 
 
 class SigError(Exception):
-    """Base exception for odin-sig operations.
+    """Base exception for signature-sdk operations.
 
-    All exceptions raised by the odin-sig library inherit from this base class,
+    All exceptions raised by the signature-sdk library inherit from this base class,
     making it easy to catch all library-specific errors.
 
     Example:
         >>> try:
-        ...     # some odin-sig operation
+        ...     # some signature-sdk operation
         ...     pass
         ... except SigError as e:
         ...     print(f"Signature operation failed: {e}")
@@ -22,7 +22,7 @@ class ConfigError(SigError):
     Raised when LSH configuration parameters are invalid or incompatible.
 
     Example:
-        >>> from odin_sig import LshConfig
+        >>> from signature_sdk import LshConfig
         >>> # Invalid configuration would raise ConfigError
     """
 
@@ -55,7 +55,7 @@ class InvalidInputError(SigError):
     invalid embedding dimensions, or malformed signature strings.
 
     Example:
-        >>> from odin_sig import parse_signature_string
+        >>> from signature_sdk import parse_signature_string
         >>> try:
         ...     parse_signature_string("invalid")
         ... except InvalidInputError as e:

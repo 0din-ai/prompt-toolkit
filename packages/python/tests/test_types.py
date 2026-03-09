@@ -1,6 +1,6 @@
 """Tests for type definitions."""
 
-from odin_sig import ComparisonResult, LshConfig, PromptInfo, QualityStats
+from signature_sdk import ComparisonResult, LshConfig, PromptInfo, QualityStats
 
 
 def test_prompt_info_construction():

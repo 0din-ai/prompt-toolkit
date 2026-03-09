@@ -1,6 +1,6 @@
 """Transparent native acceleration layer.
 
-This module attempts to import the native Rust extension (odin_sig_native)
+This module attempts to import the native Rust extension (signature_sdk_native)
 and exposes its functions. If the native extension is not available, it
 sets NATIVE_AVAILABLE to False and the pure Python implementations are used.
 
@@ -12,13 +12,13 @@ Or by building from source:
     maturin develop --release
 
 To force pure-Python mode even when the native extension is installed:
-    export ODIN_SIG_NO_NATIVE=1
+    export SIGNATURE_SDK_NO_NATIVE=1
 """
 
 import os
 
 # Check if user wants to force pure-Python mode
-_force_no_native = os.environ.get("ODIN_SIG_NO_NATIVE", "").lower() in (
+_force_no_native = os.environ.get("SIGNATURE_SDK_NO_NATIVE", "").lower() in (
     "1",
     "true",
     "yes",
@@ -38,7 +38,7 @@ if _force_no_native:
 
 else:
     try:
-        from odin_sig_native import (
+        from signature_sdk_native import (
             LshFamily as _NativeLshFamily,
             compute_embedding_sha256 as _native_compute_embedding_sha256,
             cosine_from_hamming as _native_cosine_from_hamming,

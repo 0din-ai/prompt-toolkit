@@ -3,8 +3,8 @@
 import os
 import pytest
 
-from odin_sig import sign_text, EmbeddingProvider, SignatureVersion
-from odin_sig.types import EmbeddingResult, LshConfig
+from signature_sdk import sign_text, EmbeddingProvider, SignatureVersion
+from signature_sdk.types import EmbeddingResult, LshConfig
 
 
 class MockProvider:
@@ -150,7 +150,7 @@ async def test_sign_text_long_prompt_preview():
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     not __import__("importlib.util").util.find_spec("openai"),
-    reason="Requires openai package (install with pip install '0din-sig[openai]')",
+    reason="Requires openai package (install with pip install 'signature-sdk[openai]')",
 )
 async def test_sign_text_auto_construct_v0_missing_api_key(monkeypatch):
     """Test that auto-construction for V0 fails without API key."""

@@ -1,4 +1,4 @@
-# Installing 0din-sig (Python)
+# Installing signature-sdk (Python)
 
 ## Requirements
 - Python >= 3.10
@@ -30,7 +30,7 @@ pip install "0din_sig-<VERSION>-py3-none-any.whl[all]"
 ## Quick Start
 
 ```python
-from odin_sig import simhash_lsh_multi, normalize_vector
+from signature_sdk import simhash_lsh_multi, normalize_vector
 
 # Your embedding vector (must be L2-normalized)
 vector = [0.5, 0.5, 0.5, 0.5]

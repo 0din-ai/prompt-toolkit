@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 # Re-use the existing LSH functions for consistency
-from odin_sig.lsh import _sign_for, _splitmix64
+from signature_sdk.lsh import _sign_for, _splitmix64
 
 
 @dataclass
