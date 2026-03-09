@@ -1,4 +1,4 @@
-# 0din-sig Algorithm Specification
+# signature-sdk Algorithm Specification
 
 This document provides the formal specification for the LSH (Locality-Sensitive Hashing) signature algorithm used across all three language implementations (Rust, Python, TypeScript).
 

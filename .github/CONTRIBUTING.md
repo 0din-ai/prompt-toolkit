@@ -1,4 +1,4 @@
-# Contributing to 0din-sig SDK
+# Contributing to signature-sdk
 
 ## Development Setup
 
@@ -13,7 +13,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/0din/sig-sdk.git
+git clone https://github.com/0din-ai/signature-sdk.git
 cd sig-sdk
 
 # Install dependencies for all languages

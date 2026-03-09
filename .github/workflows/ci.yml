@@ -38,7 +38,7 @@ jobs:
       - name: Test
         run: cd packages/python && pytest tests/ -v
       - name: Type check
-        run: cd packages/python && mypy odin_sig/
+        run: cd packages/python && mypy signature_sdk/
 
   typescript:
     runs-on: ubuntu-latest

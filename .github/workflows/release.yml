@@ -26,22 +26,22 @@ jobs:
         run: |
           python -m venv /tmp/test-env
           /tmp/test-env/bin/pip install dist/*.whl
-          /tmp/test-env/bin/python -c "import odin_sig; print(odin_sig.__version__)"
+          /tmp/test-env/bin/python -c "import signature_sdk; print(odin_sig.__version__)"
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/0din-sig-python-${VERSION}
-          cp dist/*.whl /tmp/0din-sig-python-${VERSION}/
-          cp dist/*.tar.gz /tmp/0din-sig-python-${VERSION}/
-          cp packages/python/INSTALL.md /tmp/0din-sig-python-${VERSION}/ 2>/dev/null || true
-          cd /tmp && zip -r 0din-sig-python-${VERSION}.zip 0din-sig-python-${VERSION}/
+          mkdir -p /tmp/signature-sdk-python-${VERSION}
+          cp dist/*.whl /tmp/signature-sdk-python-${VERSION}/
+          cp dist/*.tar.gz /tmp/signature-sdk-python-${VERSION}/
+          cp packages/python/INSTALL.md /tmp/signature-sdk-python-${VERSION}/ 2>/dev/null || true
+          cd /tmp && zip -r signature-sdk-python-${VERSION}.zip signature-sdk-python-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: python-dist
           path: |
             dist/*.whl
             dist/*.tar.gz
-            /tmp/0din-sig-python-*.zip
+            /tmp/signature-sdk-python-*.zip
 
   # Package Rust crate
   build-rust:
@@ -55,16 +55,16 @@ jobs:
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/odin-sig-rust-${VERSION}
-          cp dist/odin-sig-${VERSION}.crate /tmp/odin-sig-rust-${VERSION}/
-          cp packages/rust/README.md /tmp/odin-sig-rust-${VERSION}/
-          cd /tmp && zip -r odin-sig-rust-${VERSION}.zip odin-sig-rust-${VERSION}/
+          mkdir -p /tmp/signature-sdk-rust-${VERSION}
+          cp dist/signature-sdk-${VERSION}.crate /tmp/signature-sdk-rust-${VERSION}/
+          cp packages/rust/README.md /tmp/signature-sdk-rust-${VERSION}/
+          cd /tmp && zip -r signature-sdk-rust-${VERSION}.zip signature-sdk-rust-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: rust-dist
           path: |
             dist/*.crate
-            /tmp/odin-sig-rust-*.zip
+            /tmp/signature-sdk-rust-*.zip
 
   # Package TypeScript npm tarball
   build-typescript:
@@ -82,16 +82,16 @@ jobs:
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/0din-sig-typescript-${VERSION}
-          cp dist/*.tgz /tmp/0din-sig-typescript-${VERSION}/
-          cp packages/typescript/README.md /tmp/0din-sig-typescript-${VERSION}/
-          cd /tmp && zip -r 0din-sig-typescript-${VERSION}.zip 0din-sig-typescript-${VERSION}/
+          mkdir -p /tmp/signature-sdk-typescript-${VERSION}
+          cp dist/*.tgz /tmp/signature-sdk-typescript-${VERSION}/
+          cp packages/typescript/README.md /tmp/signature-sdk-typescript-${VERSION}/
+          cd /tmp && zip -r signature-sdk-typescript-${VERSION}.zip signature-sdk-typescript-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: typescript-dist
           path: |
             dist/*.tgz
-            /tmp/0din-sig-typescript-*.zip
+            /tmp/signature-sdk-typescript-*.zip
 
   # Create GitHub Release with all artifacts
   release:
@@ -112,13 +112,13 @@ jobs:
           # Python
           cp artifacts/python-dist/dist/*.whl release-files/
           cp artifacts/python-dist/dist/*.tar.gz release-files/
-          cp artifacts/python-dist/tmp/0din-sig-python-*.zip release-files/
+          cp artifacts/python-dist/tmp/signature-sdk-python-*.zip release-files/
           # Rust
           cp artifacts/rust-dist/dist/*.crate release-files/
-          cp artifacts/rust-dist/tmp/odin-sig-rust-*.zip release-files/
+          cp artifacts/rust-dist/tmp/signature-sdk-rust-*.zip release-files/
           # TypeScript
           cp artifacts/typescript-dist/dist/*.tgz release-files/
-          cp artifacts/typescript-dist/tmp/0din-sig-typescript-*.zip release-files/
+          cp artifacts/typescript-dist/tmp/signature-sdk-typescript-*.zip release-files/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
