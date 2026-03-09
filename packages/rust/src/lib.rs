@@ -1,9 +1,9 @@
-//! # odin-sig
+//! # signature-sdk
 //!
 //! Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation
 //! for AI prompt similarity detection.
 //!
-//! This crate provides the canonical Rust implementation of the 0din-sig algorithm,
+//! This crate provides the canonical Rust implementation of the signature-sdk algorithm,
 //! which is also available in Python and TypeScript.
 //!
 //! ## Quick Start
@@ -15,8 +15,8 @@
 //! ```rust,no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use odin_sig::{sign_text, SignatureVersion};
-//! use odin_sig::providers::{ModelCache, OnnxProvider};
+//! use signature_sdk::{sign_text, SignatureVersion};
+//! use signature_sdk::providers::{ModelCache, OnnxProvider};
 //!
 //! // Initialize ONNX provider (local, no API key needed)
 //! let cache = ModelCache::new()?;
@@ -43,9 +43,9 @@
 //! ```rust,no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use odin_sig::{simhash_lsh_multi, LshConfig};
-//! use odin_sig::provider::EmbeddingProvider;
-//! use odin_sig::providers::{ModelCache, OnnxProvider};
+//! use signature_sdk::{simhash_lsh_multi, LshConfig};
+//! use signature_sdk::provider::EmbeddingProvider;
+//! use signature_sdk::providers::{ModelCache, OnnxProvider};
 //!
 //! let cache = ModelCache::new()?;
 //! let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -86,7 +86,7 @@
 //! - Hex-encoded signatures (64 hex chars = 256 bits)
 //! - Hamming distance → cosine similarity via `cos(π × d/n)`
 //!
-//! See the [specification](https://github.com/0din/sig-sdk/blob/main/spec/SPEC.md)
+//! See the [specification](https://github.com/0din-ai/signature-sdk/blob/main/spec/SPEC.md)
 //! for complete algorithm details.
 
 pub mod error;

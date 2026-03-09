@@ -30,8 +30,8 @@ use std::sync::Arc;
 ///
 /// # Example
 /// ```
-/// use odin_sig::types::HashAlgorithm;
-/// use odin_sig::hashers::get_hasher;
+/// use signature_sdk::types::HashAlgorithm;
+/// use signature_sdk::hashers::get_hasher;
 ///
 /// let hasher = get_hasher(HashAlgorithm::Lsh);
 /// assert_eq!(hasher.name(), "lsh");

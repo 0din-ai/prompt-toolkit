@@ -32,7 +32,7 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// ```no_run
 /// # #[cfg(feature = "onnx")]
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// use odin_sig::{sign_text, SignatureVersion};
+/// use signature_sdk::{sign_text, SignatureVersion};
 ///
 /// let result = sign_text("How do I reset my password?", SignatureVersion::Latest, None, None).await?;
 /// println!("Signature: {}", result.to_signature_string());
@@ -44,9 +44,9 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// ```no_run
 /// # #[cfg(feature = "onnx")]
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// use odin_sig::{sign_text, SignatureVersion};
-/// use odin_sig::providers::{OnnxProvider, ModelCache};
-/// use odin_sig::provider::EmbeddingProvider;
+/// use signature_sdk::{sign_text, SignatureVersion};
+/// use signature_sdk::providers::{OnnxProvider, ModelCache};
+/// use signature_sdk::provider::EmbeddingProvider;
 ///
 /// let cache = ModelCache::new()?;
 /// let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -174,7 +174,7 @@ async fn create_provider_for_version(version: SignatureVersion) -> Result<Box<dy
             {
                 Err(SigError::InvalidInput(
                     "V1 signatures require the 'onnx' feature. \
-                     Enable with: cargo add odin-sig --features onnx"
+                     Enable with: cargo add signature-sdk --features onnx"
                         .to_string(),
                 ))
             }
@@ -197,7 +197,7 @@ async fn create_provider_for_version(version: SignatureVersion) -> Result<Box<dy
             {
                 Err(SigError::InvalidInput(
                     "V0 signatures require the 'openai' feature. \
-                     Enable with: cargo add odin-sig --features openai"
+                     Enable with: cargo add signature-sdk --features openai"
                         .to_string(),
                 ))
             }

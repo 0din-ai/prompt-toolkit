@@ -9,8 +9,8 @@ use tracing::{debug, info, warn};
 
 /// Model cache for downloading and storing ONNX models.
 ///
-/// Models are cached to `~/.cache/heimdall/models/` by default,
-/// or to the path specified by the `HEIMDALL_MODEL_CACHE` environment variable.
+/// Models are cached to `~/.cache/signature-sdk/models/` by default,
+/// or to the path specified by the `SIGNATURE_SDK_MODEL_CACHE` environment variable.
 #[derive(Debug, Clone)]
 pub struct ModelCache {
     cache_dir: PathBuf,
@@ -22,19 +22,19 @@ impl ModelCache {
     /// # Returns
     ///
     /// A new `ModelCache` instance with the cache directory set to:
-    /// - `$HEIMDALL_MODEL_CACHE` if set
-    /// - `~/.cache/heimdall/models/` otherwise
+    /// - `$SIGNATURE_SDK_MODEL_CACHE` if set
+    /// - `~/.cache/signature-sdk/models/` otherwise
     ///
     /// # Errors
     ///
     /// Returns an error if the cache directory cannot be determined or created.
     pub fn new() -> Result<Self> {
-        let cache_dir = if let Ok(path) = env::var("HEIMDALL_MODEL_CACHE") {
+        let cache_dir = if let Ok(path) = env::var("SIGNATURE_SDK_MODEL_CACHE") {
             PathBuf::from(path)
         } else {
             dirs::cache_dir()
                 .ok_or_else(|| SigError::Provider("Cannot determine cache directory".into()))?
-                .join("heimdall")
+                .join("signature-sdk")
                 .join("models")
         };
 
@@ -210,14 +210,14 @@ mod tests {
     #[test]
     fn test_new() {
         let cache = ModelCache::new().unwrap();
-        assert!(cache.cache_dir().to_string_lossy().contains("heimdall"));
+        assert!(cache.cache_dir().to_string_lossy().contains("signature-sdk"));
     }
 
     #[test]
     fn test_cache_dir() {
         let cache = ModelCache::new().unwrap();
         let cache_dir = cache.cache_dir();
-        assert!(cache_dir.ends_with("heimdall/models") || cache_dir.ends_with("heimdall\\models"));
+        assert!(cache_dir.ends_with("signature-sdk/models") || cache_dir.ends_with("signature-sdk\\models"));
     }
 
     #[tokio::test]

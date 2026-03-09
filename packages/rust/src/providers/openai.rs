@@ -43,8 +43,8 @@ struct OpenAIEmbeddingRequest {
 /// # Example
 ///
 /// ```no_run
-/// use odin_sig::providers::OpenAIProvider;
-/// use odin_sig::provider::EmbeddingProvider;
+/// use signature_sdk::providers::OpenAIProvider;
+/// use signature_sdk::provider::EmbeddingProvider;
 ///
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let provider = OpenAIProvider::new(
