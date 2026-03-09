@@ -2,7 +2,7 @@
 
 ## Overview
 
-The 0din-sig SDK uses GitHub Actions for continuous integration across all three language implementations (Rust, Python, TypeScript).
+The signature-sdk uses GitHub Actions for continuous integration across all three language implementations (Rust, Python, TypeScript).
 
 ## Workflows
 
@@ -90,7 +90,7 @@ pre-commit run --all-files
 Add to README.md:
 
 ```markdown
-[![CI](https://github.com/0din/sig-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/0din/sig-sdk/actions/workflows/ci.yml)
+[![CI](https://github.com/0din-ai/signature-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/0din-ai/signature-sdk/actions/workflows/ci.yml)
 ```
 
 ## Test Results Summary
@@ -113,7 +113,7 @@ Add to README.md:
 
 ### CI Failing on Python
 
-- Check mypy errors: `cd packages/python && mypy src/odin_sig/`
+- Check mypy errors: `cd packages/python && mypy src/signature_sdk/`
 - Verify tests pass: `cd packages/python && pytest tests/ -v`
 - Check for Python version compatibility issues
 

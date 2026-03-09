@@ -1,6 +1,6 @@
 # Signature Versioning Specification
 
-This document defines the signature version scheme, version registry, and compatibility rules for 0din-sig signatures.
+This document defines the signature version scheme, version registry, and compatibility rules for signature-sdk signatures.
 
 ## Version: 1.0.0
 
@@ -321,7 +321,7 @@ If no `version` parameter is provided:
 
 ## 11. References
 
-- V0 Implementation: `heimdall-core` (Rust)
-- V1 Implementation: `heimdall-core` (Rust)
+- V0 Implementation: `signature-sdk (formerly heimdall-core)` (Rust)
+- V1 Implementation: `signature-sdk (formerly heimdall-core)` (Rust)
 - V1 Model: `models/v1/` directory
 - Algorithm Specification: `spec/SPEC.md`

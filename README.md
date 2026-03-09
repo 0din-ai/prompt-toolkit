@@ -1,4 +1,4 @@
-# 0din-sig SDK
+# signature-sdk
 
 Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
 
@@ -32,9 +32,9 @@ See [VALIDATION.md](VALIDATION.md) for the complete cross-language validation re
 
 | Language   | Package      | Status      | Tests      | Path           |
 |------------|--------------|-------------|------------|----------------|
-| Rust       | `odin-sig`   | ✅ Ready    | 43 passing | [packages/rust/](packages/rust/) |
-| Python     | `0din-sig`   | ✅ Ready    | 11 passing | [packages/python/](packages/python/) |
-| TypeScript | `@0din/sig`  | ✅ Ready    | 7 passing  | [packages/typescript/](packages/typescript/) |
+| Rust       | `signature-sdk`   | ✅ Ready    | 43 passing | [packages/rust/](packages/rust/) |
+| Python     | `signature-sdk`   | ✅ Ready    | 11 passing | [packages/python/](packages/python/) |
+| TypeScript | `@0din/signature-sdk`  | ✅ Ready    | 7 passing  | [packages/typescript/](packages/typescript/) |
 
 **Total**: 61 tests passing across all languages
 
@@ -71,46 +71,46 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-odin-sig = { git = "https://github.com/0din/sig-sdk", branch = "main" }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main" }
 
 # With CM-LSH feature (optional, higher accuracy)
-odin-sig = { git = "https://github.com/0din/sig-sdk", branch = "main", features = ["cm-lsh"] }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["cm-lsh"] }
 
 # With ONNX embeddings (local, API-free)
-odin-sig = { git = "https://github.com/0din/sig-sdk", branch = "main", features = ["onnx"] }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["onnx"] }
 
 # With OpenAI embeddings
-odin-sig = { git = "https://github.com/0din/sig-sdk", branch = "main", features = ["openai"] }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["openai"] }
 
 # All features
-odin-sig = { git = "https://github.com/0din/sig-sdk", branch = "main", features = ["cm-lsh", "onnx", "openai"] }
+signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["cm-lsh", "onnx", "openai"] }
 ```
 
 Or via command line:
 
 ```bash
-cargo add odin-sig --git https://github.com/0din/sig-sdk --branch main
+cargo add signature-sdk --git https://github.com/0din-ai/signature-sdk --branch main
 ```
 
 ### Python
 
 ```bash
 # Install from git (core features only)
-pip install "0din-sig @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # With all optional features (CM-LSH, ONNX, OpenAI)
-pip install "0din-sig[all] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 
 # With specific features
-pip install "0din-sig[cm-lsh] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
-pip install "0din-sig[onnx] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
-pip install "0din-sig[openai] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python"
+pip install "signature-sdk[cm-lsh] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
+pip install "signature-sdk[onnx] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
+pip install "signature-sdk[openai] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
 ```
 
 Add to `requirements.txt`:
 
 ```txt
-0din-sig[all] @ git+https://github.com/0din/sig-sdk#subdirectory=packages/python
+signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python
 ```
 
 ### TypeScript
@@ -120,7 +120,7 @@ Add to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@0din/sig": "github:0din/sig-sdk#main"
+    "@0din/signature-sdk": "github:0din-ai/signature-sdk#main"
   }
 }
 ```
@@ -128,19 +128,19 @@ Add to your `package.json`:
 Or via command line:
 
 ```bash
-npm install github:0din/sig-sdk#main
+npm install github:0din-ai/signature-sdk#main
 
 # With yarn
-yarn add github:0din/sig-sdk#main
+yarn add github:0din-ai/signature-sdk#main
 
 # With pnpm
-pnpm add github:0din/sig-sdk#main
+pnpm add github:0din-ai/signature-sdk#main
 ```
 
 **Note:** For monorepos using npm workspaces, you may need to adjust the path:
 
 ```bash
-npm install "github:0din/sig-sdk#main" --workspace=typescript
+npm install "github:0din-ai/signature-sdk#main" --workspace=typescript
 ```
 
 ## Quick Start
@@ -148,7 +148,7 @@ npm install "github:0din/sig-sdk#main" --workspace=typescript
 ### Rust
 
 ```rust
-use odin_sig::{simhash_lsh_multi, normalize_vector, LshConfig};
+use signature_sdk::{simhash_lsh_multi, normalize_vector, LshConfig};
 
 let vector = vec![0.5, 0.5, 0.5, 0.5]; // Your embedding
 let normalized = normalize_vector(&vector);
@@ -162,7 +162,7 @@ See [packages/rust/README.md](packages/rust/README.md) for full documentation.
 ### Python
 
 ```python
-from odin_sig import simhash_lsh_multi, normalize_vector
+from signature_sdk import simhash_lsh_multi, normalize_vector
 
 vector = [0.5, 0.5, 0.5, 0.5]  # Your embedding
 normalized = normalize_vector(vector)
@@ -176,7 +176,7 @@ See [packages/python/README.md](packages/python/README.md) for full documentatio
 ### TypeScript
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/sig';
+import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
 
 const vector = [0.5, 0.5, 0.5, 0.5]; // Your embedding
 const normalized = normalizeVector(vector);
@@ -352,7 +352,7 @@ See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for development setup, co
 
 ```bash
 # Clone and install
-git clone https://github.com/0din/sig-sdk.git
+git clone https://github.com/0din-ai/signature-sdk.git
 cd sig-sdk
 make install
 

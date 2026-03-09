@@ -20,7 +20,7 @@ real-world dimensions, using a real threat-feed dataset on a local laptop.
 
 | Label | Approach | Technology |
 |-------|----------|------------|
-| **A** | Signatures + Band Index | `odin_sig` + `sqlite3` (stdlib — zero deps) |
+| **A** | Signatures + Band Index | `signature_sdk` + `sqlite3` (stdlib — zero deps) |
 | **B** | sqlite-vec (brute-force KNN) | `sqlite-vec` pip package |
 | **C** | pgvector + HNSW | `pgvector` via Docker |
 
@@ -210,7 +210,7 @@ These are `.gitignore`d (large binary files).
 
 ## Troubleshooting
 
-**`ModuleNotFoundError: No module named 'odin_sig'`**  
+**`ModuleNotFoundError: No module named 'signature_sdk'`**  
 Run `pip install -e "packages/python[onnx]"` from the repo root first.
 
 **`ModuleNotFoundError: No module named 'onnxruntime'`**  

@@ -61,7 +61,7 @@ _REPO_ROOT = Path(__file__).parent.parent
 _DEMOS_DIR = Path(__file__).parent
 sys.path.insert(0, str(_REPO_ROOT / "packages" / "python"))
 
-from odin_sig import (  # noqa: E402
+from signature_sdk import (  # noqa: E402
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,
@@ -231,10 +231,10 @@ async def generate_embeddings(prompts: list[str]) -> tuple[np.ndarray, float]:
     Returns (embeddings array, elapsed seconds).
     """
     try:
-        from odin_sig.providers import ModelCache, OnnxProvider
+        from signature_sdk.providers import ModelCache, OnnxProvider
     except ImportError as e:
         print(red(f"\n  Error: {e}"))
-        print("  Install ONNX dependencies: pip install '0din-sig[onnx]'")
+        print("  Install ONNX dependencies: pip install 'signature-sdk[onnx]'")
         sys.exit(1)
 
     cache = ModelCache()

@@ -3,7 +3,7 @@
 
 *Run date: 2026-02-26 · Dataset: 3,714 real jailbreak prompts · Hardware: local MacBook (CPU only)*
 
-**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install 0din-sig[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
+**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install signature-sdk[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
 
 ---
 
@@ -43,7 +43,7 @@ is a known and acceptable LSH property for the use cases we care about.
 
 | Label | Approach | What it uses |
 |-------|----------|--------------|
-| **A** | **Signatures + Band Index** | `odin_sig` (our SDK) + Python `sqlite3` — zero external dependencies |
+| **A** | **Signatures + Band Index** | `signature_sdk` (our SDK) + Python `sqlite3` — zero external dependencies |
 | **B** | **sqlite-vec brute-force KNN** | `sqlite-vec` pip package — scans every row |
 | **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker — enterprise vector DB with ANN indexing |
 
@@ -83,8 +83,8 @@ For the full 3,714-prompt dataset:
 **With native Rust acceleration (default in v0.1.1+)**: Signature generation adds only **0.6% overhead** on top of embedding generation. The pure Python fallback adds ~38% overhead, but is
 only needed if the native Rust extension fails to build. This is a **one-time ingest cost** — queries don't regenerate signatures, they do O(log n) band lookups.
 
-**Native acceleration** (available via `pip install 0din-sig[native]`):
-- Installs the `odin-sig-native` PyO3 extension (Rust bindings)
+**Native acceleration** (available via `pip install signature-sdk[native]`):
+- Installs the `signature-sdk-native` PyO3 extension (Rust bindings)
 - Provides **~592× speedup** for signature generation (5,332 vs 85 sigs/sec)
 - Transparent: same Python API, automatically used if installed
 - Bit-identical results to pure Python (verified via canonical test vectors)
@@ -272,7 +272,7 @@ pip install -e "packages/python[onnx]"
 pip install -r demos/requirements.txt
 
 # Copy ONNX model to ~/.cache/odin-sig/models/v1/onnx/model.onnx
-# (or set ODIN_SIG_MODEL_DIR env var)
+# (or set SIGNATURE_SDK_MODEL_DIR env var)
 
 # Run
 python demos/showcase.py \

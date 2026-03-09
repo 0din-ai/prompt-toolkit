@@ -44,9 +44,9 @@
   },
   "download": {
     "huggingface_repo": "TBD",
-    "local_path": "../heimdall/models/v1",
-    "cache_dir_default": "~/.cache/odin-sig/models/v1",
-    "cache_dir_env_var": "ODIN_SIG_MODEL_CACHE",
+    "local_path": "../signature-sdk/models/v1",
+    "cache_dir_default": "~/.cache/signature-sdk/models/v1",
+    "cache_dir_env_var": "SIGNATURE_SDK_MODEL_CACHE",
     "download_strategy": "on_first_use",
     "note": "Model is not bundled in SDK packages. Downloaded from HuggingFace on first use and cached locally."
   },

@@ -13,7 +13,7 @@ RESET := \033[0m
 ##@ General
 
 help: ## Display this help message
-	@echo "$(CYAN)0din-sig SDK - Multi-language Build System$(RESET)"
+	@echo "$(CYAN)signature-sdk - Multi-language Build System$(RESET)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(RESET)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(RESET)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
@@ -69,7 +69,7 @@ build-rust: ## Build Rust package
 
 build-python: ## Check Python package (no build step needed)
 	@echo "$(CYAN)Checking Python package...$(RESET)"
-	@cd packages/python && python -c "import odin_sig; print('✅ Python package OK')"
+	@cd packages/python && python -c "import signature_sdk; print('✅ Python package OK')"
 
 build-typescript: ## Build TypeScript package
 	@echo "$(CYAN)Building TypeScript package...$(RESET)"
@@ -204,7 +204,7 @@ lint-rust: ## Run Rust linter
 
 lint-python: ## Run Python linter
 	@echo "$(CYAN)Linting Python code...$(RESET)"
-	@cd packages/python && ruff check odin_sig/ tests/
+	@cd packages/python && ruff check signature_sdk/ tests/
 
 lint-typescript: ## Run TypeScript linter
 	@echo "$(CYAN)Linting TypeScript code...$(RESET)"
@@ -219,7 +219,7 @@ fmt-rust: ## Format Rust code
 
 fmt-python: ## Format Python code
 	@echo "$(CYAN)Formatting Python code...$(RESET)"
-	@cd packages/python && black odin_sig/ tests/
+	@cd packages/python && black signature_sdk/ tests/
 	@echo "$(GREEN)✅ Python code formatted$(RESET)"
 
 fmt-typescript: ## Format TypeScript code
@@ -262,7 +262,7 @@ docs: docs-rust docs-python docs-typescript ## Build all documentation (API docs
 	@echo "$(GREEN)✅ All documentation built successfully$(RESET)"
 	@echo ""
 	@echo "$(CYAN)Generated API docs:$(RESET)"
-	@echo "  • Rust:       docs/static/api/rust/odin_sig/index.html"
+	@echo "  • Rust:       docs/static/api/rust/signature_sdk/index.html"
 	@echo "  • Python:     docs/static/api/python/odin_sig.html"
 	@echo "  • TypeScript: docs/static/api/typescript/index.html"
 	@echo ""
@@ -280,7 +280,7 @@ docs-rust: ## Generate Rust API documentation (cargo doc)
 docs-python: ## Generate Python API documentation (pdoc)
 	@echo "$(CYAN)Generating Python API docs...$(RESET)"
 	@mkdir -p docs/static/api/python
-	@cd packages/python && python -m pdoc odin_sig -o ../../docs/static/api/python --html
+	@cd packages/python && python -m pdoc signature_sdk -o ../../docs/static/api/python --html
 	@echo "$(GREEN)✅ Python API docs generated → docs/static/api/python/$(RESET)"
 
 docs-typescript: ## Generate TypeScript API documentation (typedoc)
@@ -308,14 +308,14 @@ ci: clean install lint test ## Simulate CI pipeline (clean, install, lint, test)
 ##@ Information
 
 info: ## Display project information
-	@echo "$(CYAN)0din-sig SDK - Project Information$(RESET)"
+	@echo "$(CYAN)signature-sdk - Project Information$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)Status:$(RESET) ✅ Phases 1-5 Complete (Production Ready)"
 	@echo ""
 	@echo "$(YELLOW)Packages:$(RESET)"
-	@echo "  • Rust:       odin-sig       (43 tests)"
-	@echo "  • Python:     0din-sig       (11 tests)"
-	@echo "  • TypeScript: @0din/sig      (7 tests)"
+	@echo "  • Rust:       signature-sdk       (43 tests)"
+	@echo "  • Python:     signature-sdk       (11 tests)"
+	@echo "  • TypeScript: @0din/signature-sdk      (7 tests)"
 	@echo ""
 	@echo "$(YELLOW)Test Vectors:$(RESET)"
 	@ls spec/test-vectors/ | wc -l | xargs -I {} echo "  • {} files"
