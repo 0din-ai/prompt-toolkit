@@ -23,9 +23,12 @@ usage() {
     echo "This script will:"
     echo "  1. Update version in packages/rust/Cargo.toml"
     echo "  2. Update version in packages/python/pyproject.toml"
-    echo "  3. Update version in packages/typescript/package.json"
-    echo "  4. Show git diff for review"
-    echo "  5. Prompt for commit and tag"
+    echo "  3. Update version in packages/python/signature_sdk/__init__.py"
+    echo "  4. Update version in packages/python-native/pyproject.toml"
+    echo "  5. Update version in packages/python-native/Cargo.toml"
+    echo "  6. Update version in packages/typescript/package.json"
+    echo "  7. Show git diff for review"
+    echo "  8. Prompt for commit and tag"
     exit 1
 }
 
@@ -61,21 +64,28 @@ echo ""
 echo -e "${CYAN}Current versions:${RESET}"
 RUST_VERSION=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 PYTHON_VERSION=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+PYTHON_NATIVE_PY_VERSION=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+PYTHON_NATIVE_RS_VERSION=$(grep '^version = ' packages/python-native/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 TS_VERSION=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
 
-echo "  Rust:       $RUST_VERSION"
-echo "  Python:     $PYTHON_VERSION"
-echo "  TypeScript: $TS_VERSION"
+echo "  Rust:                  $RUST_VERSION"
+echo "  Python:                $PYTHON_VERSION"
+echo "  Python-native (py):    $PYTHON_NATIVE_PY_VERSION"
+echo "  Python-native (rust):  $PYTHON_NATIVE_RS_VERSION"
+echo "  TypeScript:            $TS_VERSION"
 echo ""
 
 # Check if versions are already synchronized
-if [ "$RUST_VERSION" != "$PYTHON_VERSION" ] || [ "$PYTHON_VERSION" != "$TS_VERSION" ]; then
+if [ "$RUST_VERSION" != "$PYTHON_VERSION" ] || \
+   [ "$PYTHON_VERSION" != "$PYTHON_NATIVE_PY_VERSION" ] || \
+   [ "$PYTHON_NATIVE_PY_VERSION" != "$PYTHON_NATIVE_RS_VERSION" ] || \
+   [ "$PYTHON_NATIVE_RS_VERSION" != "$TS_VERSION" ]; then
     echo -e "${YELLOW}⚠️  Warning: Current versions are not synchronized!${RESET}"
     echo ""
 fi
 
 # Confirm with user
-echo -e "${YELLOW}This will update all three packages to version ${NEW_VERSION}.${RESET}"
+echo -e "${YELLOW}This will update all six package versions to ${NEW_VERSION}.${RESET}"
 read -p "Continue? (y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -112,6 +122,22 @@ else
     sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" packages/python/signature_sdk/__init__.py
 fi
 
+# Update Python-native (pyproject.toml)
+echo "  Updating packages/python-native/pyproject.toml..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" packages/python-native/pyproject.toml
+else
+    sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" packages/python-native/pyproject.toml
+fi
+
+# Update Python-native (Cargo.toml)
+echo "  Updating packages/python-native/Cargo.toml..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" packages/python-native/Cargo.toml
+else
+    sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" packages/python-native/Cargo.toml
+fi
+
 # Update TypeScript (package.json)
 echo "  Updating packages/typescript/package.json..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -125,7 +151,7 @@ echo ""
 
 # Show diff
 echo -e "${CYAN}Changes:${RESET}"
-git diff packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/typescript/package.json
+git diff packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
 echo ""
 
 # Verify versions
@@ -133,18 +159,24 @@ echo -e "${CYAN}New versions:${RESET}"
 NEW_RUST_VERSION=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_PYTHON_VERSION=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/signature_sdk/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
+NEW_PYTHON_NATIVE_PY_VERSION=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+NEW_PYTHON_NATIVE_RS_VERSION=$(grep '^version = ' packages/python-native/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_TS_VERSION=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
 
-echo "  Rust:                $NEW_RUST_VERSION"
-echo "  Python (pyproject):  $NEW_PYTHON_VERSION"
-echo "  Python (__init__):   $NEW_PYTHON_INIT_VERSION"
-echo "  TypeScript:          $NEW_TS_VERSION"
+echo "  Rust:                        $NEW_RUST_VERSION"
+echo "  Python (pyproject):          $NEW_PYTHON_VERSION"
+echo "  Python (__init__):           $NEW_PYTHON_INIT_VERSION"
+echo "  Python-native (pyproject):   $NEW_PYTHON_NATIVE_PY_VERSION"
+echo "  Python-native (Cargo):       $NEW_PYTHON_NATIVE_RS_VERSION"
+echo "  TypeScript:                  $NEW_TS_VERSION"
 echo ""
 
 # Verify all versions match
 if [ "$NEW_RUST_VERSION" = "$NEW_VERSION" ] && \
    [ "$NEW_PYTHON_VERSION" = "$NEW_VERSION" ] && \
    [ "$NEW_PYTHON_INIT_VERSION" = "$NEW_VERSION" ] && \
+   [ "$NEW_PYTHON_NATIVE_PY_VERSION" = "$NEW_VERSION" ] && \
+   [ "$NEW_PYTHON_NATIVE_RS_VERSION" = "$NEW_VERSION" ] && \
    [ "$NEW_TS_VERSION" = "$NEW_VERSION" ]; then
     echo -e "${GREEN}✅ All versions synchronized successfully!${RESET}"
 else
@@ -161,7 +193,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     echo -e "${CYAN}Creating commit...${RESET}"
-    git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/typescript/package.json
+    git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
     git commit -m "chore: bump version to $NEW_VERSION"
     
     echo -e "${CYAN}Creating tag v${NEW_VERSION}...${RESET}"
@@ -177,7 +209,7 @@ else
     echo ""
     echo -e "${YELLOW}Changes staged but not committed.${RESET}"
     echo "To commit manually:"
-    echo "  git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/typescript/package.json"
+    echo "  git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json"
     echo "  git commit -m 'chore: bump version to $NEW_VERSION'"
     echo "  git tag -a 'v$NEW_VERSION' -m 'Release v$NEW_VERSION'"
     echo "  git push && git push --tags"
