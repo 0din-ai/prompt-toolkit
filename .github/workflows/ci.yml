@@ -74,7 +74,7 @@ jobs:
       - name: Install all
         run: |
           cd packages/rust && cargo build --all-features
-          cd ../python && pip install -e ".[all]"
+          cd ../python && pip install -e ".[dev]"
           cd ../typescript && npm ci && npm run build
       - name: Cross-validate
         run: python scripts/cross_validate.py
