@@ -24,7 +24,7 @@ repos:
         
       - id: python-mypy
         name: Python type check (mypy)
-        entry: bash -c 'cd packages/python && mypy src/odin_sig/'
+        entry: bash -c 'cd packages/python && mypy src/signature_sdk/'
         language: system
         pass_filenames: false
         files: '\.py$'
