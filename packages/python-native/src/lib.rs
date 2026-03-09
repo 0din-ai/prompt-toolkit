@@ -1,7 +1,7 @@
-//! Native Python bindings for odin-sig LSH functions
+//! Native Python bindings for signature-sdk LSH functions
 //!
 //! This crate provides PyO3 bindings for the performance-critical LSH functions
-//! from the odin-sig Rust library. When installed, the Python SDK automatically
+//! from the signature-sdk Rust library. When installed, the Python SDK automatically
 //! uses these native implementations for ~627× speedup over pure Python.
 
 use pyo3::prelude::*;
@@ -45,8 +45,8 @@ impl LshFamily {
     }
 }
 
-impl From<odin_sig::LshFamily> for LshFamily {
-    fn from(f: odin_sig::LshFamily) -> Self {
+impl From<signature_sdk::LshFamily> for LshFamily {
+    fn from(f: signature_sdk::LshFamily) -> Self {
         LshFamily {
             family: f.family,
             bits: f.bits,
@@ -90,9 +90,9 @@ impl LshConfig {
     }
 }
 
-impl From<LshConfig> for odin_sig::LshConfig {
+impl From<LshConfig> for signature_sdk::LshConfig {
     fn from(c: LshConfig) -> Self {
-        odin_sig::LshConfig {
+        signature_sdk::LshConfig {
             families: c.families,
             bits: c.bits,
             bands: c.bands,
@@ -118,12 +118,12 @@ fn simhash_lsh_multi(
     bits: usize,
     bands: usize,
 ) -> Vec<LshFamily> {
-    let config = odin_sig::LshConfig {
+    let config = signature_sdk::LshConfig {
         families,
         bits,
         bands,
     };
-    let results = odin_sig::simhash_lsh_multi(&normalized_vector, &config);
+    let results = signature_sdk::simhash_lsh_multi(&normalized_vector, &config);
     results.into_iter().map(LshFamily::from).collect()
 }
 
@@ -136,7 +136,7 @@ fn simhash_lsh_multi(
 ///     L2-normalized vector. If the input has zero magnitude, returns the original.
 #[pyfunction]
 fn normalize_vector(vector: Vec<f32>) -> Vec<f32> {
-    odin_sig::normalize_vector(&vector)
+    signature_sdk::normalize_vector(&vector)
 }
 
 /// Compute Hamming distance between two hex-encoded signatures
@@ -149,7 +149,7 @@ fn normalize_vector(vector: Vec<f32>) -> Vec<f32> {
 ///     Number of differing bits
 #[pyfunction]
 fn hamming_distance_hex(a: &str, b: &str) -> usize {
-    odin_sig::hamming_distance_hex(a, b)
+    signature_sdk::hamming_distance_hex(a, b)
 }
 
 /// Estimate cosine similarity from Hamming distance
@@ -164,7 +164,7 @@ fn hamming_distance_hex(a: &str, b: &str) -> usize {
 ///     Estimated cosine similarity in [-1, 1]
 #[pyfunction]
 fn cosine_from_hamming(distance_bits: usize, total_bits: usize) -> f64 {
-    odin_sig::cosine_from_hamming(distance_bits, total_bits)
+    signature_sdk::cosine_from_hamming(distance_bits, total_bits)
 }
 
 /// Compute canonical SHA-256 hash of a normalized embedding
@@ -180,15 +180,15 @@ fn cosine_from_hamming(distance_bits: usize, total_bits: usize) -> f64 {
 ///     Hex-encoded SHA-256 hash
 #[pyfunction]
 fn compute_embedding_sha256(normalized_embedding: Vec<f32>) -> String {
-    odin_sig::compute_embedding_sha256(&normalized_embedding)
+    signature_sdk::compute_embedding_sha256(&normalized_embedding)
 }
 
-/// Native Python extension module for odin-sig
+/// Native Python extension module for signature-sdk
 ///
 /// This module is imported as `odin_sig_native` and provides accelerated
 /// implementations of the core LSH functions.
 #[pymodule]
-fn odin_sig_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn signature_sdk_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LshFamily>()?;
     m.add_class::<LshConfig>()?;
     m.add_function(wrap_pyfunction!(simhash_lsh_multi, m)?)?;

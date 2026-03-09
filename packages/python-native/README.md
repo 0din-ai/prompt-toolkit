@@ -1,6 +1,6 @@
-# odin-sig-native
+# signature-sdk-native
 
-Native Rust acceleration for the Python odin-sig SDK.
+Native Rust acceleration for the Python signature-sdk SDK.
 
 This package provides PyO3-based native extensions that accelerate the performance-critical LSH signature generation functions by ~627× compared to pure Python.
 
@@ -35,7 +35,7 @@ This builds the native extension and installs it into your current Python enviro
 maturin build --release
 
 # Install the wheel
-pip install target/wheels/odin_sig_native-*.whl
+pip install target/wheels/signature_sdk_native-*.whl
 ```
 
 ## Usage
@@ -43,7 +43,7 @@ pip install target/wheels/odin_sig_native-*.whl
 The native extension is **transparent** — once installed, the Python SDK automatically uses it:
 
 ```python
-from odin_sig import simhash_lsh_multi, NATIVE_AVAILABLE
+from signature_sdk import simhash_lsh_multi, NATIVE_AVAILABLE
 
 # Check if native acceleration is active
 print(f"Native acceleration: {NATIVE_AVAILABLE}")
@@ -89,12 +89,12 @@ python -m pytest tests/test_vectors.py -v
 
 ## Architecture
 
-This crate is a thin PyO3 wrapper around the core `odin-sig` Rust library. It contains **zero LSH logic** — all computation is delegated to `odin-sig` via path dependency.
+This crate is a thin PyO3 wrapper around the core `signature-sdk` Rust library. It contains **zero LSH logic** — all computation is delegated to `signature-sdk` via path dependency.
 
 ```
-odin-sig-python (this crate)
+signature-sdk-python (this crate)
     ├── PyO3 type conversions
     ├── Python module setup
-    └── depends on → odin-sig (../rust)
+    └── depends on → signature-sdk (../rust)
                        └── Core LSH implementation
 ```

@@ -10,13 +10,13 @@ def benchmark(use_native: bool, iterations: int = 100):
     """Benchmark signature generation."""
     if use_native:
         # Import native version
-        import odin_sig_native as impl
+        import signature_sdk_native as impl
 
         name = "Native (Rust)"
     else:
         # Import pure Python version by going directly to the _python functions
         sys.path.insert(0, "../python")
-        from odin_sig.lsh import (
+        from signature_sdk.lsh import (
             _simhash_lsh_multi_python as simhash_lsh_multi,
             _normalize_vector_python as normalize_vector,
         )
