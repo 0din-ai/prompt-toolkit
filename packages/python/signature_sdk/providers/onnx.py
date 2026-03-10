@@ -102,11 +102,16 @@ class OnnxProvider:
         session = ort.InferenceSession(model_path)
 
         # Load tokenizer
-        tokenizer_path = str(cache.get_tokenizer_path("v1"))
-        tokenizer = AutoTokenizer.from_pretrained(
-            cache.model_directory("v1"),
-            local_files_only=True,
-        )
+        # Suppress false-positive Mistral regex warning for XLMRoberta tokenizer
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*fix_mistral_regex.*")
+            tokenizer_path = str(cache.get_tokenizer_path("v1"))
+            tokenizer = AutoTokenizer.from_pretrained(
+                cache.model_directory("v1"),
+                local_files_only=True,
+            )
 
         # Get dimensions from model output
         output_shape = session.get_outputs()[0].shape
