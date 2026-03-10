@@ -253,8 +253,8 @@ import TabItem from '@theme/TabItem';
 ```rust
 use signature_sdk::cm_lsh::create_default_cm_lsh;
 
-// Create CM-LSH hasher (384-dim embeddings)
-let hasher = create_default_cm_lsh(384, 0);
+// Create CM-LSH hasher (1024-dim embeddings)
+let hasher = create_default_cm_lsh(1024, 0);
 
 // Generate dual hash
 let hash = hasher.hash(&embedding);
@@ -272,8 +272,8 @@ println!("Similarity: {:.3}", similarity);  // e.g., 0.847
 ```python
 from signature_sdk.cm_lsh import create_default_cm_lsh
 
-# Create CM-LSH hasher (384-dim embeddings)
-hasher = create_default_cm_lsh(384, family=0)
+# Create CM-LSH hasher (1024-dim embeddings)
+hasher = create_default_cm_lsh(1024, family=0)
 
 # Generate dual hash
 hash = hasher.hash(embedding)
@@ -291,7 +291,7 @@ print(f"Similarity: {similarity:.3f}")  # e.g., 0.847
 ```typescript
 import { createDefaultCmLsh } from '@0din/signature-sdk';
 
-// Create CM-LSH hasher (384-dim embeddings)
+// Create CM-LSH hasher (1024-dim embeddings)
 const hasher = createDefaultCmLsh(384, 0);
 
 // Generate dual hash
@@ -315,7 +315,7 @@ console.log(`Similarity: ${similarity.toFixed(3)}`);  // e.g., 0.847
 ```python
 from signature_sdk.cm_lsh import create_default_cm_lsh
 
-hasher = create_default_cm_lsh(384)
+hasher = create_default_cm_lsh(1024)
 
 # Hash a corpus of embeddings
 hashes = [hasher.hash(emb) for emb in embeddings]

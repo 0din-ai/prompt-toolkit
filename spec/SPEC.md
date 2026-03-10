@@ -104,7 +104,7 @@ LshConfig:
 ### Input Requirements
 
 - `normalized_vector` MUST be L2-normalized (unit length)
-- Vector can be any dimension (typically 384 or 1536)
+- Vector can be any dimension (typically 1024 or 1536)
 - All computations use `f64` precision for dot products
 
 ### Hex Packing
