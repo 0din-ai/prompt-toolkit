@@ -54,8 +54,8 @@ class FixedEmbeddingProvider:
 @pytest.mark.asyncio
 async def test_cross_validation_v1():
     """Test V1 signature with fixed embedding."""
-    # Create provider with V1 dimensions (384)
-    provider = FixedEmbeddingProvider(384)
+    # Create provider with V1 dimensions (1024)
+    provider = FixedEmbeddingProvider(1024)
 
     # Generate signature
     result = await sign_text("test prompt", provider=provider, version=SignatureVersion.V1)
@@ -104,7 +104,7 @@ async def test_cross_validation_pattern():
 
         def __init__(self):
             # Create a pattern: alternating positive/negative
-            self._embedding = [1.0 if i % 2 == 0 else -1.0 for i in range(384)]
+            self._embedding = [1.0 if i % 2 == 0 else -1.0 for i in range(1024)]
 
         def name(self) -> str:
             return "pattern-provider"
@@ -113,7 +113,7 @@ async def test_cross_validation_pattern():
             return "pattern-model"
 
         def dimensions(self) -> int:
-            return 384
+            return 1024
 
         async def generate_embedding(self, text: str) -> EmbeddingResult:
             from signature_sdk.lsh import normalize_vector
@@ -127,7 +127,7 @@ async def test_cross_validation_pattern():
                 normalized_embedding=normalized,
                 normalized_embedding_sha256=sha256,
                 model="pattern-model",
-                dimensions=384,
+                dimensions=1024,
                 token_count=10,
                 timing_ms=100.0,
             )
