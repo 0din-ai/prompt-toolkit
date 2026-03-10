@@ -210,7 +210,7 @@ All three implementations follow the **canonical specification**:
 | Version | Model | Dimensions | Provider | Comparable |
 |---------|-------|------------|----------|------------|
 | V0      | text-embedding-3-large | 1536 | OpenAI API | V0 ↔ V0 ✅ |
-| V1      | multilingual-e5-small  | 384  | ONNX local | V1 ↔ V1 ✅ |
+| V1      | multilingual-e5-large  | 1024 | ONNX local | V1 ↔ V1 ✅ |
 
 **Cross-version**: V0 ↔ V1 ❌ (different embedding spaces)
 
@@ -236,7 +236,7 @@ All implementations validate the `0din-v{N}:{signature}` format:
 - **Cosine Estimation**: O(1)
 - **Normalization**: O(dimensions)
 
-### Typical Performance (384-dim vector, 3 families, 256 bits)
+### Typical Performance (1024-dim vector, 3 families, 256 bits)
 
 | Language   | Time (single signature) | Notes |
 |------------|-------------------------|-------|

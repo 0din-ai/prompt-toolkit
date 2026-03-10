@@ -43,7 +43,7 @@ pip install -e "packages/python[onnx]"
 ```
 
 This pulls in `numpy`, `onnxruntime`, and `huggingface-hub`.  
-The ONNX model (`all-MiniLM-L6-v2`, 384-dim) is downloaded on first use and
+The ONNX model (`multilingual-e5-large`, 1024-dim) is downloaded on first use and
 cached in `~/.cache/huggingface/hub/`.
 
 ### 3. Install showcase dependencies
@@ -147,12 +147,12 @@ python demos/showcase.py --data path/to/threat-feed.json --phase summary
 ══════════════════════════════════════════════════════════════════════
 
   Loading: /path/to/threat-feed.json
-  Generating embeddings (ONNX, 384-dim, local — no API key)...
+  Generating embeddings (ONNX, 1024-dim, local — no API key)...
   [████████████████████████████████░░░░░░░░]  80.0% (8000/10000)
   Generating LSH signatures (256-bit, 16 bands)...
   Saving cache...
 
-  ✓ Ready: 10,000 prompts  |  embeddings: (10000, 384)  |  signatures: 10000
+  ✓ Ready: 10,000 prompts  |  embeddings: (10000, 1024)  |  signatures: 10000
 
 ══════════════════════════════════════════════════════════════════════
   PHASE 1: Setup Complexity
@@ -199,7 +199,7 @@ After the first run, `demos/cache/` contains:
 
 | File | Contents |
 |------|----------|
-| `embeddings.npz` | NumPy archive of 384-dim embeddings (one per prompt) |
+| `embeddings.npz` | NumPy archive of 1024-dim embeddings (one per prompt) |
 | `signatures.json` | LSH signatures as hex strings |
 | `signatures.db` | SQLite band-index DB (Approach A) |
 | `sqlite_vec.db` | sqlite-vec vector DB (Approach B) |

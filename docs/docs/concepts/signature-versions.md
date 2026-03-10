@@ -11,8 +11,8 @@ signature-sdk supports two signature versions with different embedding providers
 | Feature | V0 | V1 |
 |---------|----|----|
 | **Provider** | OpenAI API | Local ONNX |
-| **Model** | text-embedding-3-large | multilingual-e5-small |
-| **Dimensions** | 1536 | 384 |
+| **Model** | text-embedding-3-large | multilingual-e5-large |
+| **Dimensions** | 1536 | 1024 |
 | **API Key** | Required | Not required |
 | **Latency** | ~100-500ms | ~10-50ms |
 | **Cost** | $0.13 per 1M tokens | Free |
@@ -46,7 +46,7 @@ export OPENAI_API_KEY=your-key-here
 ## Compatibility
 
 :::danger Not Comparable
-V0 and V1 signatures use **different embedding spaces** (1536 vs 384 dimensions) and are **not comparable**. Always compare signatures with the same version.
+V0 and V1 signatures use **different embedding spaces** (1536 vs 1024 dimensions) and are **not comparable**. Always compare signatures with the same version.
 :::
 
 **Do NOT**:

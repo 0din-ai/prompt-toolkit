@@ -294,9 +294,9 @@ The included `signatures/threat-feed-v1.json` demonstrates the signature pack fo
 
 ### Signatures vs Embeddings
 
-**Embeddings** (384-dim vectors):
+**Embeddings** (1024-dim vectors):
 - Capture semantic meaning
-- High storage cost (~1.5KB per item)
+- High storage cost (~4KB per item)
 - Slow similarity search at scale (must compare all items)
 
 **Signatures** (256-bit hashes):
@@ -314,7 +314,7 @@ The SDK generates **3 independent hash families** by default for improved recall
 ### Versions
 
 - **V0**: OpenAI embeddings (1536 dimensions) - legacy
-- **V1**: ONNX embeddings (384 dimensions) - current, included in this package
+- **V1**: ONNX embeddings (1024 dimensions) - current, included in this package
 
 **Important**: V0 and V1 signatures are NOT comparable (different embedding spaces).
 

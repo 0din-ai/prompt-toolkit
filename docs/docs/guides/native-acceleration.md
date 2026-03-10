@@ -194,7 +194,7 @@ cargo run --release --example benchmark_signatures -- --count 10000
 
 **Expected output:**
 ```
-Generating 10,000 signatures (384-dim random vectors)...
+Generating 10,000 signatures (1024-dim random vectors)...
 Time: 1.760s
 Throughput: 5,683 signatures/sec
 Per-signature: 0.176ms

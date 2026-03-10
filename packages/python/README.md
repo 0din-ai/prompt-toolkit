@@ -84,8 +84,8 @@ print(f"Estimated cosine similarity: {similarity:.3f}")
 ```python
 from signature_sdk.cm_lsh import create_default_cm_lsh
 
-# Create CM-LSH hasher (384 dimensions)
-cm_lsh = create_default_cm_lsh(384, family=0)
+# Create CM-LSH hasher (1024 dimensions)
+cm_lsh = create_default_cm_lsh(1024, family=0)
 
 # Generate 512-bit signature with confidence matrix
 hash1 = cm_lsh.hash(embedding1)
@@ -102,7 +102,7 @@ is_duplicate = cm_lsh.is_dup(hash1, hash2, threshold=0.85)
 ## Signature Versions
 
 - **V0**: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-- **V1**: multilingual-e5-small ONNX (384 dimensions, local)
+- **V1**: multilingual-e5-large ONNX (1024 dimensions, local)
 - **Latest**: Resolves to V1
 
 **Important**: V0 and V1 signatures are **not comparable** due to different embedding spaces.

@@ -141,7 +141,7 @@ interface LshConfig {
 
 enum SignatureVersion {
   V0 = 'v0', // OpenAI (1536 dims)
-  V1 = 'v1', // ONNX (384 dims)
+  V1 = 'v1', // ONNX (1024 dims)
   LATEST = 'latest', // Resolves to V1
 }
 ```
@@ -149,7 +149,7 @@ enum SignatureVersion {
 ## Signature Versions
 
 - **V0**: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-- **V1**: multilingual-e5-small ONNX (384 dimensions, local)
+- **V1**: multilingual-e5-large ONNX (1024 dimensions, local)
 - **Latest**: Resolves to V1
 
 **Important**: V0 and V1 signatures are **not comparable** due to different embedding spaces.
