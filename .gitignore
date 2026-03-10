@@ -4,6 +4,7 @@
 # Rust
 /packages/rust/target/
 /packages/rust/Cargo.lock
+/packages/python-native/target/
 *.rs.bk
 
 # Python
