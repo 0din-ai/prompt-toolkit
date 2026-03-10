@@ -1,7 +1,7 @@
 //! ONNX embedding provider implementation using tract.
 //!
 //! This module provides embedding generation using ONNX models via the tract runtime.
-//! The default model is `intfloat/multilingual-e5-small` which produces 384-dimensional embeddings.
+//! The default model is `intfloat/multilingual-e5-large` which produces 1024-dimensional embeddings.
 //!
 //! ## Features
 //!
@@ -53,8 +53,8 @@ type TractModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<d
 
 /// ONNX embedding provider using tract runtime.
 ///
-/// This provider uses the `intfloat/multilingual-e5-small` model by default,
-/// which produces 384-dimensional embeddings suitable for multilingual text similarity.
+/// This provider uses the `intfloat/multilingual-e5-large` model by default,
+/// which produces 1024-dimensional embeddings suitable for multilingual text similarity.
 ///
 /// The model is automatically downloaded from HuggingFace on first use and cached locally.
 #[derive(Debug)]
@@ -83,7 +83,7 @@ impl OnnxProvider {
     pub const DEFAULT_MODEL: &'static str = "models/v1";
 
     /// Default embedding dimensions.
-    pub const DEFAULT_DIMENSIONS: usize = 384;
+    pub const DEFAULT_DIMENSIONS: usize = 1024;
 
     /// Maximum sequence length supported by the model.
     pub const MAX_SEQUENCE_LENGTH: usize = 512;
@@ -442,7 +442,7 @@ mod tests {
     #[test]
     fn test_constants() {
         assert_eq!(OnnxProvider::DEFAULT_MODEL, "models/v1");
-        assert_eq!(OnnxProvider::DEFAULT_DIMENSIONS, 384);
+        assert_eq!(OnnxProvider::DEFAULT_DIMENSIONS, 1024);
         assert_eq!(OnnxProvider::MAX_SEQUENCE_LENGTH, 512);
         assert_eq!(OnnxProvider::INPUT_PREFIX, "query: ");
     }
