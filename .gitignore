@@ -53,3 +53,9 @@ demos/cache/*.db
 
 # OpenCode
 .opencode/
+
+# Model files (large ONNX models, don't commit to repo)
+models/*/onnx/*.onnx
+models/*/onnx/*.onnx_data
+models/*/tokenizer.json
+models/*/*.json
