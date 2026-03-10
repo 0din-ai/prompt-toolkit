@@ -212,12 +212,12 @@ def _resolve_version(
     # Infer version from provider dimensions
     if provider_dims == 1536:
         inferred_version = SignatureVersion.V0
-    elif provider_dims == 384:
+    elif provider_dims == 1024:
         inferred_version = SignatureVersion.V1
     else:
         raise ValueError(
             f"Cannot infer version from provider dimensions ({provider_dims}). "
-            f"Expected 1536 (V0) or 384 (V1). "
+            f"Expected 1536 (V0) or 1024 (V1). "
             f"Please specify version explicitly."
         )
 
