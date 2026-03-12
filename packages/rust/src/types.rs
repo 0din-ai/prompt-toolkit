@@ -75,7 +75,7 @@ impl SignatureVersion {
     /// # Example
     ///
     /// ```
-    /// use signature_sdk::types::SignatureVersion;
+    /// use odin_prompt_toolkit::types::SignatureVersion;
     ///
     /// assert_eq!(SignatureVersion::V0.resolve(), SignatureVersion::V0);
     /// assert_eq!(SignatureVersion::V1.resolve(), SignatureVersion::V1);
@@ -117,7 +117,7 @@ impl SignatureVersion {
     /// # Example
     ///
     /// ```
-    /// use signature_sdk::types::SignatureVersion;
+    /// use odin_prompt_toolkit::types::SignatureVersion;
     ///
     /// assert_eq!(SignatureVersion::V0.embedding_dimensions(), 1536);
     /// assert_eq!(SignatureVersion::V1.embedding_dimensions(), 1024);
@@ -459,7 +459,7 @@ impl ParsedSignature {
 /// # Example
 ///
 /// ```
-/// use signature_sdk::{signature_string, SignatureVersion};
+/// use odin_prompt_toolkit::{signature_string, SignatureVersion};
 ///
 /// let sig = signature_string(SignatureVersion::V1, "abcd1234");
 /// assert_eq!(sig, "0din-v1:abcd1234");
