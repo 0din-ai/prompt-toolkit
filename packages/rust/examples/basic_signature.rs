@@ -7,7 +7,7 @@
 //!
 //! Run with: cargo run --example basic_signature
 
-use signature_sdk::{simhash_lsh_multi, LshConfig};
+use odin_prompt_toolkit::{simhash_lsh_multi, LshConfig};
 
 fn main() {
     println!("=== Basic LSH Signature Generation ===\n");
