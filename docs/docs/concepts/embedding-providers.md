@@ -122,7 +122,7 @@ npm install @0din/signature-sdk openai
 
 **Best for:** Local development, API-free deployment, cost-sensitive applications
 
-- **Model**: intfloat/multilingual-e5-small (custom fine-tuned variant)
+- **Model**: intfloat/multilingual-e5-large (custom fine-tuned variant)
 - **Dimensions**: 384
 - **Cost**: Free (local inference)
 - **Setup**: Model auto-downloads to `~/.cache/signature-sdk/models/v1/`
@@ -207,7 +207,7 @@ npm install @0din/signature-sdk onnxruntime-node
 
 | Feature | OpenAI (V0) | ONNX (V1) |
 |---------|-------------|-----------|
-| **Dimensions** | 1536 | 384 |
+| **Dimensions** | 1536 | 1024 |
 | **Cost** | $0.13 per 1M tokens | Free |
 | **Latency** | ~100-200ms | ~50-100ms (CPU) |
 | **API Key** | Required | Not required |

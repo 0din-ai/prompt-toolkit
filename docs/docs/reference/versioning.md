@@ -18,6 +18,6 @@ See [spec/VERSIONING.md](https://github.com/0din-ai/signature-sdk/blob/main/spec
 | Version | Status | Model | Dimensions |
 |---------|--------|-------|------------|
 | V0 | ✅ Stable | text-embedding-3-large | 1536 |
-| V1 | ✅ Stable | multilingual-e5-small | 384 |
+| V1 | ✅ Stable | multilingual-e5-large | 1024 |
 
 **Rule**: Signatures with different versions are **not comparable**.

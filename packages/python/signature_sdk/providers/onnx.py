@@ -30,14 +30,14 @@ except ImportError as e:
 class OnnxProvider:
     """ONNX embedding provider using local model inference.
 
-    This provider uses the intfloat/multilingual-e5-small model by default,
-    which produces 384-dimensional embeddings suitable for multilingual text similarity.
+    This provider uses the intfloat/multilingual-e5-large model by default,
+    which produces 1024-dimensional embeddings suitable for multilingual text similarity.
 
     The model is automatically downloaded from HuggingFace on first use and cached locally.
 
     Args:
         cache: ModelCache instance for managing model files
-        model: Model name or local path (default: "intfloat/multilingual-e5-small")
+        model: Model name or local path (default: "intfloat/multilingual-e5-large")
         name: Provider name (default: "onnx")
 
     Example:
@@ -47,8 +47,8 @@ class OnnxProvider:
         >>> print(f"Generated {result.dimensions}-dimensional embedding")
     """
 
-    DEFAULT_MODEL = "intfloat/multilingual-e5-small"
-    DEFAULT_DIMENSIONS = 384
+    DEFAULT_MODEL = "intfloat/multilingual-e5-large"
+    DEFAULT_DIMENSIONS = 1024
 
     def __init__(
         self,
@@ -102,11 +102,16 @@ class OnnxProvider:
         session = ort.InferenceSession(model_path)
 
         # Load tokenizer
-        tokenizer_path = str(cache.get_tokenizer_path("v1"))
-        tokenizer = AutoTokenizer.from_pretrained(
-            cache.model_directory("v1"),
-            local_files_only=True,
-        )
+        # Suppress false-positive Mistral regex warning for XLMRoberta tokenizer
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*fix_mistral_regex.*")
+            tokenizer_path = str(cache.get_tokenizer_path("v1"))
+            tokenizer = AutoTokenizer.from_pretrained(
+                cache.model_directory("v1"),
+                local_files_only=True,
+            )
 
         # Get dimensions from model output
         output_shape = session.get_outputs()[0].shape

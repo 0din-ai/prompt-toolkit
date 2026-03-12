@@ -37,7 +37,7 @@ We benchmarked three approaches to prompt similarity lookup against **3,714 real
 | Source | 0DIN threat feed (`vulnerabilities_cache.json`) |
 | Raw entries | 3,895 jailbreak prompts |
 | After deduplication | **3,714 unique prompts** |
-| Embedding model | `intfloat/multilingual-e5-small` (384-dim, local ONNX) |
+| Embedding model | `intfloat/multilingual-e5-large` (1024-dim, local ONNX) |
 | Signature config | 256-bit SimHash · 16 bands · 3 families |
 | Hardware | MacBook Pro (CPU only, local inference) |
 | Run date | 2026-02-26 |
@@ -50,7 +50,7 @@ We benchmarked three approaches to prompt similarity lookup against **3,714 real
 | **B** | **sqlite-vec KNN** | `sqlite-vec` pip package (brute-force scan) |
 | **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker (enterprise ANN indexing) |
 
-All three use the **same embeddings** (384-dim multilingual-e5-small). The comparison isolates the **lookup mechanism**, not the semantic understanding.
+All three use the **same embeddings** (1024-dim multilingual-e5-large). The comparison isolates the **lookup mechanism**, not the semantic understanding.
 
 ---
 
@@ -317,7 +317,7 @@ Total per item: ~574 bytes
 
 ```
 Vector data:
-  - 384 dimensions × 4 bytes (float32) = 1,536 bytes
+  - 1024 dimensions × 4 bytes (float32) = 1,536 bytes
 
 SQLite overhead:
   - Row metadata, virtual table = ~102 bytes
@@ -346,7 +346,7 @@ Evaluated on a **500-item sample** with **233 ground-truth duplicate pairs** (co
 | Exact KNN (sqlite-vec) | 1.000 | 1.000 | **1.000** | Guaranteed to find all pairs |
 | Signatures (LSH) | 0.762 | 0.742 | **0.752** | Approximate, tunable |
 
-**The F1 gap of 0.248 is NOT a difference in semantic understanding.** Both approaches use the **same 384-dim embeddings**. The gap is entirely in the **lookup approximation**:
+**The F1 gap of 0.248 is NOT a difference in semantic understanding.** Both approaches use the **same 1024-dim embeddings**. The gap is entirely in the **lookup approximation**:
 
 - **Exact KNN**: Computes cosine similarity between query and *every* vector — guaranteed to find all pairs above threshold
 - **Signatures (LSH)**: Use band-hash collisions to retrieve candidates. If two similar vectors don't collide in any band, they're missed. Recall of 0.742 means ~26% of true duplicates don't trigger a band match.
@@ -467,7 +467,7 @@ cargo run --release --example benchmark_signatures -- --count 10000
 
 **Expected output**:
 ```
-Generating 10,000 signatures (384-dim random vectors)...
+Generating 10,000 signatures (1024-dim random vectors)...
 Time: 1.760s
 Throughput: 5,683 signatures/sec
 Per-signature: 0.176ms

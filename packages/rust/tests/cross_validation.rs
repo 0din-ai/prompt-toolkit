@@ -62,8 +62,8 @@ impl EmbeddingProvider for FixedEmbeddingProvider {
 
 #[tokio::test]
 async fn test_cross_validation_v1() -> Result<()> {
-    // Create provider with V1 dimensions (384)
-    let provider = FixedEmbeddingProvider::new(384);
+    // Create provider with V1 dimensions (1024)
+    let provider = FixedEmbeddingProvider::new(1024);
 
     // Generate signature
     let result = sign_text(
@@ -84,12 +84,12 @@ async fn test_cross_validation_v1() -> Result<()> {
     assert!(signature.starts_with("0din-v1:"));
     assert_eq!(signature.len(), 72); // "0din-v1:" (8) + 64 hex chars
 
-    // Expected signature for [0.5; 384] embedding
+    // Expected signature for [0.5; 1024] embedding
     // This should match across all three implementations
-    let expected_sig = "0din-v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    let _expected_sig = "0din-v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     
     // Note: The actual signature will depend on the LSH implementation
-    // For a [0.5; 384] vector, all hyperplane projections will be the same
+    // For a [0.5; 1024] vector, all hyperplane projections will be the same
     // So we expect a pattern, but let's just verify the format for now
     assert!(signature.starts_with("0din-v1:"));
     assert!(signature.chars().skip(8).all(|c| c.is_ascii_hexdigit()));
@@ -127,7 +127,7 @@ async fn test_cross_validation_v0() -> Result<()> {
 #[tokio::test]
 async fn test_cross_validation_different_vectors() -> Result<()> {
     // Test with a more complex vector pattern
-    let mut embedding = vec![0.0; 384];
+    let mut embedding = vec![0.0; 1024];
     
     // Create a pattern: alternating positive/negative after normalization
     for (i, val) in embedding.iter_mut().enumerate() {

@@ -255,12 +255,12 @@ The following **stay in their respective applications** (not part of the SDK):
 - ✅ **Throughput**: Local ONNX inference is faster for batch processing
 
 **Reasons to stay on V0**:
-- ⚠️ **Accuracy**: OpenAI text-embedding-3-large (1536-dim) may have higher quality than multilingual-e5-small (384-dim) for English text
+- ⚠️ **Accuracy**: OpenAI text-embedding-3-large (1536-dim) may have higher quality than multilingual-e5-large (1024-dim) for English text
 - ⚠️ **Investment**: Already have a large corpus of V0 signatures indexed
 
 ### Migration Process
 
-⚠️ **CRITICAL**: V0 and V1 signatures are **NOT comparable**. They use different embedding spaces (1536-dim vs 384-dim) and models.
+⚠️ **CRITICAL**: V0 and V1 signatures are **NOT comparable**. They use different embedding spaces (1536-dim vs 1024-dim) and models.
 
 **You cannot do gradual migration.** Choose one version and regenerate all signatures.
 
@@ -488,7 +488,7 @@ cur = conn.cursor()
 
 # Determine version (based on your knowledge of the data)
 # If you used OpenAI text-embedding-3-large → V0
-# If you used ONNX multilingual-e5-small → V1
+# If you used ONNX multilingual-e5-large → V1
 target_version = SignatureVersion.V1
 
 # Fetch all raw hex signatures

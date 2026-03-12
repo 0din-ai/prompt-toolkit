@@ -10,7 +10,7 @@ from signature_sdk.types import EmbeddingResult, LshConfig
 class MockProvider:
     """Mock embedding provider for testing."""
 
-    def __init__(self, dimensions: int = 384):
+    def __init__(self, dimensions: int = 1024):
         self._dimensions = dimensions
 
     def name(self) -> str:
@@ -42,14 +42,14 @@ class MockProvider:
 @pytest.mark.asyncio
 async def test_sign_text_v1_with_provider():
     """Test sign_text() with explicit V1 provider."""
-    provider = MockProvider(dimensions=384)
+    provider = MockProvider(dimensions=1024)
 
     result = await sign_text("test prompt", provider=provider, version=SignatureVersion.V1)
 
     assert result.version == SignatureVersion.V1
     assert result.provider == "mock-provider"
     assert result.model == "mock-model"
-    assert result.dimensions == 384
+    assert result.dimensions == 1024
     assert result.prompt_preview == "test prompt"
     assert result.prompt_length == 11
     assert result.timing_ms is not None
@@ -77,7 +77,7 @@ async def test_sign_text_v0_with_provider():
 @pytest.mark.asyncio
 async def test_sign_text_latest_resolves_to_v1():
     """Test that LATEST resolves to V1."""
-    provider = MockProvider(dimensions=384)
+    provider = MockProvider(dimensions=1024)
 
     result = await sign_text("test", provider=provider, version=SignatureVersion.LATEST)
 
@@ -87,8 +87,8 @@ async def test_sign_text_latest_resolves_to_v1():
 @pytest.mark.asyncio
 async def test_sign_text_infer_version_from_provider():
     """Test version inference from provider dimensions."""
-    # V1 provider (384 dims) - version inferred
-    provider_v1 = MockProvider(dimensions=384)
+    # V1 provider (1024 dims) - version inferred
+    provider_v1 = MockProvider(dimensions=1024)
     result = await sign_text("test", provider=provider_v1)
     assert result.version == SignatureVersion.V1
 
@@ -101,8 +101,8 @@ async def test_sign_text_infer_version_from_provider():
 @pytest.mark.asyncio
 async def test_sign_text_version_mismatch_with_provider():
     """Test that version mismatch with provider raises ValueError."""
-    # Provider returns 384 dimensions but we request V0 (expects 1536)
-    provider = MockProvider(dimensions=384)
+    # Provider returns 1024 dimensions but we request V0 (expects 1536)
+    provider = MockProvider(dimensions=1024)
 
     with pytest.raises(ValueError, match="Version mismatch"):
         await sign_text("test", provider=provider, version=SignatureVersion.V0)
@@ -121,7 +121,7 @@ async def test_sign_text_dimension_mismatch():
 @pytest.mark.asyncio
 async def test_sign_text_custom_config():
     """Test sign_text() with custom LSH config."""
-    provider = MockProvider(dimensions=384)
+    provider = MockProvider(dimensions=1024)
 
     custom_config = LshConfig(families=5, bits=128, bands=8)
 
@@ -136,7 +136,7 @@ async def test_sign_text_custom_config():
 @pytest.mark.asyncio
 async def test_sign_text_long_prompt_preview():
     """Test that long prompts are truncated in preview."""
-    provider = MockProvider(dimensions=384)
+    provider = MockProvider(dimensions=1024)
 
     long_text = "a" * 100
     result = await sign_text(long_text, provider=provider)
@@ -164,7 +164,7 @@ async def test_sign_text_auto_construct_v0_missing_api_key(monkeypatch):
 @pytest.mark.asyncio
 async def test_sign_text_backward_compat_positional():
     """Test backward compatibility with old positional argument style."""
-    provider = MockProvider(dimensions=384)
+    provider = MockProvider(dimensions=1024)
 
     # Old style: sign_text(text, provider, version, config)
     result = await sign_text("test", provider=provider, version=SignatureVersion.V1, config=None)

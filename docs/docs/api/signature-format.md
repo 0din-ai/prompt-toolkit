@@ -23,7 +23,7 @@ All 0din signatures use a standardized string format that encodes version and he
 **Examples:**
 ```
 0din-v0:abc1234567890def...  (OpenAI, 1536-dim, 64 hex chars)
-0din-v1:8d000000ac854dae...  (ONNX, 384-dim, 64 hex chars)
+0din-v1:8d000000ac854dae...  (ONNX, 1024-dim, 64 hex chars)
 ```
 
 ---
@@ -248,7 +248,7 @@ Signatures from different versions are **NOT comparable** because they use diffe
 | Version | Model | Dimensions | Comparable With |
 |---------|-------|------------|-----------------|
 | V0 | OpenAI text-embedding-3-large | 1536 | V0 only |
-| V1 | multilingual-e5-small ONNX | 384 | V1 only |
+| V1 | multilingual-e5-large ONNX | 1024 | V1 only |
 
 **Cross-Version Comparison:**
 ```typescript

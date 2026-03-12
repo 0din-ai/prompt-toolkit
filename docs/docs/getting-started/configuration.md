@@ -100,7 +100,7 @@ bits = bands × bits_per_band
 |---------------|-----------|-------|-------|
 | 3 families × 256 bits | 192 | 96 | Default, good balance |
 | 5 families × 256 bits | 320 | 160 | Higher recall |
-| 3 families × 512 bits | 384 | 192 | Higher precision |
+| 3 families × 512 bits | 1024 | 192 | Higher precision |
 | 1 family × 256 bits | 64 | 32 | Minimal storage |
 
 ---
@@ -180,7 +180,7 @@ use signature_sdk::providers::{ModelCache, OnnxProvider};
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(
     &cache,
-    Some("intfloat/multilingual-e5-small".to_string()),  // Model
+    Some("intfloat/multilingual-e5-large".to_string()),  // Model
     Some("onnx".to_string()),                             // Name
 ).await?;
 ```
@@ -194,7 +194,7 @@ from signature_sdk.providers import ModelCache, OnnxProvider
 cache = ModelCache()
 provider = await OnnxProvider.new(
     cache,
-    model_name="intfloat/multilingual-e5-small",  # Optional
+    model_name="intfloat/multilingual-e5-large",  # Optional
     name="onnx",                                    # Optional
 )
 ```
@@ -208,7 +208,7 @@ import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(
   cache,
-  'intfloat/multilingual-e5-small',  // Optional
+  'intfloat/multilingual-e5-large',  // Optional
   'onnx'                               // Optional
 );
 ```

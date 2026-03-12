@@ -226,11 +226,11 @@ fn resolve_version(
     // Infer version from provider dimensions
     let inferred_version = match provider_dims {
         1536 => SignatureVersion::V0,
-        384 => SignatureVersion::V1,
+        1024 => SignatureVersion::V1,
         _ => {
             return Err(SigError::InvalidInput(format!(
                 "Cannot infer version from provider dimensions ({}). \
-                 Expected 1536 (V0) or 384 (V1). \
+                 Expected 1536 (V0) or 1024 (V1). \
                  Please specify version explicitly.",
                 provider_dims
             )));
@@ -300,12 +300,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_v1_with_provider() {
-        // Create mock provider with V1 dimensions (384)
-        let embedding = vec![0.5; 384];
+        // Create mock provider with V1 dimensions (1024)
+        let embedding = vec![0.5; 1024];
         let provider = MockProvider {
             name: "mock-onnx".to_string(),
             model: "test-model".to_string(),
-            dimensions: 384,
+            dimensions: 1024,
             embedding,
         };
 
@@ -316,7 +316,7 @@ mod tests {
         assert_eq!(result.version, SignatureVersion::V1);
         assert_eq!(result.provider, "mock-onnx");
         assert_eq!(result.model, "test-model");
-        assert_eq!(result.dimensions, 384);
+        assert_eq!(result.dimensions, 1024);
         assert_eq!(result.prompt_preview, "test prompt");
         assert_eq!(result.prompt_length, 11);
         assert!(result.timing_ms.is_some());
@@ -351,11 +351,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_latest_resolves_to_v1() {
-        let embedding = vec![0.5; 384]; // V1 dimensions
+        let embedding = vec![0.5; 1024]; // V1 dimensions
         let provider = MockProvider {
             name: "mock".to_string(),
             model: "test".to_string(),
-            dimensions: 384,
+            dimensions: 1024,
             embedding,
         };
 
@@ -369,12 +369,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_infer_version_from_provider() {
-        // V1 provider (384 dims)
+        // V1 provider (1024 dims)
         let provider_v1 = MockProvider {
             name: "mock".to_string(),
             model: "test".to_string(),
-            dimensions: 384,
-            embedding: vec![0.5; 384],
+            dimensions: 1024,
+            embedding: vec![0.5; 1024],
         };
 
         let result = sign_text("test", SignatureVersion::Latest, Some(&provider_v1), None)
@@ -398,12 +398,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_version_mismatch() {
-        // Provider returns 384 dimensions but we request V0 (expects 1536)
-        let embedding = vec![0.5; 384];
+        // Provider returns 1024 dimensions but we request V0 (expects 1536)
+        let embedding = vec![0.5; 1024];
         let provider = MockProvider {
             name: "mock".to_string(),
             model: "test".to_string(),
-            dimensions: 384,
+            dimensions: 1024,
             embedding,
         };
 
@@ -438,11 +438,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_custom_config() {
-        let embedding = vec![0.5; 384];
+        let embedding = vec![0.5; 1024];
         let provider = MockProvider {
             name: "mock".to_string(),
             model: "test".to_string(),
-            dimensions: 384,
+            dimensions: 1024,
             embedding,
         };
 
@@ -469,11 +469,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_sign_text_long_prompt_preview() {
-        let embedding = vec![0.5; 384];
+        let embedding = vec![0.5; 1024];
         let provider = MockProvider {
             name: "mock".to_string(),
             model: "test".to_string(),
-            dimensions: 384,
+            dimensions: 1024,
             embedding,
         };
 
