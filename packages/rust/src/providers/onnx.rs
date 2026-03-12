@@ -24,8 +24,8 @@
 //! ```no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use signature_sdk::providers::{OnnxProvider, ModelCache};
-//! use signature_sdk::provider::EmbeddingProvider;
+//! use odin_prompt_toolkit::providers::{OnnxProvider, ModelCache};
+//! use odin_prompt_toolkit::provider::EmbeddingProvider;
 //!
 //! let cache = ModelCache::new()?;
 //! let provider = OnnxProvider::new(&cache, None, None).await?;

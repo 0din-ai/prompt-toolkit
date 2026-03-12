@@ -15,8 +15,8 @@
 //! ```rust,no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use signature_sdk::{sign_text, SignatureVersion};
-//! use signature_sdk::providers::{ModelCache, OnnxProvider};
+//! use odin_prompt_toolkit::{sign_text, SignatureVersion};
+//! use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 //!
 //! // Initialize ONNX provider (local, no API key needed)
 //! let cache = ModelCache::new()?;
@@ -43,9 +43,9 @@
 //! ```rust,no_run
 //! # #[cfg(feature = "onnx")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use signature_sdk::{simhash_lsh_multi, LshConfig};
-//! use signature_sdk::provider::EmbeddingProvider;
-//! use signature_sdk::providers::{ModelCache, OnnxProvider};
+//! use odin_prompt_toolkit::{simhash_lsh_multi, LshConfig};
+//! use odin_prompt_toolkit::provider::EmbeddingProvider;
+//! use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 //!
 //! let cache = ModelCache::new()?;
 //! let provider = OnnxProvider::new(&cache, None, None).await?;

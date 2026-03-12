@@ -32,7 +32,7 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// ```no_run
 /// # #[cfg(feature = "onnx")]
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// use signature_sdk::{sign_text, SignatureVersion};
+/// use odin_prompt_toolkit::{sign_text, SignatureVersion};
 ///
 /// let result = sign_text("How do I reset my password?", SignatureVersion::Latest, None, None).await?;
 /// println!("Signature: {}", result.to_signature_string());
@@ -44,9 +44,9 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// ```no_run
 /// # #[cfg(feature = "onnx")]
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// use signature_sdk::{sign_text, SignatureVersion};
-/// use signature_sdk::providers::{OnnxProvider, ModelCache};
-/// use signature_sdk::provider::EmbeddingProvider;
+/// use odin_prompt_toolkit::{sign_text, SignatureVersion};
+/// use odin_prompt_toolkit::providers::{OnnxProvider, ModelCache};
+/// use odin_prompt_toolkit::provider::EmbeddingProvider;
 ///
 /// let cache = ModelCache::new()?;
 /// let provider = OnnxProvider::new(&cache, None, None).await?;
