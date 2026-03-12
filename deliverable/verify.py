@@ -44,7 +44,7 @@ def verify_import() -> bool:
         import odin_prompt_toolkit
 
         print_success(
-            f"signature_sdk imported successfully (v{signature_sdk.__version__})"
+            f"signature_sdk imported successfully (v{odin_prompt_toolkit.__version__})"
         )
         return True
     except ImportError as e:
@@ -55,7 +55,7 @@ def verify_import() -> bool:
 def verify_native_acceleration() -> Optional[bool]:
     """Check if native acceleration is available."""
     try:
-        from signature_sdk import NATIVE_AVAILABLE
+        from odin_prompt_toolkit import NATIVE_AVAILABLE
 
         if NATIVE_AVAILABLE:
             print_success("Native Rust acceleration is ENABLED (653× faster)")
@@ -73,7 +73,7 @@ def verify_native_acceleration() -> Optional[bool]:
 def verify_signature_generation() -> bool:
     """Verify basic signature generation works."""
     try:
-        from signature_sdk import simhash_lsh_multi, normalize_vector
+        from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
         # Test vector: simple 3D vector
         test_vector = [1.0, 2.0, 3.0]
@@ -119,7 +119,7 @@ def verify_signature_generation() -> bool:
 def verify_signature_format() -> bool:
     """Verify signature string formatting and parsing."""
     try:
-        from signature_sdk import (
+        from odin_prompt_toolkit import (
             signature_string,
             parse_signature_string,
             SignatureVersion,
@@ -157,7 +157,7 @@ def verify_signature_format() -> bool:
 def verify_hamming_distance() -> bool:
     """Verify Hamming distance calculation."""
     try:
-        from signature_sdk import hamming_distance_hex
+        from odin_prompt_toolkit import hamming_distance_hex
 
         # Test known cases
         test_cases = [
