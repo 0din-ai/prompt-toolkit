@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cross-language validation script for 0din-sig SDK.
+Cross-language validation script for 0DIN Prompt Toolkit.
 
 Runs test suites for all three language implementations (Rust, Python, TypeScript)
 and validates that all tests pass. Used in CI pipeline to ensure cross-language
@@ -93,7 +93,7 @@ def main() -> int:
     root_dir = script_dir.parent
 
     print(f"{CYAN}{'=' * 60}{RESET}")
-    print(f"{CYAN}0din-sig SDK - Cross-Language Validation{RESET}")
+    print(f"{CYAN}0DIN Prompt Toolkit - Cross-Language Validation{RESET}")
     print(f"{CYAN}{'=' * 60}{RESET}\n")
 
     results = {}

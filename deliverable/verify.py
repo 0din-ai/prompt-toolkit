@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Post-installation verification script for signature-sdk deliverable.
+Post-installation verification script for odin-prompt-toolkit deliverable.
 
 This script runs a quick smoke test to verify:
 1. signature_sdk package is importable
@@ -41,14 +41,14 @@ def print_warning(msg: str) -> None:
 def verify_import() -> bool:
     """Verify that signature_sdk can be imported."""
     try:
-        import signature_sdk
+        import odin_prompt_toolkit
 
         print_success(
             f"signature_sdk imported successfully (v{signature_sdk.__version__})"
         )
         return True
     except ImportError as e:
-        print_error(f"Failed to import signature_sdk: {e}")
+        print_error(f"Failed to import odin_prompt_toolkit: {e}")
         return False
 
 
@@ -63,7 +63,7 @@ def verify_native_acceleration() -> Optional[bool]:
         else:
             print_warning("Native acceleration not available (using pure Python)")
             print_warning("  Install native wheels for better performance:")
-            print_warning("  pip install signature-sdk-native")
+            print_warning("  pip install odin-prompt-toolkit-native")
             return False
     except ImportError:
         print_warning("Could not check native acceleration status")
@@ -186,7 +186,7 @@ def verify_hamming_distance() -> bool:
 def main() -> int:
     """Run all verification checks."""
     print("\n" + "=" * 60)
-    print("signature-sdk Installation Verification")
+    print("odin-prompt-toolkit Installation Verification")
     print("=" * 60 + "\n")
 
     checks = [
@@ -218,7 +218,7 @@ def main() -> int:
     if all(results):
         print_success(f"All {total} checks passed!")
         print(
-            "\nInstallation verified successfully. You're ready to use signature-sdk!"
+            "\nInstallation verified successfully. You're ready to use odin-prompt-toolkit!"
         )
         return 0
     else:

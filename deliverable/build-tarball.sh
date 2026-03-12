@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Build design partner deliverable tarball for signature-sdk
+# Build design partner deliverable tarball for odin-prompt-toolkit
 #
 # This script assembles a complete distribution package including:
 # - Python SDK wheels (pure + native for multiple platforms)
@@ -27,8 +27,8 @@
 #   - HuggingFace token set (for private repos): huggingface-cli login
 #
 # Output:
-#   signature-sdk-deliverable-v{VERSION}.tar.gz
-#   signature-sdk-deliverable-v{VERSION}.tar.gz.sha256
+#   odin-prompt-toolkit-deliverable-v{VERSION}.tar.gz
+#   odin-prompt-toolkit-deliverable-v{VERSION}.tar.gz.sha256
 #
 
 set -euo pipefail
@@ -138,12 +138,12 @@ fi
 
 # Staging directory
 STAGING_DIR="$SCRIPT_DIR/staging"
-DELIVERABLE_NAME="signature-sdk-deliverable-v$VERSION"
+DELIVERABLE_NAME="odin-prompt-toolkit-deliverable-v$VERSION"
 DELIVERABLE_DIR="$STAGING_DIR/$DELIVERABLE_NAME"
 TARBALL_NAME="$DELIVERABLE_NAME.tar.gz"
 TARBALL_PATH="$OUTPUT_DIR/$TARBALL_NAME"
 
-log_info "Building deliverable for signature-sdk v$VERSION"
+log_info "Building deliverable for odin-prompt-toolkit v$VERSION"
 log_info "Output: $TARBALL_PATH"
 echo ""
 
@@ -155,9 +155,9 @@ if [[ ! -d "$PYTHON_DIST" ]]; then
     die "Python dist directory not found: $PYTHON_DIST (run 'make package-python' first)"
 fi
 
-PURE_WHEEL=$(find "$PYTHON_DIST" -name "signature_sdk-${VERSION}-py3-none-any.whl" | head -n 1)
+PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
 if [[ -z "$PURE_WHEEL" ]]; then
-    die "Python wheel not found: signature_sdk-${VERSION}-py3-none-any.whl (run 'make package-python')"
+    die "Python wheel not found: odin_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
 fi
 log_success "Found Python wheel: $(basename "$PURE_WHEEL")"
 
@@ -166,7 +166,7 @@ NATIVE_WHEELS=()
 if [[ -d "$NATIVE_DIST" ]]; then
     while IFS= read -r wheel; do
         NATIVE_WHEELS+=("$wheel")
-    done < <(find "$NATIVE_DIST" -name "signature_sdk_native-${VERSION}-*.whl")
+    done < <(find "$NATIVE_DIST" -name "odin_prompt_toolkit_native-${VERSION}-*.whl")
     
     if [[ ${#NATIVE_WHEELS[@]} -gt 0 ]]; then
         log_success "Found ${#NATIVE_WHEELS[@]} native wheel(s)"
@@ -216,7 +216,7 @@ done
 
 # Create requirements.txt
 cat > "$DELIVERABLE_DIR/sdk/requirements.txt" << EOF
-# Core dependencies for signature-sdk v${VERSION}
+# Core dependencies for odin-prompt-toolkit v${VERSION}
 numpy>=1.24.0,<2.0.0
 EOF
 log_success "Created requirements.txt"
