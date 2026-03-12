@@ -3,13 +3,13 @@ sidebar_position: 1
 slug: /
 ---
 
-# Introduction to signature-sdk
+# Introduction to odin-prompt-toolkit
 
-**signature-sdk** is a multi-language SDK for generating LSH (Locality-Sensitive Hashing) signatures from AI prompt embeddings. It provides fast, deterministic similarity detection across three languages: Rust, Python, and TypeScript.
+**odin-prompt-toolkit** is a multi-language SDK for generating LSH (Locality-Sensitive Hashing) signatures from AI prompt embeddings. It provides fast, deterministic similarity detection across three languages: Rust, Python, and TypeScript.
 
-## What is signature-sdk?
+## What is odin-prompt-toolkit?
 
-signature-sdk implements **SimHash** via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)), a proven algorithm for approximate nearest neighbor search. It converts high-dimensional embedding vectors (384-1536 dimensions) into compact 256-bit binary signatures that preserve cosine similarity.
+odin-prompt-toolkit implements **SimHash** via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)), a proven algorithm for approximate nearest neighbor search. It converts high-dimensional embedding vectors (384-1536 dimensions) into compact 256-bit binary signatures that preserve cosine similarity.
 
 ### Key Features
 
@@ -51,8 +51,8 @@ import TabItem from '@theme/TabItem';
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{sign_text, SignatureVersion};
-use signature_sdk::providers::{ModelCache, OnnxProvider};
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -80,8 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```python
 import asyncio
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.providers import ModelCache, OnnxProvider
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
 async def main():
     # Initialize local ONNX provider (no API key needed)
@@ -106,8 +106,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/signature-sdk';
-import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
 async function main() {
   // Initialize local ONNX provider (no API key needed)
@@ -138,7 +138,7 @@ For advanced use cases requiring manual embedding management, see the [Core Func
 
 ## How It Works
 
-signature-sdk uses a deterministic LSH algorithm:
+odin-prompt-toolkit uses a deterministic LSH algorithm:
 
 1. **Normalize** embedding to unit length (L2 norm)
 2. **Generate** 256 random hyperplanes (deterministic via SplitMix64 PRNG)
@@ -171,8 +171,8 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
-| Rust | `signature-sdk` | ✅ Ready | 50 passing |
-| Python | `signature-sdk` | ✅ Ready | 32 passing |
-| TypeScript | `@0din/signature-sdk` | ✅ Ready | 27 passing |
+| Rust | `odin-prompt-toolkit` | ✅ Ready | 50 passing |
+| Python | `odin-prompt-toolkit` | ✅ Ready | 32 passing |
+| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 27 passing |
 
-See the [Validation Report](https://github.com/0din-ai/signature-sdk/blob/main/VALIDATION.md) for detailed cross-language validation results.
+See the [Validation Report](https://github.com/0din-ai/odin-prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language validation results.

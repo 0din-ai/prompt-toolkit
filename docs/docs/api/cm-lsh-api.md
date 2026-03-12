@@ -47,7 +47,7 @@ impl HybridCMLSH {
 
 **Example:**
 ```rust
-use signature_sdk::cm_lsh::{HybridCMLSH, create_default_cm_lsh};
+use odin_prompt_toolkit::cm_lsh::{HybridCMLSH, create_default_cm_lsh};
 
 // Use default factory (recommended)
 let hasher = create_default_cm_lsh(1024, 0);
@@ -77,7 +77,7 @@ class HybridCMLSH:
 
 **Example:**
 ```python
-from signature_sdk.cm_lsh import HybridCMLSH, create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import HybridCMLSH, create_default_cm_lsh
 
 # Use default factory (recommended)
 hasher = create_default_cm_lsh(dimensions=384, family=0)
@@ -107,7 +107,7 @@ class HybridCMLSH {
 
 **Example:**
 ```typescript
-import { HybridCMLSH, createDefaultCmLsh } from '@0din/signature-sdk';
+import { HybridCMLSH, createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
 
 // Use default factory (recommended)
 const hasher = createDefaultCmLsh(384, 0);
@@ -420,7 +420,7 @@ pub fn create_default_cm_lsh(dimensions: usize, family: usize) -> HybridCMLSH
 
 **Example:**
 ```rust
-use signature_sdk::cm_lsh::create_default_cm_lsh;
+use odin_prompt_toolkit::cm_lsh::create_default_cm_lsh;
 
 // For 1024-dimensional embeddings (V1/ONNX)
 let hasher = create_default_cm_lsh(1024, 0);
@@ -438,7 +438,7 @@ def create_default_cm_lsh(dimensions: int, family: int = 0) -> HybridCMLSH
 
 **Example:**
 ```python
-from signature_sdk.cm_lsh import create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 
 # For 1024-dimensional embeddings (V1/ONNX)
 hasher = create_default_cm_lsh(1024, family=0)
@@ -456,7 +456,7 @@ function createDefaultCmLsh(dimensions: number, family?: number): HybridCMLSH
 
 **Example:**
 ```typescript
-import { createDefaultCmLsh } from '@0din/signature-sdk';
+import { createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
 
 // For 1024-dimensional embeddings (V1/ONNX)
 const hasher = createDefaultCmLsh(384, 0);
@@ -497,7 +497,7 @@ pub fn gen_hyperplanes(family: usize, bits: usize, dims: usize) -> Vec<Vec<f32>>
 
 **Example:**
 ```rust
-use signature_sdk::cm_lsh::gen_hyperplanes;
+use odin_prompt_toolkit::cm_lsh::gen_hyperplanes;
 
 // Generate 512 hyperplanes for 1024-dim embeddings, family 0
 let planes = gen_hyperplanes(0, 512, 384);
@@ -513,7 +513,7 @@ def gen_hyperplanes(family: int, bits: int, dims: int) -> list[list[float]]
 
 **Example:**
 ```python
-from signature_sdk.cm_lsh import gen_hyperplanes
+from odin_prompt_toolkit.cm_lsh import gen_hyperplanes
 
 # Generate 512 hyperplanes for 1024-dim embeddings, family 0
 planes = gen_hyperplanes(family=0, bits=512, dims=384)
@@ -529,7 +529,7 @@ function genHyperplanes(family: number, bits: number, dims: number): Float32Arra
 
 **Example:**
 ```typescript
-import { genHyperplanes } from '@0din/signature-sdk';
+import { genHyperplanes } from '@0din/odin-prompt-toolkit';
 
 // Generate 512 hyperplanes for 1024-dim embeddings, family 0
 const planes = genHyperplanes(0, 512, 384);

@@ -1,4 +1,4 @@
-# Contributing to signature-sdk
+# Contributing to odin-prompt-toolkit
 
 ## Development Setup
 
@@ -13,8 +13,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/0din-ai/signature-sdk.git
-cd sig-sdk
+git clone https://github.com/0din-ai/odin-prompt-toolkit.git
+cd prompt-toolkit
 
 # Install dependencies for all languages
 make install

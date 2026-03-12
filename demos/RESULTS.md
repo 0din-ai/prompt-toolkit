@@ -3,7 +3,7 @@
 
 *Run date: 2026-02-26 · Dataset: 3,714 real jailbreak prompts · Hardware: local MacBook (CPU only)*
 
-**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install signature-sdk[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
+**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install odin-prompt-toolkit[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
 
 ---
 
@@ -43,7 +43,7 @@ is a known and acceptable LSH property for the use cases we care about.
 
 | Label | Approach | What it uses |
 |-------|----------|--------------|
-| **A** | **Signatures + Band Index** | `signature_sdk` (our SDK) + Python `sqlite3` — zero external dependencies |
+| **A** | **Signatures + Band Index** | `odin_prompt_toolkit` (our SDK) + Python `sqlite3` — zero external dependencies |
 | **B** | **sqlite-vec brute-force KNN** | `sqlite-vec` pip package — scans every row |
 | **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker — enterprise vector DB with ANN indexing |
 
@@ -83,8 +83,8 @@ For the full 3,714-prompt dataset:
 **With native Rust acceleration (default in v0.1.1+)**: Signature generation adds only **0.6% overhead** on top of embedding generation. The pure Python fallback adds ~38% overhead, but is
 only needed if the native Rust extension fails to build. This is a **one-time ingest cost** — queries don't regenerate signatures, they do O(log n) band lookups.
 
-**Native acceleration** (available via `pip install signature-sdk[native]`):
-- Installs the `signature-sdk-native` PyO3 extension (Rust bindings)
+**Native acceleration** (available via `pip install odin-prompt-toolkit[native]`):
+- Installs the `odin-prompt-toolkit-native` PyO3 extension (Rust bindings)
 - Provides **~592× speedup** for signature generation (5,332 vs 85 sigs/sec)
 - Transparent: same Python API, automatically used if installed
 - Bit-identical results to pure Python (verified via canonical test vectors)
@@ -271,8 +271,8 @@ git clone <repo>
 pip install -e "packages/python[onnx]"
 pip install -r demos/requirements.txt
 
-# Copy ONNX model to ~/.cache/signature-sdk/models/v1/onnx/model_O4.onnx
-# (or set SIGNATURE_SDK_MODEL_DIR env var)
+# Copy ONNX model to ~/.cache/odin-prompt-toolkit/models/v1/onnx/model_O4.onnx
+# (or set ODIN_PROMPT_TOOLKIT_MODEL_DIR env var)
 
 # Run
 python demos/showcase.py \
@@ -321,4 +321,4 @@ Note: Python SDK achieves ~9 sigs/sec on the same hardware (631× slower)
       the 0.90+ cited in 0DIN-1021. Increasing LSH bands (16→32) or bits (256→512)
       should improve recall with modest latency trade-off.
 - [ ] **Benchmark script is reproducible** — `demos/showcase.py` is committed to
-      `sig-sdk`. Anyone with the threat feed JSON can reproduce these numbers.
+      `odin-prompt-toolkit`. Anyone with the threat feed JSON can reproduce these numbers.

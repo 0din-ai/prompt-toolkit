@@ -97,7 +97,7 @@ impl OpenAIProvider {
 
 **Example:**
 ```rust
-use signature_sdk::providers::OpenAIProvider;
+use odin_prompt_toolkit::providers::OpenAIProvider;
 
 let provider = OpenAIProvider::new(
     std::env::var("OPENAI_API_KEY")?,
@@ -131,7 +131,7 @@ class OpenAIProvider:
 
 **Example:**
 ```python
-from signature_sdk.providers import OpenAIProvider
+from odin_prompt_toolkit.providers import OpenAIProvider
 import os
 
 provider = OpenAIProvider(
@@ -158,7 +158,7 @@ class OpenAIProvider implements EmbeddingProvider {
 
 **Example:**
 ```typescript
-import { OpenAIProvider } from '@0din/signature-sdk/providers';
+import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -187,21 +187,21 @@ const provider = new OpenAIProvider({
 
 ```toml
 [dependencies]
-signature-sdk = { version = "0.1", features = ["openai"] }
+odin-prompt-toolkit = { version = "0.1", features = ["openai"] }
 ```
 
 </TabItem>
 <TabItem value="python" label="Python">
 
 ```bash
-pip install 'signature-sdk[openai]'
+pip install 'odin-prompt-toolkit[openai]'
 ```
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/signature-sdk openai
+npm install @0din/odin-prompt-toolkit openai
 ```
 
 </TabItem>
@@ -230,7 +230,7 @@ impl OnnxProvider {
 
 **Example:**
 ```rust
-use signature_sdk::providers::{ModelCache, OnnxProvider};
+use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -254,7 +254,7 @@ class OnnxProvider:
 
 **Example:**
 ```python
-from signature_sdk.providers import ModelCache, OnnxProvider
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
 cache = ModelCache()
 provider = await OnnxProvider.new(cache)
@@ -277,7 +277,7 @@ class OnnxProvider implements EmbeddingProvider {
 
 **Example:**
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(cache);
@@ -307,21 +307,21 @@ const provider = await OnnxProvider.create(cache);
 
 ```toml
 [dependencies]
-signature-sdk = { version = "0.1", features = ["onnx"] }
+odin-prompt-toolkit = { version = "0.1", features = ["onnx"] }
 ```
 
 </TabItem>
 <TabItem value="python" label="Python">
 
 ```bash
-pip install 'signature-sdk[onnx]'
+pip install 'odin-prompt-toolkit[onnx]'
 ```
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/signature-sdk onnxruntime-node
+npm install @0din/odin-prompt-toolkit onnxruntime-node
 ```
 
 </TabItem>
@@ -348,7 +348,7 @@ impl ModelCache {
 
 **Example:**
 ```rust
-use signature_sdk::providers::ModelCache;
+use odin_prompt_toolkit::providers::ModelCache;
 
 // Use default cache directory
 let cache = ModelCache::new()?;
@@ -370,7 +370,7 @@ class ModelCache:
 
 **Example:**
 ```python
-from signature_sdk.providers import ModelCache
+from odin_prompt_toolkit.providers import ModelCache
 
 # Use default cache directory
 cache = ModelCache()
@@ -392,7 +392,7 @@ class ModelCache {
 
 **Example:**
 ```typescript
-import { ModelCache } from '@0din/signature-sdk/providers';
+import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
 
 // Use default cache directory
 const cache = new ModelCache();
@@ -407,17 +407,17 @@ const cache = new ModelCache('/path/to/cache');
 ### Cache Directory
 
 **Default Location:**
-- Linux/macOS: `~/.cache/signature-sdk/models/`
-- Windows: `%LOCALAPPDATA%\signature-sdk\models\`
+- Linux/macOS: `~/.cache/odin-prompt-toolkit/models/`
+- Windows: `%LOCALAPPDATA%\odin-prompt-toolkit\models\`
 
 **Override via Environment Variable:**
 ```bash
-export SIGNATURE_SDK_MODEL_CACHE=/path/to/cache
+export ODIN_PROMPT_TOOLKIT_MODEL_CACHE=/path/to/cache
 ```
 
 **Directory Structure:**
 ```
-~/.cache/signature-sdk/models/
+~/.cache/odin-prompt-toolkit/models/
 ├── v1/
 │   ├── onnx/
 │   │   └── model_O4.onnx    # ONNX model optimized (~235MB)
@@ -442,7 +442,7 @@ You can implement custom providers for any embedding source:
 
 ```rust
 use async_trait::async_trait;
-use signature_sdk::{EmbeddingProvider, EmbeddingResult, SigError};
+use odin_prompt_toolkit::{EmbeddingProvider, EmbeddingResult, SigError};
 
 pub struct CustomProvider {
     // Your provider fields
@@ -494,8 +494,8 @@ impl EmbeddingProvider for CustomProvider {
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import EmbeddingProvider, EmbeddingResult
-from signature_sdk import normalize_vector, compute_embedding_sha256
+from odin_prompt_toolkit import EmbeddingProvider, EmbeddingResult
+from odin_prompt_toolkit import normalize_vector, compute_embedding_sha256
 
 class CustomProvider:
     def name(self) -> str:
@@ -539,7 +539,7 @@ import {
   EmbeddingResult,
   normalizeVector,
   computeEmbeddingSha256
-} from '@0din/signature-sdk';
+} from '@0din/odin-prompt-toolkit';
 
 class CustomProvider implements EmbeddingProvider {
   name(): string {

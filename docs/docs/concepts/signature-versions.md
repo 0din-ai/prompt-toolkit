@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Signature Versions
 
-signature-sdk supports two signature versions with different embedding providers.
+odin-prompt-toolkit supports two signature versions with different embedding providers.
 
 ## Version Comparison
 

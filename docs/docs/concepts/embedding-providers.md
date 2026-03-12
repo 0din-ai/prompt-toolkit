@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Embedding Providers
 
-Embedding providers generate vector embeddings from text. The signature-sdk SDK supports two built-in providers: OpenAI (API-based) and ONNX (local inference).
+Embedding providers generate vector embeddings from text. The odin-prompt-toolkit SDK supports two built-in providers: OpenAI (API-based) and ONNX (local inference).
 
 ## Provider Interface
 
@@ -42,8 +42,8 @@ import TabItem from '@theme/TabItem';
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{sign_text, SignatureVersion};
-use signature_sdk::providers::OpenAIProvider;
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::OpenAIProvider;
 
 let provider = OpenAIProvider::new(
     std::env::var("OPENAI_API_KEY")?,
@@ -59,8 +59,8 @@ let result = sign_text("Your text here", &provider, SignatureVersion::V0, None).
   <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.providers import OpenAIProvider
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import OpenAIProvider
 import os
 
 provider = OpenAIProvider(
@@ -76,8 +76,8 @@ result = await sign_text("Your text here", provider, SignatureVersion.V0)
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion } from '@0din/signature-sdk';
-import { OpenAIProvider } from '@0din/signature-sdk/providers';
+import { signText, SignatureVersion } from '@0din/odin-prompt-toolkit';
+import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -98,21 +98,21 @@ const result = await signText("Your text here", provider, SignatureVersion.V0);
 
 ```toml
 [dependencies]
-signature-sdk = { version = "0.1", features = ["openai"] }
+odin-prompt-toolkit = { version = "0.1", features = ["openai"] }
 ```
 
   </TabItem>
   <TabItem value="python" label="Python">
 
 ```bash
-pip install 'signature-sdk[openai]'
+pip install 'odin-prompt-toolkit[openai]'
 ```
 
   </TabItem>
   <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/signature-sdk openai
+npm install @0din/odin-prompt-toolkit openai
 ```
 
   </TabItem>
@@ -125,7 +125,7 @@ npm install @0din/signature-sdk openai
 - **Model**: intfloat/multilingual-e5-large (custom fine-tuned variant)
 - **Dimensions**: 384
 - **Cost**: Free (local inference)
-- **Setup**: Model auto-downloads to `~/.cache/signature-sdk/models/v1/`
+- **Setup**: Model auto-downloads to `~/.cache/odin-prompt-toolkit/models/v1/`
 - **Latency**: ~50-100ms (CPU inference on M1 Mac)
 - **Quality**: Good multilingual performance, optimized for prompt similarity
 
@@ -135,8 +135,8 @@ npm install @0din/signature-sdk openai
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{sign_text, SignatureVersion};
-use signature_sdk::providers::{ModelCache, OnnxProvider};
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(&cache, None, None).await?;
@@ -149,8 +149,8 @@ let result = sign_text("Your text here", &provider, SignatureVersion::Latest, No
   <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.providers import ModelCache, OnnxProvider
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
 cache = ModelCache()
 provider = await OnnxProvider.new(cache)
@@ -163,8 +163,8 @@ result = await sign_text("Your text here", provider)
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion } from '@0din/signature-sdk';
-import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+import { signText, SignatureVersion } from '@0din/odin-prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(cache);
@@ -183,21 +183,21 @@ const result = await signText("Your text here", provider);
 
 ```toml
 [dependencies]
-signature-sdk = { version = "0.1", features = ["onnx"] }
+odin-prompt-toolkit = { version = "0.1", features = ["onnx"] }
 ```
 
   </TabItem>
   <TabItem value="python" label="Python">
 
 ```bash
-pip install 'signature-sdk[onnx]'
+pip install 'odin-prompt-toolkit[onnx]'
 ```
 
   </TabItem>
   <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/signature-sdk onnxruntime-node
+npm install @0din/odin-prompt-toolkit onnxruntime-node
 ```
 
   </TabItem>
@@ -225,7 +225,7 @@ You can implement your own embedding provider by implementing the `EmbeddingProv
 
 ```rust
 use async_trait::async_trait;
-use signature_sdk::{EmbeddingProvider, EmbeddingResult};
+use odin_prompt_toolkit::{EmbeddingProvider, EmbeddingResult};
 
 struct MyProvider;
 
@@ -247,7 +247,7 @@ impl EmbeddingProvider for MyProvider {
   <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import EmbeddingProvider, EmbeddingResult
+from odin_prompt_toolkit import EmbeddingProvider, EmbeddingResult
 
 class MyProvider:
     def name(self) -> str:
@@ -271,7 +271,7 @@ class MyProvider:
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { EmbeddingProvider, EmbeddingResult } from '@0din/signature-sdk';
+import { EmbeddingProvider, EmbeddingResult } from '@0din/odin-prompt-toolkit';
 
 class MyProvider implements EmbeddingProvider {
   name(): string { return 'my-provider'; }

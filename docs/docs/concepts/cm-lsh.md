@@ -251,7 +251,7 @@ import TabItem from '@theme/TabItem';
 <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::cm_lsh::create_default_cm_lsh;
+use odin_prompt_toolkit::cm_lsh::create_default_cm_lsh;
 
 // Create CM-LSH hasher (1024-dim embeddings)
 let hasher = create_default_cm_lsh(1024, 0);
@@ -270,7 +270,7 @@ println!("Similarity: {:.3}", similarity);  // e.g., 0.847
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk.cm_lsh import create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 
 # Create CM-LSH hasher (1024-dim embeddings)
 hasher = create_default_cm_lsh(1024, family=0)
@@ -289,7 +289,7 @@ print(f"Similarity: {similarity:.3f}")  # e.g., 0.847
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { createDefaultCmLsh } from '@0din/signature-sdk';
+import { createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
 
 // Create CM-LSH hasher (1024-dim embeddings)
 const hasher = createDefaultCmLsh(384, 0);
@@ -313,7 +313,7 @@ console.log(`Similarity: ${similarity.toFixed(3)}`);  // e.g., 0.847
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk.cm_lsh import create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 
 hasher = create_default_cm_lsh(1024)
 
@@ -337,9 +337,9 @@ for i, h1 in enumerate(hashes):
 
 | Language | Status | Installation |
 |----------|--------|-------------|
-| **Rust** | ✅ Available | `signature-sdk = { version = "0.1", features = ["cm-lsh"] }` |
-| **Python** | ✅ Available | `pip install 'signature-sdk[cm-lsh]'` |
-| **TypeScript** | ✅ Available | `npm install @0din/signature-sdk` (included by default) |
+| **Rust** | ✅ Available | `odin-prompt-toolkit = { version = "0.1", features = ["cm-lsh"] }` |
+| **Python** | ✅ Available | `pip install 'odin-prompt-toolkit[cm-lsh]'` |
+| **TypeScript** | ✅ Available | `npm install @0din/odin-prompt-toolkit` (included by default) |
 
 ---
 

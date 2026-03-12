@@ -1,8 +1,8 @@
-# signature-sdk (Rust)
+# odin-prompt-toolkit (Rust)
 
 Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
 
-This is the **canonical Rust implementation** of the signature-sdk algorithm, also available in [Python](../python) and [TypeScript](../typescript).
+This is the **canonical Rust implementation** of the odin-prompt-toolkit algorithm, also available in [Python](../python) and [TypeScript](../typescript).
 
 ## Installation
 
@@ -10,10 +10,10 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-signature-sdk = "0.1"
+odin-prompt-toolkit = "0.1"
 
 # Or with specific features
-signature-sdk = { version = "0.1", features = ["openai", "onnx", "cm-lsh"] }
+odin-prompt-toolkit = { version = "0.1", features = ["openai", "onnx", "cm-lsh"] }
 ```
 
 ### Feature Flags
@@ -29,16 +29,16 @@ signature-sdk = { version = "0.1", features = ["openai", "onnx", "cm-lsh"] }
 
 ```toml
 # Minimal (LSH only, no embedding providers)
-signature-sdk = { version = "0.1", default-features = false }
+odin-prompt-toolkit = { version = "0.1", default-features = false }
 
 # OpenAI only
-signature-sdk = { version = "0.1", default-features = false, features = ["openai"] }
+odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["openai"] }
 
 # Local ONNX only
-signature-sdk = { version = "0.1", default-features = false, features = ["onnx"] }
+odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["onnx"] }
 
 # Everything (including experimental CM-LSH)
-signature-sdk = { version = "0.1", features = ["cm-lsh"] }
+odin-prompt-toolkit = { version = "0.1", features = ["cm-lsh"] }
 ```
 
 ---
@@ -48,7 +48,7 @@ signature-sdk = { version = "0.1", features = ["cm-lsh"] }
 ### Basic LSH Signatures
 
 ```rust
-use signature_sdk::{simhash_lsh_multi, normalize_vector};
+use odin_prompt_toolkit::{simhash_lsh_multi, normalize_vector};
 
 fn main() {
     // Your embedding vector (must be L2-normalized)
@@ -66,7 +66,7 @@ fn main() {
 ### Similarity Comparison
 
 ```rust
-use signature_sdk::{simhash_lsh_multi, hamming_distance_hex, cosine_from_hamming};
+use odin_prompt_toolkit::{simhash_lsh_multi, hamming_distance_hex, cosine_from_hamming};
 
 fn main() {
     let vector1 = vec![0.5, 0.5, 0.5, 0.5];
@@ -91,9 +91,9 @@ fn main() {
 ### High-Level API with Embeddings
 
 ```rust
-use signature_sdk::sign_text;
-use signature_sdk::types::SignatureVersion;
-use signature_sdk::providers::onnx::OnnxProvider;
+use odin_prompt_toolkit::sign_text;
+use odin_prompt_toolkit::types::SignatureVersion;
+use odin_prompt_toolkit::providers::onnx::OnnxProvider;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -117,8 +117,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Versioned Signatures
 
 ```rust
-use signature_sdk::{signature_string, parse_signature_string};
-use signature_sdk::types::{SignatureVersion, LshOutput};
+use odin_prompt_toolkit::{signature_string, parse_signature_string};
+use odin_prompt_toolkit::types::{SignatureVersion, LshOutput};
 
 fn main() {
     let lsh_output = LshOutput {
@@ -183,8 +183,8 @@ fn main() {
 ### Hasher Abstraction
 
 ```rust
-use signature_sdk::hasher::Hasher;
-use signature_sdk::hashers::get_hasher;
+use odin_prompt_toolkit::hasher::Hasher;
+use odin_prompt_toolkit::hashers::get_hasher;
 
 // Get hasher by algorithm name
 let hasher = get_hasher("lsh")?;
@@ -348,7 +348,7 @@ cargo clippy --all-features -- -D warnings
 cargo doc --all-features --no-deps --open
 
 # Docs will open in browser at:
-# file:///.../target/doc/signature_sdk/index.html
+# file:///.../target/doc/odin_prompt_toolkit/index.html
 ```
 
 ### Feature Testing
@@ -399,7 +399,7 @@ See [Cross-Language Validation](../../docs/docs/concepts/cross-language.md) for 
 The crate uses `SigError` for all error cases:
 
 ```rust
-use signature_sdk::error::SigError;
+use odin_prompt_toolkit::error::SigError;
 
 match parse_signature_string("invalid") {
     Ok(parsed) => println!("Parsed: {:?}", parsed),
@@ -428,12 +428,12 @@ For deployments without internet access:
 
 1. **Use ONNX provider** (no API calls):
    ```toml
-   signature-sdk = { version = "0.1", default-features = false, features = ["onnx"] }
+   odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["onnx"] }
    ```
 
 2. **Pre-download ONNX model**:
    ```bash
-   # Download to ~/.cache/signature-sdk/models/v1/onnx/
+   # Download to ~/.cache/odin-prompt-toolkit/models/v1/onnx/
    # Or set SIGNATURE_SDK_MODEL_DIR to custom location
    ```
 
@@ -484,7 +484,7 @@ async fn main() -> Result<(), SigError> {
 
 ## Comparison with Other Libraries
 
-| Feature | signature-sdk (Rust) | Annoy | Faiss LSH | datasketch |
+| Feature | odin-prompt-toolkit (Rust) | Annoy | Faiss LSH | datasketch |
 |---------|----------------|-------|-----------|------------|
 | Language | Rust | C++ (Python bindings) | C++ (Python bindings) | Python |
 | Deterministic | ✅ Yes | ❌ No | ⚠️ Depends | ⚠️ Depends |
