@@ -7,7 +7,7 @@
 //!
 //! Run with: cargo run --example similarity_comparison
 
-use signature_sdk::{
+use odin_prompt_toolkit::{
     cosine_from_hamming, hamming_distance_hex, normalize_vector, simhash_lsh_multi, LshConfig,
 };
 

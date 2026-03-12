@@ -5,7 +5,7 @@
 //!
 //! Run with: cargo run --example generate_vectors
 
-use signature_sdk::{
+use odin_prompt_toolkit::{
     compute_embedding_sha256, cosine_from_hamming, hamming_distance_hex, normalize_vector,
     simhash_lsh_multi, LshConfig,
 };

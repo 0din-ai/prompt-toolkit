@@ -7,7 +7,7 @@
 //!
 //! Run with: cargo run --example duplicate_detection
 
-use signature_sdk::{
+use odin_prompt_toolkit::{
     cosine_from_hamming, hamming_distance_hex, normalize_vector, simhash_lsh_multi, LshConfig,
 };
 use std::collections::{HashMap, HashSet};
