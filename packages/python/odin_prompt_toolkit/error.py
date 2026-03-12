@@ -22,7 +22,7 @@ class ConfigError(SigError):
     Raised when LSH configuration parameters are invalid or incompatible.
 
     Example:
-        >>> from signature_sdk import LshConfig
+        >>> from odin_prompt_toolkit import LshConfig
         >>> # Invalid configuration would raise ConfigError
     """
 
@@ -55,7 +55,7 @@ class InvalidInputError(SigError):
     invalid embedding dimensions, or malformed signature strings.
 
     Example:
-        >>> from signature_sdk import parse_signature_string
+        >>> from odin_prompt_toolkit import parse_signature_string
         >>> try:
         ...     parse_signature_string("invalid")
         ... except InvalidInputError as e:

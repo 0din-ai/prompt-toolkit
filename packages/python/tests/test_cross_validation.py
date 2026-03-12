@@ -6,8 +6,8 @@ across Rust, Python, and TypeScript implementations.
 
 import pytest
 
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.types import EmbeddingResult
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.types import EmbeddingResult
 
 
 class FixedEmbeddingProvider:
@@ -30,8 +30,8 @@ class FixedEmbeddingProvider:
 
     async def generate_embedding(self, text: str) -> EmbeddingResult:
         """Return the fixed embedding."""
-        from signature_sdk.lsh import normalize_vector
-        from signature_sdk.types import compute_embedding_sha256
+        from odin_prompt_toolkit.lsh import normalize_vector
+        from odin_prompt_toolkit.types import compute_embedding_sha256
 
         # Return the fixed embedding (normalize it)
         normalized = normalize_vector(self._embedding)
@@ -116,8 +116,8 @@ async def test_cross_validation_pattern():
             return 1024
 
         async def generate_embedding(self, text: str) -> EmbeddingResult:
-            from signature_sdk.lsh import normalize_vector
-            from signature_sdk.types import compute_embedding_sha256
+            from odin_prompt_toolkit.lsh import normalize_vector
+            from odin_prompt_toolkit.types import compute_embedding_sha256
 
             normalized = normalize_vector(self._embedding)
             sha256 = compute_embedding_sha256(normalized)

@@ -1,7 +1,7 @@
 """Tests for hasher abstraction."""
 
-from signature_sdk import Hasher, HashAlgorithm, LshConfig, SimHashLsh, get_hasher
-from signature_sdk.lsh import normalize_vector
+from odin_prompt_toolkit import Hasher, HashAlgorithm, LshConfig, SimHashLsh, get_hasher
+from odin_prompt_toolkit.lsh import normalize_vector
 
 
 def test_get_hasher_lsh():

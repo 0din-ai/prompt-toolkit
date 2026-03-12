@@ -11,8 +11,8 @@ Run with: python python/examples/cm_lsh_example.py
 """
 
 try:
-    from signature_sdk.cm_lsh import create_default_cm_lsh
-    from signature_sdk import normalize_vector
+    from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
+    from odin_prompt_toolkit import normalize_vector
 except ImportError:
     print("This example requires the CM-LSH implementation.")
     print("Install with: pip install -e '.[cm-lsh]'")

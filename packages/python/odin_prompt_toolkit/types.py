@@ -160,7 +160,7 @@ def parse_signature_string(s: str) -> ParsedSignature:
     Raises:
         InvalidInputError: If format is invalid or version unsupported
     """
-    from signature_sdk.error import InvalidInputError
+    from odin_prompt_toolkit.error import InvalidInputError
 
     if not s.startswith("0din-"):
         raise InvalidInputError(f"Invalid signature prefix: {s}")
@@ -268,9 +268,9 @@ class ComparisonResult:
 
 # Transparent native acceleration
 # Try to use native implementation, fall back to pure Python
-from signature_sdk._accel import NATIVE_AVAILABLE
+from odin_prompt_toolkit._accel import NATIVE_AVAILABLE
 
 if NATIVE_AVAILABLE:
-    from signature_sdk._accel import compute_embedding_sha256
+    from odin_prompt_toolkit._accel import compute_embedding_sha256
 else:
     compute_embedding_sha256 = _compute_embedding_sha256_python

@@ -1,7 +1,7 @@
 """SimHash LSH implementation."""
 
-from signature_sdk.lsh import LSHFamily, simhash_lsh_multi
-from signature_sdk.types import LshConfig
+from odin_prompt_toolkit.lsh import LSHFamily, simhash_lsh_multi
+from odin_prompt_toolkit.types import LshConfig
 
 
 class SimHashLsh:
@@ -12,9 +12,9 @@ class SimHashLsh:
     used for V0 and V1 signatures.
 
     Example:
-        >>> from signature_sdk.hashers import SimHashLsh
-        >>> from signature_sdk.types import LshConfig
-        >>> from signature_sdk.lsh import normalize_vector
+        >>> from odin_prompt_toolkit.hashers import SimHashLsh
+        >>> from odin_prompt_toolkit.types import LshConfig
+        >>> from odin_prompt_toolkit.lsh import normalize_vector
         >>>
         >>> hasher = SimHashLsh()
         >>> vector = normalize_vector([1.0, 2.0, 3.0])

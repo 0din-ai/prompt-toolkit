@@ -3,8 +3,8 @@
 import os
 import pytest
 
-from signature_sdk import sign_text, EmbeddingProvider, SignatureVersion
-from signature_sdk.types import EmbeddingResult, LshConfig
+from odin_prompt_toolkit import sign_text, EmbeddingProvider, SignatureVersion
+from odin_prompt_toolkit.types import EmbeddingResult, LshConfig
 
 
 class MockProvider:

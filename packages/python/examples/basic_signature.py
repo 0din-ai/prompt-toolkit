@@ -9,7 +9,7 @@ This example demonstrates:
 Run with: python python/examples/basic_signature.py
 """
 
-from signature_sdk import simhash_lsh_multi
+from odin_prompt_toolkit import simhash_lsh_multi
 
 
 def main():
