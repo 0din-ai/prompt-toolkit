@@ -3,9 +3,9 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "signature-sdk-native"
+name = "odin-prompt-toolkit-native"
 version = "0.1.1"
-description = "Native Rust acceleration for signature-sdk"
+description = "Native Rust acceleration for odin-prompt-toolkit"
 authors = [{ name = "0din Team" }]
 requires-python = ">=3.10"
 classifiers = [
@@ -21,5 +21,5 @@ classifiers = [
 ]
 
 [tool.maturin]
-module-name = "signature_sdk_native"
+module-name = "odin_prompt_toolkit_native"
 features = ["pyo3/extension-module"]

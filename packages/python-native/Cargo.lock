@@ -164,6 +164,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "odin-prompt-toolkit"
+version = "0.1.1"
+dependencies = [
+ "async-trait",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "odin-prompt-toolkit-python"
+version = "0.1.1"
+dependencies = [
+ "odin-prompt-toolkit",
+ "pyo3",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -368,28 +390,6 @@ checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
  "errno",
  "libc",
-]
-
-[[package]]
-name = "signature-sdk"
-version = "0.1.1"
-dependencies = [
- "async-trait",
- "hex",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "signature-sdk-python"
-version = "0.1.1"
-dependencies = [
- "pyo3",
- "signature-sdk",
 ]
 
 [[package]]
