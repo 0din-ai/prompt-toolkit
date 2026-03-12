@@ -52,7 +52,7 @@ import {
  *
  * @example Advanced - bring your own provider (version inferred)
  * ```typescript
- * import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+ * import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
  *
  * const cache = new ModelCache();
  * const provider = await OnnxProvider.create(cache);

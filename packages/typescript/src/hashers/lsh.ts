@@ -15,8 +15,8 @@ import type { LshConfig } from '../types';
  * 
  * @example
  * ```typescript
- * import { SimHashLsh } from '@0din/signature-sdk/hashers';
- * import { normalizeVector } from '@0din/signature-sdk';
+ * import { SimHashLsh } from '@0din/prompt-toolkit/hashers';
+ * import { normalizeVector } from '@0din/prompt-toolkit';
  * 
  * const hasher = new SimHashLsh();
  * const vector = normalizeVector([1.0, 2.0, 3.0]);

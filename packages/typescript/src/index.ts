@@ -1,5 +1,5 @@
 /**
- * @0din/signature-sdk - Multi-language SDK for LSH signature generation
+ * @0din/prompt-toolkit - Multi-language SDK for LSH signature generation
  * 
  * This package provides locality-sensitive hashing (LSH) for AI prompt similarity
  * detection, with support for both standard LSH and Confidence Matrix LSH (CM-LSH).
@@ -8,8 +8,8 @@
  * 
  * @example Quick Start with signText()
  * ```typescript
- * import { signText, SignatureVersion, getSignatureString } from '@0din/signature-sdk';
- * import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+ * import { signText, SignatureVersion, getSignatureString } from '@0din/prompt-toolkit';
+ * import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
  * 
  * const cache = new ModelCache();
  * const provider = await OnnxProvider.create(cache);
@@ -28,7 +28,7 @@
  * 
  * @example Low-level LSH API
  * ```typescript
- * import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+ * import { simhashLshMulti, normalizeVector } from '@0din/prompt-toolkit';
  * 
  * const vector = [0.5, 0.5, 0.5, 0.5];
  * const normalized = normalizeVector(vector);
@@ -43,7 +43,7 @@
  *   simhashLshMulti, 
  *   hammingDistanceHex, 
  *   cosineFromHamming 
- * } from '@0din/signature-sdk';
+ * } from '@0din/prompt-toolkit';
  * 
  * const families1 = simhashLshMulti(vector1);
  * const families2 = simhashLshMulti(vector2);

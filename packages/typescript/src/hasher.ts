@@ -6,9 +6,9 @@
  * 
  * @example
  * ```typescript
- * import { getHasher, HashAlgorithm } from '@0din/signature-sdk';
- * import type { LshConfig } from '@0din/signature-sdk/types';
- * import { normalizeVector } from '@0din/signature-sdk';
+ * import { getHasher, HashAlgorithm } from '@0din/prompt-toolkit';
+ * import type { LshConfig } from '@0din/prompt-toolkit/types';
+ * import { normalizeVector } from '@0din/prompt-toolkit';
  * 
  * const hasher = getHasher(HashAlgorithm.LSH);
  * const vector = normalizeVector([1.0, 2.0, 3.0]);
