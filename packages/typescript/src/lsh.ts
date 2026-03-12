@@ -71,7 +71,7 @@ function signFor(family: number, bit: number, dim: number): number {
  * 
  * @example
  * ```typescript
- * import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+ * import { simhashLshMulti, normalizeVector } from '@0din/prompt-toolkit';
  * 
  * const vector = [0.5, 0.5, 0.5, 0.5];
  * const normalized = normalizeVector(vector);
@@ -139,7 +139,7 @@ export function simhashLshMulti(
  * 
  * @example
  * ```typescript
- * import { hammingDistanceHex } from '@0din/signature-sdk';
+ * import { hammingDistanceHex } from '@0din/prompt-toolkit';
  * 
  * const distance = hammingDistanceHex('abcd', 'abce');
  * console.log(distance); // 1
@@ -179,7 +179,7 @@ export function hammingDistanceHex(a: string, b: string): number {
  * 
  * @example
  * ```typescript
- * import { cosineFromHamming } from '@0din/signature-sdk';
+ * import { cosineFromHamming } from '@0din/prompt-toolkit';
  * 
  * const similarity = cosineFromHamming(64, 256);
  * console.log(similarity); // ~0.707 (quarter bits different)
@@ -201,7 +201,7 @@ export function cosineFromHamming(distanceBits: number, totalBits: number): numb
  * 
  * @example
  * ```typescript
- * import { normalizeVector } from '@0din/signature-sdk';
+ * import { normalizeVector } from '@0din/prompt-toolkit';
  * 
  * const normalized = normalizeVector([3, 4]);
  * console.log(normalized); // [0.6, 0.8]

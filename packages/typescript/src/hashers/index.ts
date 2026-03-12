@@ -15,7 +15,7 @@ import { SimHashLsh } from './lsh';
  * 
  * @example
  * ```typescript
- * import { getHasher, HashAlgorithm } from '@0din/signature-sdk';
+ * import { getHasher, HashAlgorithm } from '@0din/prompt-toolkit';
  * 
  * const hasher = getHasher(HashAlgorithm.LSH);
  * console.log(hasher.name()); // 'lsh'
