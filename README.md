@@ -1,4 +1,4 @@
-# signature-sdk
+# odin-prompt-toolkit
 
 Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
 
@@ -32,9 +32,9 @@ See [VALIDATION.md](VALIDATION.md) for the complete cross-language validation re
 
 | Language   | Package      | Status      | Tests      | Path           |
 |------------|--------------|-------------|------------|----------------|
-| Rust       | `signature-sdk`   | ✅ Ready    | 43 passing | [packages/rust/](packages/rust/) |
-| Python     | `signature-sdk`   | ✅ Ready    | 11 passing | [packages/python/](packages/python/) |
-| TypeScript | `@0din/signature-sdk`  | ✅ Ready    | 7 passing  | [packages/typescript/](packages/typescript/) |
+| Rust       | `odin-prompt-toolkit`   | ✅ Ready    | 43 passing | [packages/rust/](packages/rust/) |
+| Python     | `odin-prompt-toolkit`   | ✅ Ready    | 11 passing | [packages/python/](packages/python/) |
+| TypeScript | `@0din/odin-prompt-toolkit`  | ✅ Ready    | 7 passing  | [packages/typescript/](packages/typescript/) |
 
 **Total**: 61 tests passing across all languages
 
@@ -71,46 +71,46 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main" }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main" }
 
 # With CM-LSH feature (optional, higher accuracy)
-signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["cm-lsh"] }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["cm-lsh"] }
 
 # With ONNX embeddings (local, API-free)
-signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["onnx"] }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["onnx"] }
 
 # With OpenAI embeddings
-signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["openai"] }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["openai"] }
 
 # All features
-signature-sdk = { git = "https://github.com/0din-ai/signature-sdk", branch = "main", features = ["cm-lsh", "onnx", "openai"] }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["cm-lsh", "onnx", "openai"] }
 ```
 
 Or via command line:
 
 ```bash
-cargo add signature-sdk --git https://github.com/0din-ai/signature-sdk --branch main
+cargo add odin-prompt-toolkit --git https://github.com/0din-ai/odin-prompt-toolkit --branch main
 ```
 
 ### Python
 
 ```bash
 # Install from git (core features only)
-pip install "signature-sdk @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
+pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
 
 # With all optional features (CM-LSH, ONNX, OpenAI)
-pip install "signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
 
 # With specific features
-pip install "signature-sdk[cm-lsh] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
-pip install "signature-sdk[onnx] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
-pip install "signature-sdk[openai] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
 ```
 
 Add to `requirements.txt`:
 
 ```txt
-signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk#subdirectory=packages/python
+odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python
 ```
 
 ### TypeScript
@@ -120,7 +120,7 @@ Add to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@0din/signature-sdk": "github:0din-ai/signature-sdk#main"
+    "@0din/odin-prompt-toolkit": "github:0din-ai/odin-prompt-toolkit#main"
   }
 }
 ```
@@ -128,19 +128,19 @@ Add to your `package.json`:
 Or via command line:
 
 ```bash
-npm install github:0din-ai/signature-sdk#main
+npm install github:0din-ai/odin-prompt-toolkit#main
 
 # With yarn
-yarn add github:0din-ai/signature-sdk#main
+yarn add github:0din-ai/odin-prompt-toolkit#main
 
 # With pnpm
-pnpm add github:0din-ai/signature-sdk#main
+pnpm add github:0din-ai/odin-prompt-toolkit#main
 ```
 
 **Note:** For monorepos using npm workspaces, you may need to adjust the path:
 
 ```bash
-npm install "github:0din-ai/signature-sdk#main" --workspace=typescript
+npm install "github:0din-ai/odin-prompt-toolkit#main" --workspace=typescript
 ```
 
 ## Quick Start
@@ -148,7 +148,7 @@ npm install "github:0din-ai/signature-sdk#main" --workspace=typescript
 ### Rust
 
 ```rust
-use signature_sdk::{simhash_lsh_multi, normalize_vector, LshConfig};
+use odin_prompt_toolkit::{simhash_lsh_multi, normalize_vector, LshConfig};
 
 let vector = vec![0.5, 0.5, 0.5, 0.5]; // Your embedding
 let normalized = normalize_vector(&vector);
@@ -162,7 +162,7 @@ See [packages/rust/README.md](packages/rust/README.md) for full documentation.
 ### Python
 
 ```python
-from signature_sdk import simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
 vector = [0.5, 0.5, 0.5, 0.5]  # Your embedding
 normalized = normalize_vector(vector)
@@ -176,7 +176,7 @@ See [packages/python/README.md](packages/python/README.md) for full documentatio
 ### TypeScript
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
 
 const vector = [0.5, 0.5, 0.5, 0.5]; // Your embedding
 const normalized = normalizeVector(vector);
@@ -352,8 +352,8 @@ See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for development setup, co
 
 ```bash
 # Clone and install
-git clone https://github.com/0din-ai/signature-sdk.git
-cd sig-sdk
+git clone https://github.com/0din-ai/odin-prompt-toolkit.git
+cd prompt-toolkit
 make install
 
 # Install pre-commit hooks

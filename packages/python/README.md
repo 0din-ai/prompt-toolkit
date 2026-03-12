@@ -1,8 +1,8 @@
-# signature-sdk (Python)
+# odin-prompt-toolkit (Python)
 
 Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
 
-This is the Python implementation of the signature-sdk algorithm, also available in [Rust](../rust) and [TypeScript](../typescript).
+This is the Python implementation of the odin-prompt-toolkit algorithm, also available in [Rust](../rust) and [TypeScript](../typescript).
 
 ## Installation
 
@@ -10,22 +10,22 @@ This is the Python implementation of the signature-sdk algorithm, also available
 
 ```bash
 # Basic installation (pure Python)
-pip install git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python
+pip install git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python
 
 # With native Rust acceleration (653× faster signature generation!)
-pip install "signature-sdk[native] @ git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python"
+pip install "odin-prompt-toolkit[native] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
 
 # With OpenAI support
-pip install "signature-sdk[openai] @ git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python"
+pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
 
 # With ONNX support (local embeddings)
-pip install "signature-sdk[onnx] @ git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python"
+pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
 
 # With CM-LSH (Confidence Matrix LSH)
-pip install "signature-sdk[cm-lsh] @ git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python"
+pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
 
 # All features (including native acceleration)
-pip install "signature-sdk[all] @ git+https://github.com/0din-ai/signature-sdk.git#subdirectory=python"
+pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
 ```
 
 ### Performance: Native vs Pure Python
@@ -40,7 +40,7 @@ The native Rust extension provides **~653× speedup** for signature generation:
 The extension is **transparent** — install it and your code automatically gets faster. Check at runtime:
 
 ```python
-from signature_sdk import NATIVE_AVAILABLE
+from odin_prompt_toolkit import NATIVE_AVAILABLE
 print(f"Native acceleration: {'✅ active' if NATIVE_AVAILABLE else '❌ not installed'}")
 ```
 
@@ -49,7 +49,7 @@ print(f"Native acceleration: {'✅ active' if NATIVE_AVAILABLE else '❌ not ins
 ### Basic LSH Signatures
 
 ```python
-from signature_sdk import simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
 # Your embedding vector (must be L2-normalized)
 vector = [0.5, 0.5, 0.5, 0.5]
@@ -65,7 +65,7 @@ print(f"Bands: {families[0].bands}")
 ### Similarity Comparison
 
 ```python
-from signature_sdk import simhash_lsh_multi, hamming_distance_hex, cosine_from_hamming
+from odin_prompt_toolkit import simhash_lsh_multi, hamming_distance_hex, cosine_from_hamming
 
 # Generate signatures for two vectors
 families1 = simhash_lsh_multi(vector1)
@@ -82,7 +82,7 @@ print(f"Estimated cosine similarity: {similarity:.3f}")
 ### Confidence Matrix LSH (CM-LSH)
 
 ```python
-from signature_sdk.cm_lsh import create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 
 # Create CM-LSH hasher (1024 dimensions)
 cm_lsh = create_default_cm_lsh(1024, family=0)
@@ -135,14 +135,14 @@ pytest tests/
 ### Type Checking
 
 ```bash
-mypy signature_sdk/
+mypy odin_prompt_toolkit/
 ```
 
 ### Formatting
 
 ```bash
-black signature_sdk/ tests/
-ruff check signature_sdk/ tests/
+black odin_prompt_toolkit/ tests/
+ruff check odin_prompt_toolkit/ tests/
 ```
 
 ## License

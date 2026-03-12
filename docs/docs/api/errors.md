@@ -35,7 +35,7 @@ pub type Result<T> = std::result::Result<T, SigError>;
 
 **Usage:**
 ```rust
-use signature_sdk::{sign_text, SigError};
+use odin_prompt_toolkit::{sign_text, SigError};
 
 match sign_text(text, &provider, version, None).await {
     Ok(result) => println!("Success: {}", result.signature_string),
@@ -50,7 +50,7 @@ match sign_text(text, &provider, version, None).await {
 
 ```python
 class SigError(Exception):
-    """Base exception for all signature-sdk operations."""
+    """Base exception for all odin-prompt-toolkit operations."""
 
 class ConfigError(SigError):
     """Invalid LSH configuration."""
@@ -67,7 +67,7 @@ class InvalidInputError(SigError):
 
 **Usage:**
 ```python
-from signature_sdk import sign_text, SigError, ProviderError, InvalidInputError
+from odin_prompt_toolkit import sign_text, SigError, ProviderError, InvalidInputError
 
 try:
     result = await sign_text(text, provider=provider)
@@ -107,7 +107,7 @@ class InvalidInputError extends SigError {
 
 **Usage:**
 ```typescript
-import { signText, SigError, ProviderError, InvalidInputError } from '@0din/signature-sdk';
+import { signText, SigError, ProviderError, InvalidInputError } from '@0din/odin-prompt-toolkit';
 
 try {
   const result = await signText(text, provider);
@@ -158,7 +158,7 @@ let config = LshConfig {
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import LshConfig, ConfigError
+from odin_prompt_toolkit import LshConfig, ConfigError
 
 try:
     config = LshConfig(families=0, bits=256, bands=16)  # Invalid
@@ -171,7 +171,7 @@ except ConfigError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ConfigError } from '@0din/signature-sdk';
+import { ConfigError } from '@0din/odin-prompt-toolkit';
 
 // Invalid configuration would throw ConfigError
 // if validated in constructor
@@ -211,8 +211,8 @@ let provider = OpenAIProvider::new("".to_string(), None, None, None);
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk.providers import OpenAIProvider
-from signature_sdk import ProviderError
+from odin_prompt_toolkit.providers import OpenAIProvider
+from odin_prompt_toolkit import ProviderError
 
 try:
     provider = OpenAIProvider(api_key="invalid_key")
@@ -226,8 +226,8 @@ except ProviderError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { OpenAIProvider } from '@0din/signature-sdk/providers';
-import { ProviderError } from '@0din/signature-sdk';
+import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
+import { ProviderError } from '@0din/odin-prompt-toolkit';
 
 try {
   const provider = new OpenAIProvider({ apiKey: 'invalid' });
@@ -271,8 +271,8 @@ let provider = OnnxProvider::new(&cache, Some("nonexistent/model".to_string()), 
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk.providers import ModelCache, OnnxProvider
-from signature_sdk import ModelError
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
+from odin_prompt_toolkit import ModelError
 
 try:
     cache = ModelCache()
@@ -286,8 +286,8 @@ except ModelError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
-import { ModelError } from '@0din/signature-sdk';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { ModelError } from '@0din/odin-prompt-toolkit';
 
 try {
   const cache = new ModelCache();
@@ -321,7 +321,7 @@ Raised when input data doesn't meet requirements.
 <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{parse_signature_string, SigError};
+use odin_prompt_toolkit::{parse_signature_string, SigError};
 
 // Invalid signature format
 match parse_signature_string("invalid") {
@@ -346,7 +346,7 @@ match parse_signature_string("0din-v1:xyz123") {
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import parse_signature_string, InvalidInputError
+from odin_prompt_toolkit import parse_signature_string, InvalidInputError
 
 try:
     # Invalid signature format
@@ -367,7 +367,7 @@ except InvalidInputError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { parseSignatureString, InvalidInputError } from '@0din/signature-sdk';
+import { parseSignatureString, InvalidInputError } from '@0din/odin-prompt-toolkit';
 
 try {
   // Invalid signature format
@@ -435,7 +435,7 @@ async fn sign_with_retry(
 
 ```python
 import asyncio
-from signature_sdk import sign_text, SignatureVersion, ProviderError
+from odin_prompt_toolkit import sign_text, SignatureVersion, ProviderError
 
 async def sign_with_retry(
     text: str,
@@ -460,7 +460,7 @@ async def sign_with_retry(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, ProviderError } from '@0din/signature-sdk';
+import { signText, SignatureVersion, ProviderError } from '@0din/odin-prompt-toolkit';
 
 async function signWithRetry(
   text: string,
@@ -498,8 +498,8 @@ Fall back to alternative behavior on errors:
 <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import sign_text, ProviderError, ModelError
-from signature_sdk.providers import OpenAIProvider, OnnxProvider, ModelCache
+from odin_prompt_toolkit import sign_text, ProviderError, ModelError
+from odin_prompt_toolkit.providers import OpenAIProvider, OnnxProvider, ModelCache
 
 async def sign_with_fallback(text: str):
     """Try OpenAI, fall back to ONNX on error."""
@@ -529,7 +529,7 @@ Validate inputs before expensive operations:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { parseSignatureString, InvalidInputError } from '@0din/signature-sdk';
+import { parseSignatureString, InvalidInputError } from '@0din/odin-prompt-toolkit';
 
 function validateAndCompare(sig1: string, sig2: string): number | null {
   try {

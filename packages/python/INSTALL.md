@@ -1,4 +1,4 @@
-# Installing signature-sdk (Python)
+# Installing odin-prompt-toolkit (Python)
 
 ## Requirements
 - Python >= 3.10
@@ -6,7 +6,7 @@
 ## Install from wheel
 
 ```bash
-pip install signature_sdk-<VERSION>-py3-none-any.whl
+pip install odin_prompt_toolkit-<VERSION>-py3-none-any.whl
 ```
 
 Replace `<VERSION>` with the version number (e.g., `0.1.1`).
@@ -15,22 +15,22 @@ Replace `<VERSION>` with the version number (e.g., `0.1.1`).
 
 ```bash
 # OpenAI embeddings (API-based)
-pip install "signature_sdk-<VERSION>-py3-none-any.whl[openai]"
+pip install "odin_prompt_toolkit-<VERSION>-py3-none-any.whl[openai]"
 
 # ONNX embeddings (local, no API key needed)
-pip install "signature_sdk-<VERSION>-py3-none-any.whl[onnx]"
+pip install "odin_prompt_toolkit-<VERSION>-py3-none-any.whl[onnx]"
 
 # Confidence Matrix LSH (higher accuracy)
-pip install "signature_sdk-<VERSION>-py3-none-any.whl[cm-lsh]"
+pip install "odin_prompt_toolkit-<VERSION>-py3-none-any.whl[cm-lsh]"
 
 # All features
-pip install "signature_sdk-<VERSION>-py3-none-any.whl[all]"
+pip install "odin_prompt_toolkit-<VERSION>-py3-none-any.whl[all]"
 ```
 
 ## Quick Start
 
 ```python
-from signature_sdk import simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
 # Your embedding vector (must be L2-normalized)
 vector = [0.5, 0.5, 0.5, 0.5]

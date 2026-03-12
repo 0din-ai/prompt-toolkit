@@ -1,19 +1,19 @@
-# @0din/signature-sdknature-sdk (TypeScript)
+# @0din/odin-prompt-toolkitnature-sdk (TypeScript)
 
 Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
 
-This is the TypeScript implementation of the 0din-sig algorithm, also available in [Rust](../rust) and [Python](../python).
+This is the TypeScript implementation of the odin-prompt-toolkit algorithm, also available in [Rust](../rust) and [Python](../python).
 
 ## Installation
 
 ### From Git (Development)
 
 ```bash
-npm install git+https://github.com/0din-ai/signature-sdk.git#main:typescript
+npm install git+https://github.com/0din-ai/odin-prompt-toolkit.git#main:typescript
 # or
-yarn add git+https://github.com/0din-ai/signature-sdk.git#main:typescript
+yarn add git+https://github.com/0din-ai/odin-prompt-toolkit.git#main:typescript
 # or
-pnpm add git+https://github.com/0din-ai/signature-sdk.git#main:typescript
+pnpm add git+https://github.com/0din-ai/odin-prompt-toolkit.git#main:typescript
 ```
 
 ## Quick Start
@@ -21,7 +21,7 @@ pnpm add git+https://github.com/0din-ai/signature-sdk.git#main:typescript
 ### Basic LSH Signatures
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
 
 // Your embedding vector (must be L2-normalized)
 const vector = [0.5, 0.5, 0.5, 0.5];
@@ -41,7 +41,7 @@ import {
   simhashLshMulti, 
   hammingDistanceHex, 
   cosineFromHamming 
-} from '@0din/signature-sdk';
+} from '@0din/odin-prompt-toolkit';
 
 // Generate signatures for two vectors
 const families1 = simhashLshMulti(vector1);
@@ -65,7 +65,7 @@ import {
   signatureString, 
   parseSignatureString,
   SignatureVersion 
-} from '@0din/signature-sdk';
+} from '@0din/odin-prompt-toolkit';
 
 // Format signature with version
 const versionedSig = signatureString(SignatureVersion.V1, signature);

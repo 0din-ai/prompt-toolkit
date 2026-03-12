@@ -1,18 +1,18 @@
-# signature-sdk Design Partner Deliverable
+# odin-prompt-toolkit Design Partner Deliverable
 
-This package contains everything you need to get started with the signature-sdk for efficient similarity search and duplicate detection.
+This package contains everything you need to get started with the odin-prompt-toolkit for efficient similarity search and duplicate detection.
 
 ## What's Included
 
 ```
-signature-sdk-deliverable-v0.1.1/
+odin-prompt-toolkit-deliverable-v0.1.1/
 ├── install.sh              # Automated installation script
 ├── README.md               # This file
 ├── INSTALL.md              # Detailed installation guide
 ├── verify.py               # Post-install verification script
 ├── sdk/
-│   ├── signature_sdk-0.1.1-py3-none-any.whl
-│   ├── signature_sdk_native-0.1.1-*.whl    # Platform-specific (if included)
+│   ├── odin_prompt_toolkit-0.1.1-py3-none-any.whl
+│   ├── odin_prompt_toolkit_native-0.1.1-*.whl    # Platform-specific (if included)
 │   └── requirements.txt
 ├── model/
 │   └── v1/
@@ -47,9 +47,9 @@ signature-sdk-deliverable-v0.1.1/
 
 This will:
 1. Create a Python virtual environment at `./venv/`
-2. Install the signature-sdk package
+2. Install the odin-prompt-toolkit package
 3. Download the ONNX model from HuggingFace (~235MB)
-4. Copy signature pack to `~/.signature-sdk/signatures/`
+4. Copy signature pack to `~/.odin-prompt-toolkit/signatures/`
 5. Run verification tests
 
 **Option 2: Offline Mode** (for air-gapped environments)
@@ -66,7 +66,7 @@ Requirements:
 
 After installation completes, you should see:
 ```
-✓ signature_sdk imported successfully (v0.1.1)
+✓ odin_prompt_toolkit imported successfully (v0.1.1)
 ✓ Native Rust acceleration is ENABLED (653× faster)
 ✓ Signature generation works correctly
 ✓ Signature format validation passed
@@ -123,8 +123,8 @@ python examples/sign_text.py
 ### Generate Your First Signature
 
 ```python
-from signature_sdk import sign_text
-from signature_sdk.providers import OnnxProvider
+from odin_prompt_toolkit import sign_text
+from odin_prompt_toolkit.providers import OnnxProvider
 
 # Initialize embedding provider
 provider = OnnxProvider.from_pretrained()
@@ -143,23 +143,23 @@ print(f"Signature: {result.signature_string}")
 
 ### Environment Variables
 
-- `SIGNATURE_SDK_MODEL_CACHE`: Override model cache directory (default: `~/.cache/signature-sdk/`)
-- `SIGNATURE_SDK_NO_NATIVE`: Set to `1` to force pure Python mode (disables native acceleration)
+- `ODIN_PROMPT_TOOLKIT_MODEL_CACHE`: Override model cache directory (default: `~/.cache/odin-prompt-toolkit/`)
+- `ODIN_PROMPT_TOOLKIT_NO_NATIVE`: Set to `1` to force pure Python mode (disables native acceleration)
 - `HF_TOKEN`: HuggingFace API token (required for private model downloads in online mode)
 
 ### Model Location
 
 By default, models are cached at:
-- Linux/macOS: `~/.cache/signature-sdk/models/`
-- Windows: `%LOCALAPPDATA%\signature-sdk\models\`
+- Linux/macOS: `~/.cache/odin-prompt-toolkit/models/`
+- Windows: `%LOCALAPPDATA%\odin-prompt-toolkit\models\`
 
-You can override this with the `SIGNATURE_SDK_MODEL_CACHE` environment variable.
+You can override this with the `ODIN_PROMPT_TOOLKIT_MODEL_CACHE` environment variable.
 
 ### Signature Packs
 
 Signature packs are JSON files containing pre-computed signatures for known content (e.g., threat feeds, known duplicates). They are stored at:
-- Linux/macOS: `~/.signature-sdk/signatures/`
-- Windows: `%USERPROFILE%\.signature-sdk\signatures\`
+- Linux/macOS: `~/.odin-prompt-toolkit/signatures/`
+- Windows: `%USERPROFILE%\.odin-prompt-toolkit\signatures\`
 
 ## Troubleshooting
 
@@ -187,7 +187,7 @@ Signature packs are JSON files containing pre-computed signatures for known cont
 
 ### Runtime Issues
 
-**Problem**: Import error `ModuleNotFoundError: No module named 'signature_sdk'`
+**Problem**: Import error `ModuleNotFoundError: No module named 'odin_prompt_toolkit'`
 - **Solution**: Activate the virtual environment first: `source venv/bin/activate`
 
 **Problem**: Slow signature generation (~115ms per signature)
@@ -195,7 +195,7 @@ Signature packs are JSON files containing pre-computed signatures for known cont
 
 **Problem**: Model not found error
 - **Solution**:
-  1. Check model cache directory exists: `ls ~/.cache/signature-sdk/models/v1/`
+  1. Check model cache directory exists: `ls ~/.cache/odin-prompt-toolkit/models/v1/`
   2. Re-run installer in online mode to download model
   3. Or manually copy model files to cache directory
 
@@ -270,7 +270,7 @@ The included `signatures/threat-feed-v1.json` demonstrates the signature pack fo
                        │ sign_text()
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│                  signature-sdk (Python)                      │
+│                  odin-prompt-toolkit (Python)                      │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  High-Level API: sign_text(), compare_signatures()    │ │
 │  └────────────────────────────────────────────────────────┘ │
@@ -285,7 +285,7 @@ The included `signatures/threat-feed-v1.json` demonstrates the signature pack fo
                        │ if native available
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│            signature-sdk-native (Rust/PyO3)                  │
+│            odin-prompt-toolkit-native (Rust/PyO3)                  │
 │              ~653× faster signature generation               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -329,11 +329,11 @@ For questions or issues with this deliverable package:
 
 ## Version
 
-**signature-sdk v0.1.1** (2024-03-09)
+**odin-prompt-toolkit v0.1.1** (2024-03-09)
 
-- Rust SDK: `signature-sdk` v0.1.1
-- Python SDK: `signature-sdk` v0.1.1
-- Python Native: `signature-sdk-native` v0.1.1
+- Rust SDK: `odin-prompt-toolkit` v0.1.1
+- Python SDK: `odin-prompt-toolkit` v0.1.1
+- Python Native: `odin-prompt-toolkit-native` v0.1.1
 - Model: `0dinai/jailbreak-embeddings-small` v1 (ONNX optimized, ~235MB)
 
 ## License

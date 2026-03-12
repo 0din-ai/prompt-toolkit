@@ -22,8 +22,8 @@ import TabItem from '@theme/TabItem';
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{sign_text, SignatureVersion};
-use signature_sdk::providers::{ModelCache, OnnxProvider};
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -56,8 +56,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```python
 import asyncio
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.providers import ModelCache, OnnxProvider
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
 async def main():
     # Initialize local ONNX provider (no API key needed)
@@ -87,8 +87,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/signature-sdk';
-import { ModelCache, OnnxProvider } from '@0din/signature-sdk/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
 async function main() {
   // Initialize local ONNX provider (no API key needed)
@@ -136,8 +136,8 @@ For production use with OpenAI's text-embedding-3-large model:
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{sign_text, SignatureVersion};
-use signature_sdk::providers::OpenAIProvider;
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::OpenAIProvider;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -167,8 +167,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```python
 import asyncio
 import os
-from signature_sdk import sign_text, SignatureVersion
-from signature_sdk.providers import OpenAIProvider
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import OpenAIProvider
 
 async def main():
     provider = OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
@@ -189,8 +189,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/signature-sdk';
-import { OpenAIProvider } from '@0din/signature-sdk/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
+import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
 
 async function main() {
   const provider = new OpenAIProvider({
@@ -221,7 +221,7 @@ For advanced use cases where you already have embeddings or need fine-grained co
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{simhash_lsh_multi, normalize_vector, LshConfig};
+use odin_prompt_toolkit::{simhash_lsh_multi, normalize_vector, LshConfig};
 
 fn main() {
     // Your pre-computed embedding
@@ -242,7 +242,7 @@ fn main() {
   <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
 # Your pre-computed embedding
 embedding = [0.5] * 384
@@ -261,7 +261,7 @@ print(f"Signature: {families[0].signature}")
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/signature-sdk';
+import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
 
 // Your pre-computed embedding
 const embedding = new Array(384).fill(0.5);
@@ -289,7 +289,7 @@ Calculate similarity between two embeddings:
   <TabItem value="rust" label="Rust">
 
 ```rust
-use signature_sdk::{
+use odin_prompt_toolkit::{
     simhash_lsh_multi, normalize_vector, hamming_distance_hex, 
     cosine_from_hamming, LshConfig
 };
@@ -322,7 +322,7 @@ fn main() {
   <TabItem value="python" label="Python">
 
 ```python
-from signature_sdk import (
+from odin_prompt_toolkit import (
     simhash_lsh_multi, normalize_vector, 
     hamming_distance_hex, cosine_from_hamming
 )
@@ -356,7 +356,7 @@ print(f"Estimated cosine similarity: {similarity:.4f}")
 import {
   simhashLshMulti, normalizeVector,
   hammingDistanceHex, cosineFromHamming
-} from '@0din/signature-sdk';
+} from '@0din/odin-prompt-toolkit';
 
 const embedding1 = [1.0, 1.0, 1.0, 1.0];
 const embedding2 = [1.0, 0.9, 1.1, 1.0];  // Similar to embedding1

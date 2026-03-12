@@ -20,7 +20,7 @@ real-world dimensions, using a real threat-feed dataset on a local laptop.
 
 | Label | Approach | Technology |
 |-------|----------|------------|
-| **A** | Signatures + Band Index | `signature_sdk` + `sqlite3` (stdlib — zero deps) |
+| **A** | Signatures + Band Index | `odin_prompt_toolkit` + `sqlite3` (stdlib — zero deps) |
 | **B** | sqlite-vec (brute-force KNN) | `sqlite-vec` pip package |
 | **C** | pgvector + HNSW | `pgvector` via Docker |
 
@@ -34,7 +34,7 @@ real-world dimensions, using a real threat-feed dataset on a local laptop.
 python --version   # must be 3.10+
 ```
 
-### 2. Install the sig-sdk Python package (with ONNX provider)
+### 2. Install the odin-prompt-toolkit Python package (with ONNX provider)
 
 From the repo root:
 
@@ -210,7 +210,7 @@ These are `.gitignore`d (large binary files).
 
 ## Troubleshooting
 
-**`ModuleNotFoundError: No module named 'signature_sdk'`**  
+**`ModuleNotFoundError: No module named 'odin_prompt_toolkit'`**  
 Run `pip install -e "packages/python[onnx]"` from the repo root first.
 
 **`ModuleNotFoundError: No module named 'onnxruntime'`**  

@@ -8,7 +8,7 @@ The Python SDK includes optional native Rust acceleration that provides **~592×
 
 ## Overview
 
-Starting with version `0.1.1`, the Python package supports native Rust acceleration through the `signature-sdk-native` PyO3 extension. This is a **drop-in performance enhancement**:
+Starting with version `0.1.1`, the Python package supports native Rust acceleration through the `odin-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
 
 - **Same API**: No code changes required
 - **Transparent fallback**: If native extension unavailable, falls back to pure Python
@@ -39,10 +39,10 @@ With native acceleration, signature generation adds only **0.6% overhead** on to
 
 ```bash
 # From PyPI (when published)
-pip install 'signature-sdk[native]'
+pip install 'odin-prompt-toolkit[native]'
 
 # From Git
-pip install 'git+https://github.com/0din-ai/signature-sdk.git#subdirectory=packages/python&egg=signature-sdk[native]'
+pip install 'git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=packages/python&egg=odin-prompt-toolkit[native]'
 
 # Local development
 cd packages/python
@@ -51,13 +51,13 @@ pip install -e '.[native]'
 
 The `[native]` extra installs:
 - `maturin>=1.0,\<2.0` - Build tool for Rust Python extensions
-- `signature-sdk-native` - The Rust PyO3 extension (built from `packages/rust`)
+- `odin-prompt-toolkit-native` - The Rust PyO3 extension (built from `packages/rust`)
 
 ### Option 2: Pure Python (Fallback)
 
 ```bash
 # Basic installation without native acceleration
-pip install signature-sdk
+pip install odin-prompt-toolkit
 ```
 
 The SDK will work fine without the native extension, but signature generation will be ~592× slower.
@@ -66,7 +66,7 @@ The SDK will work fine without the native extension, but signature generation wi
 
 ```bash
 # Install everything including native acceleration
-pip install 'signature-sdk[all]'
+pip install 'odin-prompt-toolkit[all]'
 ```
 
 Includes: `native`, `openai`, `onnx`, `cm-lsh` extras.
@@ -78,7 +78,7 @@ Includes: `native`, `openai`, `onnx`, `cm-lsh` extras.
 ### Check if Native Extension is Active
 
 ```python
-from signature_sdk import NATIVE_AVAILABLE
+from odin_prompt_toolkit import NATIVE_AVAILABLE
 
 if NATIVE_AVAILABLE:
     print("✅ Native Rust acceleration is active")
@@ -91,7 +91,7 @@ else:
 The SDK automatically uses the native implementation when available:
 
 ```python
-from signature_sdk import simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 
 # This function automatically uses native Rust if installed
 embedding = normalize_vector([0.5, 0.5, 0.5, 0.5])
@@ -117,7 +117,7 @@ All other functions (normalization, parsing, Hamming distance) remain in Python 
 
 The native extension replaces the pure-Python random hyperplane hashing loop:
 
-**Pure Python** (`signature_sdk/lsh.py`):
+**Pure Python** (`odin_prompt_toolkit/lsh.py`):
 ```python
 def simhash_lsh(vector: np.ndarray, family: int = 0, bits: int = 256) -> LshOutput:
     dim = len(vector)
@@ -259,13 +259,13 @@ At large scale, the native extension is the difference between **minutes and day
 
 ## Troubleshooting
 
-### Import Error: `ModuleNotFoundError: No module named 'signature_sdk_native'`
+### Import Error: `ModuleNotFoundError: No module named 'odin_prompt_toolkit_native'`
 
 **Cause**: The `[native]` extra wasn't installed, or maturin build failed.
 
 **Solution 1**: Install the native extra:
 ```bash
-pip install 'signature-sdk[native]'
+pip install 'odin-prompt-toolkit[native]'
 ```
 
 **Solution 2**: Rebuild the extension manually:
@@ -276,7 +276,7 @@ maturin develop --release
 
 **Solution 3**: Use pure Python (no action needed):
 ```python
-from signature_sdk import NATIVE_AVAILABLE
+from odin_prompt_toolkit import NATIVE_AVAILABLE
 assert not NATIVE_AVAILABLE  # Expected
 # SDK will use pure Python automatically
 ```
@@ -304,21 +304,21 @@ rustup update stable
 
 **Debug**:
 ```python
-from signature_sdk import NATIVE_AVAILABLE
-import signature_sdk.lsh as lsh
+from odin_prompt_toolkit import NATIVE_AVAILABLE
+import odin_prompt_toolkit.lsh as lsh
 
 print(f"Native available: {NATIVE_AVAILABLE}")
 print(f"simhash_lsh module: {lsh.simhash_lsh.__module__}")
 
 # Expected output if native is active:
 # Native available: True
-# simhash_lsh module: signature_sdk_native
+# simhash_lsh module: odin_prompt_toolkit_native
 ```
 
 If `NATIVE_AVAILABLE` is `False`:
-1. Check if `pip list | grep signature-sdk-native` shows the package
-2. Reinstall with `pip install --force-reinstall 'signature-sdk[native]'`
-3. Check for import errors: `python -c "import signature_sdk_native"`
+1. Check if `pip list | grep odin-prompt-toolkit-native` shows the package
+2. Reinstall with `pip install --force-reinstall 'odin-prompt-toolkit[native]'`
+3. Check for import errors: `python -c "import odin_prompt_toolkit_native"`
 
 ### Different Results: Native vs Pure Python
 
@@ -354,12 +354,12 @@ fn simhash_lsh_multi(
     bits: usize,
     bands: usize,
 ) -> PyResult<Vec<LshOutput>> {
-    let outputs = signature_sdk::simhash_lsh_multi(&vector, families, bits, bands);
+    let outputs = odin_prompt_toolkit::simhash_lsh_multi(&vector, families, bits, bands);
     Ok(outputs)
 }
 
 #[pymodule]
-fn signature_sdk_native(_py: Python, m: &PyModule) -> PyResult<()> {
+fn odin_prompt_toolkit_native(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(simhash_lsh_multi, m)?)?;
     Ok(())
 }
@@ -370,12 +370,12 @@ fn signature_sdk_native(_py: Python, m: &PyModule) -> PyResult<()> {
 The Python SDK detects the native extension at import time:
 
 ```python
-# packages/python/signature_sdk/__init__.py
+# packages/python/odin_prompt_toolkit/__init__.py
 try:
-    from signature_sdk_native import simhash_lsh, simhash_lsh_multi
+    from odin_prompt_toolkit_native import simhash_lsh, simhash_lsh_multi
     NATIVE_AVAILABLE = True
 except ImportError:
-    from signature_sdk.lsh import simhash_lsh, simhash_lsh_multi
+    from odin_prompt_toolkit.lsh import simhash_lsh, simhash_lsh_multi
     NATIVE_AVAILABLE = False
 ```
 
@@ -441,7 +441,7 @@ Compile the Rust core to WebAssembly for:
 
 **Key Takeaways**:
 
-1. ✅ **Install `signature-sdk[native]` for production** - 592× faster signature generation
+1. ✅ **Install `odin-prompt-toolkit[native]` for production** - 592× faster signature generation
 2. ✅ **No code changes required** - Drop-in replacement with automatic fallback
 3. ✅ **Bit-identical results** - Validated across all implementations
 4. ✅ **Minimal overhead** - Signature generation adds only 0.6% on top of embedding time (vs 38% for pure Python)
@@ -449,12 +449,12 @@ Compile the Rust core to WebAssembly for:
 
 **Recommended Installation**:
 ```bash
-pip install 'signature-sdk[native,onnx]'  # Native acceleration + local embeddings
+pip install 'odin-prompt-toolkit[native,onnx]'  # Native acceleration + local embeddings
 ```
 
 **Performance Verification**:
 ```python
-from signature_sdk import NATIVE_AVAILABLE, simhash_lsh_multi, normalize_vector
+from odin_prompt_toolkit import NATIVE_AVAILABLE, simhash_lsh_multi, normalize_vector
 import time
 
 assert NATIVE_AVAILABLE, "Native extension not installed!"

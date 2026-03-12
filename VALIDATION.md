@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The signature-sdk has been successfully implemented across three languages (Rust, Python, TypeScript) with **full cross-language compatibility** validated against canonical test vectors.
+The odin-prompt-toolkit has been successfully implemented across three languages (Rust, Python, TypeScript) with **full cross-language compatibility** validated against canonical test vectors.
 
 **Status**: ✅ All implementations passing (109 total tests)
 

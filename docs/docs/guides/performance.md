@@ -46,7 +46,7 @@ We benchmarked three approaches to prompt similarity lookup against **3,714 real
 
 | Label | Approach | Implementation |
 |-------|----------|----------------|
-| **A** | **Signatures + Band Index** | `signature_sdk` + Python `sqlite3` (zero external dependencies) |
+| **A** | **Signatures + Band Index** | `odin_prompt_toolkit` + Python `sqlite3` (zero external dependencies) |
 | **B** | **sqlite-vec KNN** | `sqlite-vec` pip package (brute-force scan) |
 | **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker (enterprise ANN indexing) |
 
@@ -408,7 +408,7 @@ LSH accuracy also **improves with more data** (better hash distribution).
 These are **complementary technologies**, not competitors. In the 0DIN pipeline:
 
 1. **Embedding generation** (expensive, done once at ingest) — ONNX or OpenAI
-2. **Signature generation** (fast, derived from embedding) — signature-sdk SDK
+2. **Signature generation** (fast, derived from embedding) — odin-prompt-toolkit SDK
 3. **Signature lookup** (sub-millisecond, zero infrastructure) — band index in SQLite
 4. **Optional reranking** (applied only to ~85 candidates, not all 3,714) — exact cosine
 
@@ -430,8 +430,8 @@ git clone <repo>
 pip install -e "packages/python[onnx,native]"
 pip install -r demos/requirements.txt
 
-# Copy ONNX model to ~/.cache/signature-sdk/models/v1/onnx/model_O4.onnx
-# (or set SIGNATURE_SDK_MODEL_DIR env var)
+# Copy ONNX model to ~/.cache/odin-prompt-toolkit/models/v1/onnx/model_O4.onnx
+# (or set ODIN_PROMPT_TOOLKIT_MODEL_DIR env var)
 
 # Run benchmark (skip pgvector if Docker unavailable)
 python demos/showcase.py \
@@ -663,7 +663,7 @@ conn.execute("PRAGMA journal_mode=WAL")
 
 ### vs. LSH (Other Implementations)
 
-| Aspect | signature-sdk | Annoy | Faiss LSH |
+| Aspect | odin-prompt-toolkit | Annoy | Faiss LSH |
 |--------|----------|-------|-----------|
 | Language support | Rust, Python, TypeScript | Python (C++ core) | Python (C++ core) |
 | Dependencies | Zero (stdlib only) | pip package | pip package + libblas |
@@ -672,7 +672,7 @@ conn.execute("PRAGMA journal_mode=WAL")
 | Cross-language | ✅ Validated | ❌ | ❌ |
 | Air-gap deploy | ✅ | ⚠️ (needs build tools) | ⚠️ (needs BLAS) |
 
-**When to use signature-sdk**: Need deterministic signatures, cross-language consistency, or air-gapped deployment.
+**When to use odin-prompt-toolkit**: Need deterministic signatures, cross-language consistency, or air-gapped deployment.
 
 ---
 

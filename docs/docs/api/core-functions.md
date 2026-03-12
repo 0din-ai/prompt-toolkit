@@ -122,7 +122,7 @@ pub fn normalize_vector(vector: &[f32]) -> Vec<f32>
 
 **Example:**
 ```rust
-use signature_sdk::normalize_vector;
+use odin_prompt_toolkit::normalize_vector;
 
 let vector = vec![3.0, 4.0];  // magnitude = 5
 let normalized = normalize_vector(&vector);
@@ -144,7 +144,7 @@ def normalize_vector(vector: list[float]) -> list[float]
 
 **Example:**
 ```python
-from signature_sdk import normalize_vector
+from odin_prompt_toolkit import normalize_vector
 
 vector = [3.0, 4.0]  # magnitude = 5
 normalized = normalize_vector(vector)
@@ -166,7 +166,7 @@ function normalizeVector(vector: number[]): number[]
 
 **Example:**
 ```typescript
-import { normalizeVector } from '@0din/signature-sdk';
+import { normalizeVector } from '@0din/odin-prompt-toolkit';
 
 const vector = [3.0, 4.0];  // magnitude = 5
 const normalized = normalizeVector(vector);
@@ -200,7 +200,7 @@ pub fn hamming_distance_hex(hex_a: &str, hex_b: &str) -> u32
 
 **Example:**
 ```rust
-use signature_sdk::hamming_distance_hex;
+use odin_prompt_toolkit::hamming_distance_hex;
 
 let sig_a = "8d000000ac854dae";
 let sig_b = "8d000000ac854daf";
@@ -224,7 +224,7 @@ def hamming_distance_hex(hex_a: str, hex_b: str) -> int
 
 **Example:**
 ```python
-from signature_sdk import hamming_distance_hex
+from odin_prompt_toolkit import hamming_distance_hex
 
 sig_a = "8d000000ac854dae"
 sig_b = "8d000000ac854daf"
@@ -248,7 +248,7 @@ function hammingDistanceHex(hexA: string, hexB: string): number
 
 **Example:**
 ```typescript
-import { hammingDistanceHex } from '@0din/signature-sdk';
+import { hammingDistanceHex } from '@0din/odin-prompt-toolkit';
 
 const sigA = "8d000000ac854dae";
 const sigB = "8d000000ac854daf";
@@ -283,7 +283,7 @@ pub fn cosine_from_hamming(hamming_distance: u32, bits: u32) -> f64
 
 **Example:**
 ```rust
-use signature_sdk::{hamming_distance_hex, cosine_from_hamming};
+use odin_prompt_toolkit::{hamming_distance_hex, cosine_from_hamming};
 
 let distance = hamming_distance_hex("8d00...", "8d01...");
 let similarity = cosine_from_hamming(distance, 256);
@@ -306,7 +306,7 @@ def cosine_from_hamming(hamming_distance: int, bits: int) -> float
 
 **Example:**
 ```python
-from signature_sdk import hamming_distance_hex, cosine_from_hamming
+from odin_prompt_toolkit import hamming_distance_hex, cosine_from_hamming
 
 distance = hamming_distance_hex("8d00...", "8d01...")
 similarity = cosine_from_hamming(distance, 256)
@@ -329,7 +329,7 @@ function cosineFromHamming(hammingDistance: number, bits: number): number
 
 **Example:**
 ```typescript
-import { hammingDistanceHex, cosineFromHamming } from '@0din/signature-sdk';
+import { hammingDistanceHex, cosineFromHamming } from '@0din/odin-prompt-toolkit';
 
 const distance = hammingDistanceHex("8d00...", "8d01...");
 const similarity = cosineFromHamming(distance, 256);
@@ -366,7 +366,7 @@ pub fn compute_embedding_sha256(normalized_embedding: &[f32]) -> String
 
 **Example:**
 ```rust
-use signature_sdk::{normalize_vector, compute_embedding_sha256};
+use odin_prompt_toolkit::{normalize_vector, compute_embedding_sha256};
 
 let vector = vec![0.5, 0.5, 0.5, 0.5];
 let normalized = normalize_vector(&vector);
@@ -389,7 +389,7 @@ def compute_embedding_sha256(normalized_embedding: list[float]) -> str
 
 **Example:**
 ```python
-from signature_sdk import normalize_vector, compute_embedding_sha256
+from odin_prompt_toolkit import normalize_vector, compute_embedding_sha256
 
 vector = [0.5, 0.5, 0.5, 0.5]
 normalized = normalize_vector(vector)
@@ -412,7 +412,7 @@ function computeEmbeddingSha256(normalizedEmbedding: number[]): string
 
 **Example:**
 ```typescript
-import { normalizeVector, computeEmbeddingSha256 } from '@0din/signature-sdk';
+import { normalizeVector, computeEmbeddingSha256 } from '@0din/odin-prompt-toolkit';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);
