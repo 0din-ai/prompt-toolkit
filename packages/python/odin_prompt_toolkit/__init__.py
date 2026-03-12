@@ -1,11 +1,11 @@
-"""signature-sdk: Multi-language SDK for LSH signature generation.
+"""odin-prompt-toolkit: Multi-language SDK for LSH signature generation.
 
 This package provides locality-sensitive hashing (LSH) for AI prompt similarity
 detection, with support for both standard LSH and Confidence Matrix LSH (CM-LSH).
 
 Quick Start (High-Level API):
-    >>> from signature_sdk import sign_text, SignatureVersion
-    >>> from signature_sdk.providers import ModelCache, OnnxProvider
+    >>> from odin_prompt_toolkit import sign_text, SignatureVersion
+    >>> from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
     >>>
     >>> # Initialize ONNX provider (local, no API key needed)
     >>> cache = ModelCache()
@@ -21,7 +21,7 @@ Quick Start (High-Level API):
     0din-v1:8d000000ac854dae...
 
 Quick Start (Low-Level API):
-    >>> from signature_sdk import simhash_lsh_multi, normalize_vector
+    >>> from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
     >>>
     >>> vector = [0.5, 0.5, 0.5, 0.5]
     >>> normalized = normalize_vector(vector)
@@ -41,26 +41,26 @@ Algorithm:
     - Hamming distance → cosine similarity via cos(π × d/n)
 """
 
-from signature_sdk._accel import NATIVE_AVAILABLE
-from signature_sdk.error import (
+from odin_prompt_toolkit._accel import NATIVE_AVAILABLE
+from odin_prompt_toolkit.error import (
     ConfigError,
     InvalidInputError,
     ModelError,
     ProviderError,
     SigError,
 )
-from signature_sdk.hasher import Hasher
-from signature_sdk.hashers import SimHashLsh, get_hasher
-from signature_sdk.lsh import (
+from odin_prompt_toolkit.hasher import Hasher
+from odin_prompt_toolkit.hashers import SimHashLsh, get_hasher
+from odin_prompt_toolkit.lsh import (
     LSHFamily,
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,
     simhash_lsh_multi,
 )
-from signature_sdk.provider import EmbeddingProvider
-from signature_sdk.sign import sign_text
-from signature_sdk.types import (
+from odin_prompt_toolkit.provider import EmbeddingProvider
+from odin_prompt_toolkit.sign import sign_text
+from odin_prompt_toolkit.types import (
     ComparisonResult,
     EmbeddingResult,
     HashAlgorithm,

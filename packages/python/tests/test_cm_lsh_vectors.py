@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from signature_sdk.cm_lsh import create_default_cm_lsh
+from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 
 # Path to test vectors directory
 VECTORS_DIR = Path(__file__).parent.parent.parent.parent / "spec" / "test-vectors"
@@ -48,7 +48,7 @@ class TestCMLSHVectors:
             assert len(hash_result.bands) == len(expected["bands"]), f"{name}: bands count mismatch"
 
             # Check LSH-TS portion has reasonable similarity (allow some bit differences)
-            from signature_sdk import hamming_distance_hex
+            from odin_prompt_toolkit import hamming_distance_hex
 
             lsh_ts_actual = hash_result.lsh_ts_compat()
             lsh_ts_expected = expected["lsh_ts_compat"]

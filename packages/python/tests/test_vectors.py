@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from signature_sdk import (
+from odin_prompt_toolkit import (
     cosine_from_hamming,
     hamming_distance_hex,
     normalize_vector,
     simhash_lsh_multi,
 )
-from signature_sdk.lsh import _sign_for, _splitmix64
+from odin_prompt_toolkit.lsh import _sign_for, _splitmix64
 
 # Path to test vectors directory
 VECTORS_DIR = Path(__file__).parent.parent.parent.parent / "spec" / "test-vectors"
@@ -130,7 +130,7 @@ class TestSHA256:
     """Test SHA256 canonical format against vectors."""
 
     def test_sha256_vectors(self):
-        from signature_sdk.types import compute_embedding_sha256
+        from odin_prompt_toolkit.types import compute_embedding_sha256
 
         vectors = load_vectors("sha256.json")
 
@@ -155,7 +155,7 @@ class TestSignatureFormat:
     """Test signature string parsing against canonical vectors."""
 
     def test_signature_format_vectors(self):
-        from signature_sdk.types import parse_signature_string
+        from odin_prompt_toolkit.types import parse_signature_string
 
         vectors = load_vectors("signature_format.json")
 
@@ -174,7 +174,7 @@ class TestSignatureFormat:
                 assert result.signature == expected_sig, f"{description}: signature mismatch"
             else:
                 # Should raise InvalidInputError (custom error from Phase 12c)
-                from signature_sdk.error import InvalidInputError
+                from odin_prompt_toolkit.error import InvalidInputError
 
                 with pytest.raises(InvalidInputError):
                     parse_signature_string(input_str)

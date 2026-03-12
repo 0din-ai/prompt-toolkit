@@ -59,7 +59,7 @@ async def sign_text(
         0din-v0:363b24ee2b817354...
 
         Advanced - bring your own provider (version inferred):
-        >>> from signature_sdk.providers import ModelCache, OnnxProvider
+        >>> from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
         >>> cache = ModelCache()
         >>> provider = await OnnxProvider.new(cache)
         >>> result = await sign_text(
