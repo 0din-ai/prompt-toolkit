@@ -21,7 +21,7 @@ class EmbeddingProvider(Protocol):
         ...         return "my-model"
         ...
         ...     def dimensions(self) -> int:
-        ...         return 384
+        ...         return 1024
         ...
         ...     async def generate_embedding(self, text: str) -> EmbeddingResult:
         ...         # Generate and return embedding

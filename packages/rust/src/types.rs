@@ -34,7 +34,7 @@ impl std::str::FromStr for HashAlgorithm {
 pub enum SignatureVersion {
     /// v0: text-embedding-3-large + LSH (256-bit, 3 families, 1536 dims)
     V0,
-    /// v1: multilingual-e5-small ONNX + LSH (256-bit, 3 families, 384 dims)
+    /// v1: multilingual-e5-large ONNX + LSH (256-bit, 3 families, 1024 dims)
     V1,
     /// Latest version (resolves to V1)
     #[serde(rename = "latest")]
@@ -108,7 +108,7 @@ impl SignatureVersion {
     ///
     /// Returns the number of dimensions in the embedding vector for each version:
     /// - V0: 1536 dimensions (OpenAI text-embedding-3-large)
-    /// - V1: 384 dimensions (multilingual-e5-small ONNX)
+    /// - V1: 1024 dimensions (multilingual-e5-large ONNX)
     ///
     /// # Panics
     ///
@@ -120,13 +120,13 @@ impl SignatureVersion {
     /// use signature_sdk::types::SignatureVersion;
     ///
     /// assert_eq!(SignatureVersion::V0.embedding_dimensions(), 1536);
-    /// assert_eq!(SignatureVersion::V1.embedding_dimensions(), 384);
-    /// assert_eq!(SignatureVersion::Latest.resolve().embedding_dimensions(), 384);
+    /// assert_eq!(SignatureVersion::V1.embedding_dimensions(), 1024);
+    /// assert_eq!(SignatureVersion::Latest.resolve().embedding_dimensions(), 1024);
     /// ```
     pub fn embedding_dimensions(&self) -> usize {
         match self.resolve() {
             SignatureVersion::V0 => 1536, // OpenAI text-embedding-3-large
-            SignatureVersion::V1 => 384,  // multilingual-e5-small
+            SignatureVersion::V1 => 1024, // multilingual-e5-large
             SignatureVersion::Latest => unreachable!("Latest should be resolved"),
         }
     }
@@ -232,8 +232,8 @@ mod tests {
     #[test]
     fn test_signature_version_embedding_dimensions() {
         assert_eq!(SignatureVersion::V0.embedding_dimensions(), 1536);
-        assert_eq!(SignatureVersion::V1.embedding_dimensions(), 384);
-        assert_eq!(SignatureVersion::Latest.embedding_dimensions(), 384); // Resolves to V1
+        assert_eq!(SignatureVersion::V1.embedding_dimensions(), 1024);
+        assert_eq!(SignatureVersion::Latest.embedding_dimensions(), 1024); // Resolves to V1
     }
 
     #[test]
@@ -270,8 +270,8 @@ mod tests {
             prompt_preview: "test".to_string(),
             prompt_length: 4,
             provider: "onnx".to_string(),
-            model: "intfloat/multilingual-e5-small".to_string(),
-            dimensions: 384,
+            model: "intfloat/multilingual-e5-large".to_string(),
+            dimensions: 1024,
             embedding_sha256: "abc".to_string(),
             lsh: LshOutput {
                 config: LshConfig::default(),

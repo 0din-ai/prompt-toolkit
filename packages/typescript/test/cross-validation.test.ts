@@ -58,8 +58,8 @@ class FixedEmbeddingProvider implements EmbeddingProvider {
 
 describe('Cross-language validation', () => {
   test('V1 signature with fixed embedding', async () => {
-    // Create provider with V1 dimensions (384)
-    const provider = new FixedEmbeddingProvider(384);
+    // Create provider with V1 dimensions (1024)
+    const provider = new FixedEmbeddingProvider(1024);
 
     // Generate signature
     const result = await signText('test prompt', { provider, version: SignatureVersion.V1 });
@@ -106,7 +106,7 @@ describe('Cross-language validation', () => {
 
       constructor() {
         // Create a pattern: alternating positive/negative
-        this.embedding = Array.from({ length: 384 }, (_, i) => (i % 2 === 0 ? 1.0 : -1.0));
+        this.embedding = Array.from({ length: 1024 }, (_, i) => (i % 2 === 0 ? 1.0 : -1.0));
       }
 
       name(): string {
@@ -118,7 +118,7 @@ describe('Cross-language validation', () => {
       }
 
       dimensions(): number {
-        return 384;
+        return 1024;
       }
 
       async generateEmbedding(_text: string): Promise<EmbeddingResult> {
@@ -130,7 +130,7 @@ describe('Cross-language validation', () => {
           normalizedEmbedding: normalized,
           normalizedEmbeddingSha256: sha256,
           model: 'pattern-model',
-          dimensions: 384,
+          dimensions: 1024,
           tokenCount: 10,
           timingMs: 100.0,
         };

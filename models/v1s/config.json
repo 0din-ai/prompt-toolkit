@@ -1,15 +1,15 @@
 {
-  "model_id": "intfloat/multilingual-e5-large",
+  "model_id": "intfloat/multilingual-e5-small",
   "variant": "0din-threat-feed-v1",
-  "description": "Custom fine-tuned variant of multilingual-e5-large for jailbreak/threat detection",
+  "description": "Custom fine-tuned variant of multilingual-e5-small for jailbreak/threat detection",
   "architecture": {
-    "type": "XLMRobertaModel",
-    "hidden_size": 1024,
-    "num_hidden_layers": 24,
-    "num_attention_heads": 16,
-    "intermediate_size": 4096,
-    "max_position_embeddings": 514,
-    "vocab_size": 250002
+    "type": "BertModel",
+    "hidden_size": 384,
+    "num_hidden_layers": 12,
+    "num_attention_heads": 12,
+    "intermediate_size": 1536,
+    "max_position_embeddings": 512,
+    "vocab_size": 250037
   },
   "tokenizer": {
     "type": "XLMRobertaTokenizer",
@@ -26,23 +26,24 @@
     "input_prefix_note": "Empty prefix (unlike stock E5 which uses 'query: '). This custom model was fine-tuned without prefixes."
   },
   "training": {
-    "base_model": "intfloat/multilingual-e5-large",
+    "base_model": "intfloat/multilingual-e5-small",
     "loss": "ContrastiveLoss",
     "training_samples": "~4000",
     "dataset": "0din jailbreak/threat-feed corpus",
     "fine_tuned_by": "0DIN team"
   },
-  "dimensions": 1024,
+  "dimensions": 384,
   "files": {
     "onnx_model": "onnx/model.onnx",
-    "onnx_model_data": "onnx/model.onnx_data",
+    "onnx_model_optimized": "onnx/model_O4.onnx",
     "tokenizer": "tokenizer.json",
     "config": "config.json",
     "config_sentence_transformers": "config_sentence_transformers.json",
+    "model_safetensors": "model.safetensors",
     "readme": "README.md"
   },
   "download": {
-    "huggingface_repo": "0dinai/jailbreak-embeddings-large-onnx",
+    "huggingface_repo": "0dinai/jailbreak-embeddings-small",
     "local_path": "../signature-sdk/models/v1",
     "cache_dir_default": "~/.cache/signature-sdk/models/v1",
     "cache_dir_env_var": "SIGNATURE_SDK_MODEL_CACHE",
@@ -69,11 +70,12 @@
     }
   },
   "performance": {
-    "inference_time_cpu": "~150-250ms per prompt (M1 Mac)",
-    "memory_footprint": "~2.5GB RAM",
-    "disk_size_onnx": "~2.1GB"
+    "inference_time_cpu": "~50-100ms per prompt (M1 Mac)",
+    "memory_footprint": "~500MB RAM",
+    "disk_size_onnx": "~470MB",
+    "disk_size_onnx_optimized": "~235MB"
   },
   "license": "MIT",
   "version": "1.0.0",
-  "last_updated": "2026-03-10"
+  "last_updated": "2026-02-24"
 }

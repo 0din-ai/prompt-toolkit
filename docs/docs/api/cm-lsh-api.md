@@ -50,7 +50,7 @@ impl HybridCMLSH {
 use signature_sdk::cm_lsh::{HybridCMLSH, create_default_cm_lsh};
 
 // Use default factory (recommended)
-let hasher = create_default_cm_lsh(384, 0);
+let hasher = create_default_cm_lsh(1024, 0);
 
 // Or construct manually
 let hasher = HybridCMLSH::new(
@@ -422,8 +422,8 @@ pub fn create_default_cm_lsh(dimensions: usize, family: usize) -> HybridCMLSH
 ```rust
 use signature_sdk::cm_lsh::create_default_cm_lsh;
 
-// For 384-dimensional embeddings (V1/ONNX)
-let hasher = create_default_cm_lsh(384, 0);
+// For 1024-dimensional embeddings (V1/ONNX)
+let hasher = create_default_cm_lsh(1024, 0);
 
 // For 1536-dimensional embeddings (V0/OpenAI)
 let hasher = create_default_cm_lsh(1536, 0);
@@ -440,8 +440,8 @@ def create_default_cm_lsh(dimensions: int, family: int = 0) -> HybridCMLSH
 ```python
 from signature_sdk.cm_lsh import create_default_cm_lsh
 
-# For 384-dimensional embeddings (V1/ONNX)
-hasher = create_default_cm_lsh(384, family=0)
+# For 1024-dimensional embeddings (V1/ONNX)
+hasher = create_default_cm_lsh(1024, family=0)
 
 # For 1536-dimensional embeddings (V0/OpenAI)
 hasher = create_default_cm_lsh(1536, family=0)
@@ -458,7 +458,7 @@ function createDefaultCmLsh(dimensions: number, family?: number): HybridCMLSH
 ```typescript
 import { createDefaultCmLsh } from '@0din/signature-sdk';
 
-// For 384-dimensional embeddings (V1/ONNX)
+// For 1024-dimensional embeddings (V1/ONNX)
 const hasher = createDefaultCmLsh(384, 0);
 
 // For 1536-dimensional embeddings (V0/OpenAI)
@@ -499,7 +499,7 @@ pub fn gen_hyperplanes(family: usize, bits: usize, dims: usize) -> Vec<Vec<f32>>
 ```rust
 use signature_sdk::cm_lsh::gen_hyperplanes;
 
-// Generate 512 hyperplanes for 384-dim embeddings, family 0
+// Generate 512 hyperplanes for 1024-dim embeddings, family 0
 let planes = gen_hyperplanes(0, 512, 384);
 // Returns: Vec<Vec<f32>> of shape [512, 384]
 ```
@@ -515,7 +515,7 @@ def gen_hyperplanes(family: int, bits: int, dims: int) -> list[list[float]]
 ```python
 from signature_sdk.cm_lsh import gen_hyperplanes
 
-# Generate 512 hyperplanes for 384-dim embeddings, family 0
+# Generate 512 hyperplanes for 1024-dim embeddings, family 0
 planes = gen_hyperplanes(family=0, bits=512, dims=384)
 # Returns: list[list[float]] of shape [512, 384]
 ```
@@ -531,7 +531,7 @@ function genHyperplanes(family: number, bits: number, dims: number): Float32Arra
 ```typescript
 import { genHyperplanes } from '@0din/signature-sdk';
 
-// Generate 512 hyperplanes for 384-dim embeddings, family 0
+// Generate 512 hyperplanes for 1024-dim embeddings, family 0
 const planes = genHyperplanes(0, 512, 384);
 // Returns: Float32Array[] of length 512, each with 384 elements
 ```

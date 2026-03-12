@@ -154,7 +154,7 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 | Version | Provider | Model | Dimensions | Use Case |
 |---------|----------|-------|------------|----------|
 | **V0** | OpenAI | text-embedding-3-large | 1536 | API-based, production embeddings |
-| **V1** | ONNX | multilingual-e5-small | 384 | Local, API-free, lower latency |
+| **V1** | ONNX | multilingual-e5-large | 1024 | Local, API-free, lower latency |
 
 **Important:** V0 and V1 signatures use different embedding spaces and are **not comparable**.
 

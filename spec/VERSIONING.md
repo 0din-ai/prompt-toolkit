@@ -35,7 +35,7 @@ Where:
 | Version | Provider | Model                                 | Dimensions | Signature Bits | Algorithm | Status       |
 |---------|----------|---------------------------------------|------------|----------------|-----------|--------------|
 | V0      | OpenAI   | text-embedding-3-large                | 1536       | 256            | LSH       | Stable       |
-| V1      | ONNX     | multilingual-e5-small (0din-tuned-v1) | 384        | 256            | LSH       | Stable       |
+| V1      | ONNX     | multilingual-e5-large (0din-tuned-v1) | 1024       | 256            | LSH       | Stable       |
 | Latest  | →V1      | —                                     | —          | —              | —         | Alias        |
 
 ### Version Descriptions
@@ -50,11 +50,11 @@ Where:
 - **Cost**: Per-request API charges
 - **Use Case**: High-quality embeddings, production workloads with API access
 
-#### V1: ONNX multilingual-e5-small
+#### V1: ONNX multilingual-e5-large
 
 - **Provider**: Local ONNX inference
-- **Model**: `intfloat/multilingual-e5-small` (custom 0din-threat-feed fine-tuned variant)
-- **Dimensions**: 384
+- **Model**: `intfloat/multilingual-e5-large` (custom 0din-threat-feed fine-tuned variant)
+- **Dimensions**: 1024
 - **Signature**: 256-bit LSH (3 families, 16 bands)
 - **API Key**: Not required
 - **Cost**: Free (local inference)
@@ -97,7 +97,7 @@ resolve_version(v: Version) -> Version:
 **V0 and V1 use different embedding spaces and dimensions:**
 
 - V0: 1536-dimensional OpenAI space
-- V1: 384-dimensional multilingual-e5-small space
+- V1: 1024-dimensional multilingual-e5-large space
 
 **Implications:**
 

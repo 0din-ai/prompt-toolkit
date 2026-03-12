@@ -67,13 +67,13 @@
 //! | Feature | Default | Description |
 //! |---------|---------|-------------|
 //! | `openai` | Yes | OpenAI API embedding provider (V0 signatures, 1536 dims) |
-//! | `onnx` | Yes | Local ONNX embedding provider (V1 signatures, 384 dims) |
+//! | `onnx` | Yes | Local ONNX embedding provider (V1 signatures, 1024 dims) |
 //! | `cm-lsh` | No | Confidence Matrix LSH (experimental, higher accuracy) |
 //!
 //! ## Signature Versions
 //!
 //! - **V0**: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-//! - **V1**: multilingual-e5-small ONNX (384 dimensions, local)
+//! - **V1**: multilingual-e5-large ONNX (1024 dimensions, local)
 //! - **Latest**: Resolves to V1
 //!
 //! V0 and V1 signatures are **not comparable** due to different embedding spaces.

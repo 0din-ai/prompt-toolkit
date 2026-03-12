@@ -21,9 +21,9 @@ import { EmbeddingResult } from './types';
  *     return 'my-model';
  *   }
  *
- *   dimensions(): number {
- *     return 384;
- *   }
+  *   dimensions(): number {
+  *     return 1024;
+  *   }
  *
  *   async generateEmbedding(text: string): Promise<EmbeddingResult> {
  *     // Generate and return embedding

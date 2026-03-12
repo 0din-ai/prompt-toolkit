@@ -438,7 +438,7 @@ println!("{}", signature_string);
 Format: `0din-v{version}:<hex_signature>`
 
 - **v0**: OpenAI embeddings (1536 dimensions)
-- **v1**: ONNX embeddings (384 dimensions)
+- **v1**: ONNX embeddings (1024 dimensions)
 
 :::warning Version Compatibility
 V0 and V1 signatures are **not comparable** because they use different embedding spaces. Always compare signatures with the same version.

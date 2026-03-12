@@ -21,7 +21,7 @@ signature-sdk = { version = "0.1", features = ["openai", "onnx", "cm-lsh"] }
 | Feature | Description | Dependencies | Use Case |
 |---------|-------------|--------------|----------|
 | `openai` | OpenAI embedding provider | `reqwest` | Cloud-based embeddings (1536-dim) |
-| `onnx` | ONNX embedding provider | `tract-onnx`, `tokenizers`, `dirs` | Local embeddings (384-dim) |
+| `onnx` | ONNX embedding provider | `tract-onnx`, `tokenizers`, `dirs` | Local embeddings (1024-dim) |
 | `cm-lsh` | Confidence Matrix LSH | None | Higher accuracy LSH (experimental) |
 | **default** | `openai + onnx` | — | Includes both providers |
 
@@ -177,7 +177,7 @@ fn main() {
 
 | Provider | Feature Flag | Model | Dimensions | Use Case |
 |----------|-------------|-------|------------|----------|
-| `OnnxProvider` | `onnx` | multilingual-e5-small | 384 | Local/offline, cost-free |
+| `OnnxProvider` | `onnx` | multilingual-e5-large | 1024 | Local/offline, cost-free |
 | `OpenAIProvider` | `openai` | text-embedding-3-large | 1536 | Cloud-based, high quality |
 
 ### Hasher Abstraction
@@ -190,7 +190,7 @@ use signature_sdk::hashers::get_hasher;
 let hasher = get_hasher("lsh")?;
 
 // Hash a vector
-let vector = vec![0.5; 384];
+let vector = vec![0.5; 1024];
 let hash_output = hasher.hash(&vector, 0); // family 0
 
 println!("Signature: {}", hash_output.signature);
@@ -201,7 +201,7 @@ println!("Signature: {}", hash_output.signature);
 ## Signature Versions
 
 - **V0**: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-- **V1**: multilingual-e5-small ONNX (384 dimensions, local)
+- **V1**: multilingual-e5-large ONNX (1024 dimensions, local)
 - **Latest**: Resolves to V1
 
 **Important**: V0 and V1 signatures are **not comparable** due to different embedding spaces.
@@ -258,7 +258,7 @@ cargo run --features onnx --example sign_text_onnx
 
 **Example Output** (benchmark):
 ```
-Generating 10,000 signatures (384-dim random vectors)...
+Generating 10,000 signatures (1024-dim random vectors)...
 Time: 1.760s
 Throughput: 5,683 signatures/sec
 Per-signature: 0.176ms

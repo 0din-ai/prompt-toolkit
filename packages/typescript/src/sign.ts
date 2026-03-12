@@ -218,12 +218,12 @@ function resolveVersion(
   let inferredVersion: SignatureVersion;
   if (providerDims === 1536) {
     inferredVersion = SignatureVersion.V0;
-  } else if (providerDims === 384) {
+  } else if (providerDims === 1024) {
     inferredVersion = SignatureVersion.V1;
   } else {
     throw new Error(
       `Cannot infer version from provider dimensions (${providerDims}). ` +
-        `Expected 1536 (V0) or 384 (V1). ` +
+        `Expected 1536 (V0) or 1024 (V1). ` +
         `Please specify version explicitly.`
     );
   }
@@ -256,9 +256,9 @@ function getExpectedDimensions(version: SignatureVersion): number {
     case SignatureVersion.V0:
       return 1536;
     case SignatureVersion.V1:
-      return 384;
+      return 1024;
     case SignatureVersion.LATEST:
-      return 384;
+      return 1024;
     default:
       throw new Error(`Unknown version: ${version}`);
   }
