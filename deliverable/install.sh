@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Signature SDK Design Partner Installation Script
+# 0DIN Prompt Toolkit Design Partner Installation Script
 # Installs the Python SDK, native acceleration, ONNX model, and signature pack
 
 set -e
@@ -15,7 +15,7 @@ RESET='\033[0m'
 # Configuration
 REQUIRED_PYTHON_VERSION="3.10"
 VENV_DIR="./venv"
-CACHE_DIR="$HOME/.cache/signature-sdk/models/v1"
+CACHE_DIR="$HOME/.cache/odin-prompt-toolkit/models/v1"
 MODEL_ONLINE_URL="https://huggingface.co/0dinai/jailbreak-embeddings-small/resolve/main"
 
 # Modes
@@ -115,10 +115,10 @@ create_venv() {
 }
 
 install_sdk() {
-    info "Installing Signature SDK..."
+    info "Installing 0DIN Prompt Toolkit..."
     
     # Find the pure Python wheel
-    PURE_WHEEL=$(find sdk/ -name "signature_sdk-*-py3-none-any.whl" | head -1)
+    PURE_WHEEL=$(find sdk/ -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
     if [[ -z "$PURE_WHEEL" ]]; then
         error "Pure Python wheel not found in sdk/"
     fi
@@ -130,15 +130,15 @@ install_sdk() {
     PYTHON_TAG="cp$(python3 -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
     
     if [[ "$PLATFORM" == "linux" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="signature_sdk_native-*-${PYTHON_TAG}-*-manylinux*_x86_64.whl"
+        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_x86_64.whl"
     elif [[ "$PLATFORM" == "linux" && "$ARCH_NORMALIZED" == "aarch64" ]]; then
-        NATIVE_PATTERN="signature_sdk_native-*-${PYTHON_TAG}-*-manylinux*_aarch64.whl"
+        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_aarch64.whl"
     elif [[ "$PLATFORM" == "macos" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="signature_sdk_native-*-${PYTHON_TAG}-*-macosx*_x86_64.whl"
+        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_x86_64.whl"
     elif [[ "$PLATFORM" == "macos" && "$ARCH_NORMALIZED" == "aarch64" ]]; then
-        NATIVE_PATTERN="signature_sdk_native-*-${PYTHON_TAG}-*-macosx*_arm64.whl"
+        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_arm64.whl"
     elif [[ "$PLATFORM" == "windows" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="signature_sdk_native-*-${PYTHON_TAG}-*-win_amd64.whl"
+        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-win_amd64.whl"
     else
         info "No native wheel available for $PLATFORM $ARCH_NORMALIZED (using pure Python)"
         return
@@ -205,8 +205,8 @@ install_model() {
 install_signatures() {
     if [[ -f "signatures/threat-feed-v1.json" ]]; then
         info "Copying signature pack..."
-        mkdir -p "$HOME/.signature-sdk/signatures"
-        cp signatures/threat-feed-v1.json "$HOME/.signature-sdk/signatures/"
+        mkdir -p "$HOME/.odin-prompt-toolkit/signatures"
+        cp signatures/threat-feed-v1.json "$HOME/.odin-prompt-toolkit/signatures/"
         success "Signature pack installed"
     else
         warn "No signature pack found (signatures/threat-feed-v1.json)"
@@ -246,7 +246,7 @@ print_completion() {
 # Main installation flow
 main() {
     echo -e "${CYAN}╔═════════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${CYAN}║        Signature SDK Design Partner Installation           ║${RESET}"
+    echo -e "${CYAN}║        0DIN Prompt Toolkit Design Partner Installation           ║${RESET}"
     echo -e "${CYAN}╚═════════════════════════════════════════════════════════════╝${RESET}"
     echo ""
     

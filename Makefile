@@ -13,7 +13,7 @@ RESET := \033[0m
 ##@ General
 
 help: ## Display this help message
-	@echo "$(CYAN)signature-sdk - Multi-language Build System$(RESET)"
+	@echo "$(CYAN)0DIN Prompt Toolkit - Multi-language Build System$(RESET)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(RESET)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(RESET)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
@@ -120,20 +120,20 @@ deliverable: package-python ## Build design partner deliverable tarball (0DIN-11
 	@cd deliverable && ./build-tarball.sh
 	@echo ""
 	@echo "$(GREEN)✅ Deliverable built successfully$(RESET)"
-	@echo "   Location: deliverable/signature-sdk-deliverable-*.tar.gz"
+	@echo "   Location: deliverable/0DIN Prompt Toolkit-deliverable-*.tar.gz"
 
 deliverable-with-model: package-python ## Build deliverable with local model (faster, no HF download)
 	@echo ""
 	@echo "$(CYAN)Building design partner deliverable (using local model)...$(RESET)"
-	@if [ ! -d ~/.cache/signature-sdk/models/v1 ]; then \
+	@if [ ! -d ~/.cache/odin-prompt-toolkit/models/v1 ]; then \
 		echo "$(YELLOW)Warning: Model not found in cache, will download from HuggingFace$(RESET)"; \
 		cd deliverable && ./build-tarball.sh; \
 	else \
-		cd deliverable && ./build-tarball.sh --model-source ~/.cache/signature-sdk/models/v1; \
+		cd deliverable && ./build-tarball.sh --model-source ~/.cache/odin-prompt-toolkit/models/v1; \
 	fi
 	@echo ""
 	@echo "$(GREEN)✅ Deliverable built successfully$(RESET)"
-	@echo "   Location: deliverable/signature-sdk-deliverable-*.tar.gz"
+	@echo "   Location: deliverable/0DIN Prompt Toolkit-deliverable-*.tar.gz"
 
 ##@ Test Vectors
 
@@ -335,14 +335,14 @@ ci: clean install lint test ## Simulate CI pipeline (clean, install, lint, test)
 ##@ Information
 
 info: ## Display project information
-	@echo "$(CYAN)signature-sdk - Project Information$(RESET)"
+	@echo "$(CYAN)0DIN Prompt Toolkit - Project Information$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)Status:$(RESET) ✅ Phases 1-5 Complete (Production Ready)"
 	@echo ""
 	@echo "$(YELLOW)Packages:$(RESET)"
-	@echo "  • Rust:       signature-sdk       (43 tests)"
-	@echo "  • Python:     signature-sdk       (11 tests)"
-	@echo "  • TypeScript: @0din/signature-sdk      (7 tests)"
+	@echo "  • Rust:       0DIN Prompt Toolkit       (43 tests)"
+	@echo "  • Python:     0DIN Prompt Toolkit       (11 tests)"
+	@echo "  • TypeScript: @0din/0DIN Prompt Toolkit      (7 tests)"
 	@echo ""
 	@echo "$(YELLOW)Test Vectors:$(RESET)"
 	@ls spec/test-vectors/ | wc -l | xargs -I {} echo "  • {} files"

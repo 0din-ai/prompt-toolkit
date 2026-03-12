@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version bump script for signature-sdk
+# Version bump script for 0DIN Prompt Toolkit
 # Synchronizes version across all three language packages
 
 set -e
@@ -23,7 +23,7 @@ usage() {
     echo "This script will:"
     echo "  1. Update version in packages/rust/Cargo.toml"
     echo "  2. Update version in packages/python/pyproject.toml"
-    echo "  3. Update version in packages/python/signature_sdk/__init__.py"
+    echo "  3. Update version in packages/python/odin_prompt_toolkit/__init__.py"
     echo "  4. Update version in packages/python-native/pyproject.toml"
     echo "  5. Update version in packages/python-native/Cargo.toml"
     echo "  6. Update version in packages/typescript/package.json"
@@ -54,7 +54,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo -e "${CYAN}========================================${RESET}"
-echo -e "${CYAN}signature-sdk - Version Bump${RESET}"
+echo -e "${CYAN}0DIN Prompt Toolkit - Version Bump${RESET}"
 echo -e "${CYAN}========================================${RESET}"
 echo ""
 echo -e "${YELLOW}New version: ${NEW_VERSION}${RESET}"
@@ -115,11 +115,11 @@ else
 fi
 
 # Update Python (__init__.py __version__)
-echo "  Updating packages/python/signature_sdk/__init__.py..."
+echo "  Updating packages/python/odin_prompt_toolkit/__init__.py..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" packages/python/signature_sdk/__init__.py
+    sed -i '' "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" packages/python/odin_prompt_toolkit/__init__.py
 else
-    sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" packages/python/signature_sdk/__init__.py
+    sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" packages/python/odin_prompt_toolkit/__init__.py
 fi
 
 # Update Python-native (pyproject.toml)
@@ -151,14 +151,14 @@ echo ""
 
 # Show diff
 echo -e "${CYAN}Changes:${RESET}"
-git diff packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
+git diff packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/odin_prompt_toolkit/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
 echo ""
 
 # Verify versions
 echo -e "${CYAN}New versions:${RESET}"
 NEW_RUST_VERSION=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_PYTHON_VERSION=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-NEW_PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/signature_sdk/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
+NEW_PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/odin_prompt_toolkit/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
 NEW_PYTHON_NATIVE_PY_VERSION=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_PYTHON_NATIVE_RS_VERSION=$(grep '^version = ' packages/python-native/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
 NEW_TS_VERSION=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
@@ -193,7 +193,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     echo -e "${CYAN}Creating commit...${RESET}"
-    git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
+    git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/odin_prompt_toolkit/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json
     git commit -m "chore: bump version to $NEW_VERSION"
     
     echo -e "${CYAN}Creating tag v${NEW_VERSION}...${RESET}"
@@ -209,7 +209,7 @@ else
     echo ""
     echo -e "${YELLOW}Changes staged but not committed.${RESET}"
     echo "To commit manually:"
-    echo "  git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/signature_sdk/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json"
+    echo "  git add packages/rust/Cargo.toml packages/python/pyproject.toml packages/python/odin_prompt_toolkit/__init__.py packages/python-native/pyproject.toml packages/python-native/Cargo.toml packages/typescript/package.json"
     echo "  git commit -m 'chore: bump version to $NEW_VERSION'"
     echo "  git tag -a 'v$NEW_VERSION' -m 'Release v$NEW_VERSION'"
     echo "  git push && git push --tags"

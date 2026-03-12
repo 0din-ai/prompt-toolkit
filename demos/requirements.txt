@@ -1,7 +1,7 @@
 # Showcase benchmark dependencies
 # Install with: pip install -r demos/requirements.txt
 #
-# Also requires the sig-sdk Python package itself:
+# Also requires the odin-prompt-toolkit Python package itself:
 #   pip install -e "packages/python[onnx]"
 
 # Vector search comparisons

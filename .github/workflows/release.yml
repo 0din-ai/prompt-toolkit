@@ -24,7 +24,7 @@ jobs:
           # Extract versions from all sources
           RUST_VERSION=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
           PYTHON_VERSION=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/signature_sdk/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
+          PYTHON_INIT_VERSION=$(grep '__version__ = ' packages/python/odin_prompt_toolkit/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
           PYTHON_NATIVE_VERSION=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
           TS_VERSION=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
           
@@ -89,22 +89,22 @@ jobs:
         run: |
           python -m venv /tmp/test-env
           /tmp/test-env/bin/pip install dist/*.whl
-          /tmp/test-env/bin/python -c "import signature_sdk; print(signature_sdk.__version__)"
+          /tmp/test-env/bin/python -c "import odin_prompt_toolkit; print(signature_sdk.__version__)"
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/signature-sdk-python-${VERSION}
-          cp dist/*.whl /tmp/signature-sdk-python-${VERSION}/
-          cp dist/*.tar.gz /tmp/signature-sdk-python-${VERSION}/
-          cp packages/python/INSTALL.md /tmp/signature-sdk-python-${VERSION}/ 2>/dev/null || true
-          cd /tmp && zip -r signature-sdk-python-${VERSION}.zip signature-sdk-python-${VERSION}/
+          mkdir -p /tmp/odin-prompt-toolkit-python-${VERSION}
+          cp dist/*.whl /tmp/odin-prompt-toolkit-python-${VERSION}/
+          cp dist/*.tar.gz /tmp/odin-prompt-toolkit-python-${VERSION}/
+          cp packages/python/INSTALL.md /tmp/odin-prompt-toolkit-python-${VERSION}/ 2>/dev/null || true
+          cd /tmp && zip -r odin-prompt-toolkit-python-${VERSION}.zip odin-prompt-toolkit-python-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: python-dist
           path: |
             dist/*.whl
             dist/*.tar.gz
-            /tmp/signature-sdk-python-*.zip
+            /tmp/odin-prompt-toolkit-python-*.zip
 
   # Build Python-native wheels for Linux (x86_64 + aarch64)
   build-native-linux:
@@ -200,16 +200,16 @@ jobs:
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/signature-sdk-rust-${VERSION}
-          cp dist/signature-sdk-${VERSION}.crate /tmp/signature-sdk-rust-${VERSION}/
-          cp packages/rust/README.md /tmp/signature-sdk-rust-${VERSION}/
-          cd /tmp && zip -r signature-sdk-rust-${VERSION}.zip signature-sdk-rust-${VERSION}/
+          mkdir -p /tmp/odin-prompt-toolkit-rust-${VERSION}
+          cp dist/signature-sdk-${VERSION}.crate /tmp/odin-prompt-toolkit-rust-${VERSION}/
+          cp packages/rust/README.md /tmp/odin-prompt-toolkit-rust-${VERSION}/
+          cd /tmp && zip -r odin-prompt-toolkit-rust-${VERSION}.zip odin-prompt-toolkit-rust-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: rust-dist
           path: |
             dist/*.crate
-            /tmp/signature-sdk-rust-*.zip
+            /tmp/odin-prompt-toolkit-rust-*.zip
 
   # Package TypeScript npm tarball
   build-typescript:
@@ -227,16 +227,16 @@ jobs:
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          mkdir -p /tmp/signature-sdk-typescript-${VERSION}
-          cp dist/*.tgz /tmp/signature-sdk-typescript-${VERSION}/
-          cp packages/typescript/README.md /tmp/signature-sdk-typescript-${VERSION}/
-          cd /tmp && zip -r signature-sdk-typescript-${VERSION}.zip signature-sdk-typescript-${VERSION}/
+          mkdir -p /tmp/odin-prompt-toolkit-typescript-${VERSION}
+          cp dist/*.tgz /tmp/odin-prompt-toolkit-typescript-${VERSION}/
+          cp packages/typescript/README.md /tmp/odin-prompt-toolkit-typescript-${VERSION}/
+          cd /tmp && zip -r odin-prompt-toolkit-typescript-${VERSION}.zip odin-prompt-toolkit-typescript-${VERSION}/
       - uses: actions/upload-artifact@v4
         with:
           name: typescript-dist
           path: |
             dist/*.tgz
-            /tmp/signature-sdk-typescript-*.zip
+            /tmp/odin-prompt-toolkit-typescript-*.zip
 
   # Build design partner deliverable tarball
   build-deliverable:
@@ -313,15 +313,15 @@ jobs:
       - name: Calculate checksums
         run: |
           cd deliverable
-          sha256sum signature-sdk-deliverable-*.tar.gz > signature-sdk-deliverable-${GITHUB_REF_NAME#v}.tar.gz.sha256
+          sha256sum odin-prompt-toolkit-deliverable-*.tar.gz > odin-prompt-toolkit-deliverable-${GITHUB_REF_NAME#v}.tar.gz.sha256
           cat *.sha256
       
       - uses: actions/upload-artifact@v4
         with:
           name: deliverable-tarball
           path: |
-            deliverable/signature-sdk-deliverable-*.tar.gz
-            deliverable/signature-sdk-deliverable-*.tar.gz.sha256
+            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz
+            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz.sha256
           retention-days: 90
 
   # Create GitHub Release with all artifacts
@@ -353,7 +353,7 @@ jobs:
           # Python pure
           cp artifacts/python-dist/dist/*.whl release-files/ || true
           cp artifacts/python-dist/dist/*.tar.gz release-files/ || true
-          cp artifacts/python-dist/tmp/signature-sdk-python-*.zip release-files/ || true
+          cp artifacts/python-dist/tmp/odin-prompt-toolkit-python-*.zip release-files/ || true
           
           # Python-native wheels (all platforms)
           cp artifacts/native-linux-x86_64/*.whl release-files/ || true
@@ -365,11 +365,11 @@ jobs:
           
           # Rust
           cp artifacts/rust-dist/dist/*.crate release-files/ || true
-          cp artifacts/rust-dist/tmp/signature-sdk-rust-*.zip release-files/ || true
+          cp artifacts/rust-dist/tmp/odin-prompt-toolkit-rust-*.zip release-files/ || true
           
           # TypeScript
           cp artifacts/typescript-dist/dist/*.tgz release-files/ || true
-          cp artifacts/typescript-dist/tmp/signature-sdk-typescript-*.zip release-files/ || true
+          cp artifacts/typescript-dist/tmp/odin-prompt-toolkit-typescript-*.zip release-files/ || true
           
           # Design partner deliverable
           cp artifacts/deliverable-tarball/*.tar.gz release-files/ || true
