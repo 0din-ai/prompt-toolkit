@@ -1,14 +1,14 @@
-//! Native Python bindings for signature-sdk LSH functions
+//! Native Python bindings for odin-prompt-toolkit LSH functions
 //!
 //! This crate provides PyO3 bindings for the performance-critical LSH functions
-//! from the signature-sdk Rust library. When installed, the Python SDK automatically
+//! from the odin-prompt-toolkit Rust library. When installed, the Python SDK automatically
 //! uses these native implementations for ~627× speedup over pure Python.
 
 use pyo3::prelude::*;
 
 /// LSH family result containing signature and bands
 ///
-/// This mirrors the Python LSHFamily dataclass from odin_sig.lsh
+/// This mirrors the Python LSHFamily dataclass from odin_prompt_toolkit.lsh
 #[pyclass]
 #[derive(Clone)]
 pub struct LshFamily {
@@ -45,8 +45,8 @@ impl LshFamily {
     }
 }
 
-impl From<signature_sdk::LshFamily> for LshFamily {
-    fn from(f: signature_sdk::LshFamily) -> Self {
+impl From<odin_prompt_toolkit::LshFamily> for LshFamily {
+    fn from(f: odin_prompt_toolkit::LshFamily) -> Self {
         LshFamily {
             family: f.family,
             bits: f.bits,
@@ -58,7 +58,7 @@ impl From<signature_sdk::LshFamily> for LshFamily {
 
 /// LSH configuration
 ///
-/// This mirrors the Python LshConfig dataclass from odin_sig.types
+/// This mirrors the Python LshConfig dataclass from odin_prompt_toolkit.types
 #[pyclass]
 #[derive(Clone)]
 pub struct LshConfig {
@@ -90,9 +90,9 @@ impl LshConfig {
     }
 }
 
-impl From<LshConfig> for signature_sdk::LshConfig {
+impl From<LshConfig> for odin_prompt_toolkit::LshConfig {
     fn from(c: LshConfig) -> Self {
-        signature_sdk::LshConfig {
+        odin_prompt_toolkit::LshConfig {
             families: c.families,
             bits: c.bits,
             bands: c.bands,
@@ -118,12 +118,12 @@ fn simhash_lsh_multi(
     bits: usize,
     bands: usize,
 ) -> Vec<LshFamily> {
-    let config = signature_sdk::LshConfig {
+    let config = odin_prompt_toolkit::LshConfig {
         families,
         bits,
         bands,
     };
-    let results = signature_sdk::simhash_lsh_multi(&normalized_vector, &config);
+    let results = odin_prompt_toolkit::simhash_lsh_multi(&normalized_vector, &config);
     results.into_iter().map(LshFamily::from).collect()
 }
 
@@ -136,7 +136,7 @@ fn simhash_lsh_multi(
 ///     L2-normalized vector. If the input has zero magnitude, returns the original.
 #[pyfunction]
 fn normalize_vector(vector: Vec<f32>) -> Vec<f32> {
-    signature_sdk::normalize_vector(&vector)
+    odin_prompt_toolkit::normalize_vector(&vector)
 }
 
 /// Compute Hamming distance between two hex-encoded signatures
@@ -149,7 +149,7 @@ fn normalize_vector(vector: Vec<f32>) -> Vec<f32> {
 ///     Number of differing bits
 #[pyfunction]
 fn hamming_distance_hex(a: &str, b: &str) -> usize {
-    signature_sdk::hamming_distance_hex(a, b)
+    odin_prompt_toolkit::hamming_distance_hex(a, b)
 }
 
 /// Estimate cosine similarity from Hamming distance
@@ -164,7 +164,7 @@ fn hamming_distance_hex(a: &str, b: &str) -> usize {
 ///     Estimated cosine similarity in [-1, 1]
 #[pyfunction]
 fn cosine_from_hamming(distance_bits: usize, total_bits: usize) -> f64 {
-    signature_sdk::cosine_from_hamming(distance_bits, total_bits)
+    odin_prompt_toolkit::cosine_from_hamming(distance_bits, total_bits)
 }
 
 /// Compute canonical SHA-256 hash of a normalized embedding
@@ -180,15 +180,15 @@ fn cosine_from_hamming(distance_bits: usize, total_bits: usize) -> f64 {
 ///     Hex-encoded SHA-256 hash
 #[pyfunction]
 fn compute_embedding_sha256(normalized_embedding: Vec<f32>) -> String {
-    signature_sdk::compute_embedding_sha256(&normalized_embedding)
+    odin_prompt_toolkit::compute_embedding_sha256(&normalized_embedding)
 }
 
-/// Native Python extension module for signature-sdk
+/// Native Python extension module for odin-prompt-toolkit
 ///
-/// This module is imported as `odin_sig_native` and provides accelerated
+/// This module is imported as `odin_prompt_toolkit_native` and provides accelerated
 /// implementations of the core LSH functions.
 #[pymodule]
-fn signature_sdk_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn odin_prompt_toolkit_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LshFamily>()?;
     m.add_class::<LshConfig>()?;
     m.add_function(wrap_pyfunction!(simhash_lsh_multi, m)?)?;

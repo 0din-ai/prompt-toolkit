@@ -1,20 +1,20 @@
 [package]
-name = "signature-sdk-python"
+name = "odin-prompt-toolkit-python"
 version = "0.1.1"
 edition = "2021"
 rust-version = "1.70"
 authors = ["0din Team"]
-description = "Native Python bindings for signature-sdk LSH functions"
+description = "Native Python bindings for odin-prompt-toolkit LSH functions"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/0din-ai/signature-sdk"
+repository = "https://github.com/0din-ai/prompt-toolkit"
 
 [lib]
-name = "signature_sdk_native"
+name = "odin_prompt_toolkit_native"
 crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-signature-sdk = { path = "../rust", default-features = false }
+odin-prompt-toolkit = { path = "../rust", default-features = false }
 
 [profile.release]
 opt-level = 3
