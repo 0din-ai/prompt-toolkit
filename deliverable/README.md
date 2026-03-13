@@ -54,7 +54,7 @@ This will:
 
 **Option 2: Offline Mode** (for air-gapped environments)
 ```bash
-./install.sh --offline
+./install.sh
 ```
 
 Requirements:
