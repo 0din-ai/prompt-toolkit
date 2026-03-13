@@ -123,8 +123,9 @@ install_sdk() {
         error "Pure Python wheel not found in sdk/"
     fi
     
-    "$VENV_DIR/bin/pip" install --no-cache-dir "$PURE_WHEEL" > /dev/null 2>&1
-    success "Pure Python SDK installed"
+    # Install wheel with [onnx] extra so onnxruntime and transformers are pulled in
+    "$VENV_DIR/bin/pip" install --no-cache-dir "${PURE_WHEEL}[onnx]" > /dev/null 2>&1
+    success "Pure Python SDK installed (with ONNX dependencies)"
     
     # Try to install native wheel for this platform
     PYTHON_TAG="cp$(python3 -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
