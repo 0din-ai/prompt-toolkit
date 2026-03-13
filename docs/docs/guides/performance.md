@@ -37,7 +37,7 @@ We benchmarked three approaches to prompt similarity lookup against **3,714 real
 | Source | 0DIN threat feed (`vulnerabilities_cache.json`) |
 | Raw entries | 3,895 jailbreak prompts |
 | After deduplication | **3,714 unique prompts** |
-| Embedding model | `intfloat/multilingual-e5-large` (1024-dim, local ONNX) |
+| Embedding model | `0dinai/0din-jailbreak-embeddings-small` (1024-dim, local ONNX) |
 | Signature config | 256-bit SimHash · 16 bands · 3 families |
 | Hardware | MacBook Pro (CPU only, local inference) |
 | Run date | 2026-02-26 |
@@ -50,7 +50,7 @@ We benchmarked three approaches to prompt similarity lookup against **3,714 real
 | **B** | **sqlite-vec KNN** | `sqlite-vec` pip package (brute-force scan) |
 | **C** | **pgvector + HNSW** | PostgreSQL + pgvector via Docker (enterprise ANN indexing) |
 
-All three use the **same embeddings** (1024-dim multilingual-e5-large). The comparison isolates the **lookup mechanism**, not the semantic understanding.
+All three use the **same embeddings** (1024-dim 0din-jailbreak-embeddings-small). The comparison isolates the **lookup mechanism**, not the semantic understanding.
 
 ---
 

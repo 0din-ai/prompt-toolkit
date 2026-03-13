@@ -122,7 +122,7 @@ npm install @0din/odin-prompt-toolkit openai
 
 **Best for:** Local development, API-free deployment, cost-sensitive applications
 
-- **Model**: intfloat/multilingual-e5-large (custom fine-tuned variant)
+- **Model**: 0dinai/0din-jailbreak-embeddings-small (custom fine-tuned variant)
 - **Dimensions**: 384
 - **Cost**: Free (local inference)
 - **Setup**: Model auto-downloads to `~/.cache/odin-prompt-toolkit/models/v1/`

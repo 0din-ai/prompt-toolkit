@@ -10,7 +10,7 @@ import { ModelCache } from './model-cache';
 /**
  * Embedding provider using local ONNX model inference.
  *
- * This provider uses the intfloat/multilingual-e5-large model by default,
+ * This provider uses the 0dinai/0din-jailbreak-embeddings-small model by default,
  * which produces 1024-dimensional embeddings suitable for multilingual text similarity.
  *
  * The model is automatically loaded from the local cache directory.

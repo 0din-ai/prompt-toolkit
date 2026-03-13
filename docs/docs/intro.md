@@ -22,7 +22,7 @@ odin-prompt-toolkit implements **SimHash** via random hyperplane LSH ([Charikar 
 
 ## Why Use LSH Signatures?
 
-Traditional approaches to finding similar prompts require computing pairwise cosine similarities between all embeddings — **O(n²) comparisons** for a dataset of size n. With millions of prompts, this becomes prohibitively expensive.
+Traditional approaches to finding similar prompts require comparing each query against every indexed embedding — scaling linearly with index size per query. For large-scale systems with many queries, this becomes prohibitively expensive.
 
 LSH signatures enable **O(n) duplicate detection** through band-based candidate generation:
 
@@ -38,9 +38,7 @@ This reduces comparisons from **millions → hundreds** while maintaining high r
 
 - **Duplicate Detection** — Find near-duplicate AI prompts in large datasets
 - **Similarity Search** — Build approximate nearest neighbor (ANN) systems
-- **Content Deduplication** — Identify similar user inputs or generated content
 - **Prompt Clustering** — Group similar prompts without expensive pairwise comparisons
-- **Change Detection** — Monitor when prompt embeddings drift over time
 
 ## Quick Example
 
@@ -154,7 +152,7 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 | Version | Provider | Model | Dimensions | Use Case |
 |---------|----------|-------|------------|----------|
 | **V0** | OpenAI | text-embedding-3-large | 1536 | API-based, production embeddings |
-| **V1** | ONNX | multilingual-e5-large | 1024 | Local, API-free, lower latency |
+| **V1** | ONNX | 0din-jailbreak-embeddings-small | 1024 | Local, API-free, lower latency |
 
 **Important:** V0 and V1 signatures use different embedding spaces and are **not comparable**.
 

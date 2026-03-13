@@ -30,14 +30,14 @@ except ImportError as e:
 class OnnxProvider:
     """ONNX embedding provider using local model inference.
 
-    This provider uses the intfloat/multilingual-e5-large model by default,
+    This provider uses the 0dinai/0din-jailbreak-embeddings-small model by default,
     which produces 1024-dimensional embeddings suitable for multilingual text similarity.
 
     The model is automatically downloaded from HuggingFace on first use and cached locally.
 
     Args:
         cache: ModelCache instance for managing model files
-        model: Model name or local path (default: "intfloat/multilingual-e5-large")
+        model: Model name or local path (default: "0dinai/0din-jailbreak-embeddings-small")
         name: Provider name (default: "onnx")
 
     Example:
