@@ -34,7 +34,7 @@ impl std::str::FromStr for HashAlgorithm {
 pub enum SignatureVersion {
     /// v0: text-embedding-3-large + LSH (256-bit, 3 families, 1536 dims)
     V0,
-    /// v1: multilingual-e5-large ONNX + LSH (256-bit, 3 families, 1024 dims)
+    /// v1: 0din-jailbreak-embeddings-small ONNX + LSH (256-bit, 3 families, 1024 dims)
     V1,
     /// Latest version (resolves to V1)
     #[serde(rename = "latest")]
@@ -108,7 +108,7 @@ impl SignatureVersion {
     ///
     /// Returns the number of dimensions in the embedding vector for each version:
     /// - V0: 1536 dimensions (OpenAI text-embedding-3-large)
-    /// - V1: 1024 dimensions (multilingual-e5-large ONNX)
+    /// - V1: 1024 dimensions (0din-jailbreak-embeddings-small ONNX)
     ///
     /// # Panics
     ///
@@ -126,7 +126,7 @@ impl SignatureVersion {
     pub fn embedding_dimensions(&self) -> usize {
         match self.resolve() {
             SignatureVersion::V0 => 1536, // OpenAI text-embedding-3-large
-            SignatureVersion::V1 => 1024, // multilingual-e5-large
+            SignatureVersion::V1 => 1024, // 0din-jailbreak-embeddings-small
             SignatureVersion::Latest => unreachable!("Latest should be resolved"),
         }
     }
