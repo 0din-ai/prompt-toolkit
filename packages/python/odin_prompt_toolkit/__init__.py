@@ -30,7 +30,7 @@ Quick Start (Low-Level API):
 
 Signature Versions:
     - V0: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-    - V1: multilingual-e5-large ONNX (1024 dimensions, local)
+    - V1: 0din-jailbreak-embeddings-small ONNX (1024 dimensions, local)
     - Latest: Resolves to V1
 
 Algorithm:

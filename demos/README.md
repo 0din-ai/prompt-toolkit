@@ -43,7 +43,7 @@ pip install -e "packages/python[onnx]"
 ```
 
 This pulls in `numpy`, `onnxruntime`, and `huggingface-hub`.  
-The ONNX model (`multilingual-e5-large`, 1024-dim) is downloaded on first use and
+The ONNX model (`0din-jailbreak-embeddings-small`, 1024-dim) is downloaded on first use and
 cached in `~/.cache/huggingface/hub/`.
 
 ### 3. Install showcase dependencies

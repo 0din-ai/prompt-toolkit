@@ -11,7 +11,7 @@ odin-prompt-toolkit supports two signature versions with different embedding pro
 | Feature | V0 | V1 |
 |---------|----|----|
 | **Provider** | OpenAI API | Local ONNX |
-| **Model** | text-embedding-3-large | multilingual-e5-large |
+| **Model** | text-embedding-3-large | 0din-jailbreak-embeddings-small |
 | **Dimensions** | 1536 | 1024 |
 | **API Key** | Required | Not required |
 | **Latency** | ~100-500ms | ~10-50ms |

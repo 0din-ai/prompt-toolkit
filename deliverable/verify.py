@@ -44,7 +44,7 @@ def verify_import() -> bool:
         import odin_prompt_toolkit
 
         print_success(
-            f"signature_sdk imported successfully (v{odin_prompt_toolkit.__version__})"
+            f"odin_prompt_toolkit imported successfully (v{odin_prompt_toolkit.__version__})"
         )
         return True
     except ImportError as e:

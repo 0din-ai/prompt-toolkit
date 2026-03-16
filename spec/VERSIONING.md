@@ -35,7 +35,7 @@ Where:
 | Version | Provider | Model                                 | Dimensions | Signature Bits | Algorithm | Status       |
 |---------|----------|---------------------------------------|------------|----------------|-----------|--------------|
 | V0      | OpenAI   | text-embedding-3-large                | 1536       | 256            | LSH       | Stable       |
-| V1      | ONNX     | multilingual-e5-large (0din-tuned-v1) | 1024       | 256            | LSH       | Stable       |
+| V1      | ONNX     | 0din-jailbreak-embeddings-small | 1024       | 256            | LSH       | Stable       |
 | Latest  | →V1      | —                                     | —          | —              | —         | Alias        |
 
 ### Version Descriptions
@@ -50,10 +50,10 @@ Where:
 - **Cost**: Per-request API charges
 - **Use Case**: High-quality embeddings, production workloads with API access
 
-#### V1: ONNX multilingual-e5-large
+#### V1: ONNX 0din-jailbreak-embeddings-small
 
 - **Provider**: Local ONNX inference
-- **Model**: `intfloat/multilingual-e5-large` (custom 0din-threat-feed fine-tuned variant)
+- **Model**: `0dinai/0din-jailbreak-embeddings-small` (custom 0din-threat-feed fine-tuned variant)
 - **Dimensions**: 1024
 - **Signature**: 256-bit LSH (3 families, 16 bands)
 - **API Key**: Not required
@@ -97,7 +97,7 @@ resolve_version(v: Version) -> Version:
 **V0 and V1 use different embedding spaces and dimensions:**
 
 - V0: 1536-dimensional OpenAI space
-- V1: 1024-dimensional multilingual-e5-large space
+- V1: 1024-dimensional 0din-jailbreak-embeddings-small space
 
 **Implications:**
 
@@ -253,7 +253,7 @@ When adding a new signature version (e.g., V2):
 ```
 V2:
   Provider: ONNX
-  Model: multilingual-e5-large
+  Model: 0din-jailbreak-embeddings-small
   Dimensions: 1024
   Signature: 512-bit CM-LSH (dual hash with confidence)
   Format: 0din-v2:<hash_a>:<hash_b>

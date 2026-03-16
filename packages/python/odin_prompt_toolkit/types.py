@@ -19,7 +19,7 @@ class SignatureVersion(str, Enum):
     """
 
     V0 = "v0"  # OpenAI text-embedding-3-large (1536 dims)
-    V1 = "v1"  # multilingual-e5-large ONNX (1024 dims)
+    V1 = "v1"  # 0din-jailbreak-embeddings-small ONNX (1024 dims)
     LATEST = "latest"  # Resolves to V1
 
     def resolve(self) -> "SignatureVersion":

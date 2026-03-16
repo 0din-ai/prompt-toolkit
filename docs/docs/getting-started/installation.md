@@ -145,7 +145,7 @@ Runs all 61 tests across the three implementations.
 If the ONNX model fails to download on first use:
 
 1. Check internet connection
-2. Manually download from [HuggingFace](https://huggingface.co/intfloat/multilingual-e5-large)
+2. Manually download from [HuggingFace](https://huggingface.co/0dinai/0din-jailbreak-embeddings-small)
 3. Place in `~/.cache/odin-prompt-toolkit/models/v1/`
 
 ### Python: NumPy Import Error

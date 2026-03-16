@@ -248,7 +248,7 @@ Signatures from different versions are **NOT comparable** because they use diffe
 | Version | Model | Dimensions | Comparable With |
 |---------|-------|------------|-----------------|
 | V0 | OpenAI text-embedding-3-large | 1536 | V0 only |
-| V1 | multilingual-e5-large ONNX | 1024 | V1 only |
+| V1 | 0din-jailbreak-embeddings-small ONNX | 1024 | V1 only |
 
 **Cross-Version Comparison:**
 ```typescript
