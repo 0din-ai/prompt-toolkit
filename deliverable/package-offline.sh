@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Build a sneaker-net bundle for odin-prompt-toolkit.
+# Build a offline bundle for odin-prompt-toolkit.
 #
 # Run this on a build machine (internet access OK). The output directory is
 # designed to be copied to a USB drive and handed to a recipient who has no
 # internet access during installation.
 #
 # Usage:
-#   ./package-sneakernet.sh [OPTIONS]
+#   ./package-offline.sh [OPTIONS]
 #
 # Options:
 #   --version VERSION        SDK version (default: read from packages/python/pyproject.toml)
@@ -19,8 +19,8 @@
 #   --help                   Show this help message
 #
 # Output:
-#   odin-prompt-toolkit-sneakernet-v{VERSION}/   ← copy this whole directory to USB
-#   odin-prompt-toolkit-sneakernet-v{VERSION}.zip  ← only if --zip is passed
+#   odin-prompt-toolkit-offline-v{VERSION}/   ← copy this whole directory to USB
+#   odin-prompt-toolkit-offline-v{VERSION}.zip  ← only if --zip is passed
 #
 # Bundle layout (what the recipient receives):
 #   install.sh              ← recipient runs this
@@ -95,13 +95,13 @@ fi
     die "Invalid version format: $VERSION (expected X.Y.Z)"
 
 # ── bundle paths ──────────────────────────────────────────────────────────────
-BUNDLE_NAME="odin-prompt-toolkit-sneakernet-v${VERSION}"
+BUNDLE_NAME="odin-prompt-toolkit-offline-v${VERSION}"
 BUNDLE_DIR="${OUTPUT_DIR}/${BUNDLE_NAME}"
 ZIP_PATH="${OUTPUT_DIR}/${BUNDLE_NAME}.zip"
 
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "${CYAN}  0DIN Prompt Toolkit — Sneaker-Net Packager v${VERSION}${RESET}"
+echo -e "${CYAN}  0DIN Prompt Toolkit — Offline Packager v${VERSION}${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
@@ -203,14 +203,14 @@ cp "${MODEL_SOURCE}/tokenizer.json"      "${BUNDLE_DIR}/model/v1/"
 cp "${MODEL_SOURCE}/config.json"         "${BUNDLE_DIR}/model/v1/"
 
 # Installer and verifier
-cp "${SCRIPT_DIR}/install-sneakernet.sh" "${BUNDLE_DIR}/install.sh"
+cp "${SCRIPT_DIR}/install-offline.sh" "${BUNDLE_DIR}/install.sh"
 cp "${SCRIPT_DIR}/verify.py"             "${BUNDLE_DIR}/verify.py"
 chmod +x "${BUNDLE_DIR}/install.sh"
 chmod +x "${BUNDLE_DIR}/verify.py"
 
 # Quick-start README for recipient
 cat > "${BUNDLE_DIR}/README.txt" << EOF
-0DIN Prompt Toolkit — Sneaker-Net Bundle v${VERSION}
+0DIN Prompt Toolkit — Offline Bundle v${VERSION}
 ========================================================
 
 QUICK START
@@ -287,7 +287,7 @@ BUNDLE_SIZE=$(du -sh "$BUNDLE_DIR" | cut -f1)
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-log_success "Sneaker-net bundle ready!"
+log_success "Offline installer bundle ready!"
 echo ""
 echo "  📦 Bundle:  $BUNDLE_DIR"
 echo "  📏 Size:    $BUNDLE_SIZE"
