@@ -180,7 +180,7 @@ use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(
     &cache,
-    Some("intfloat/multilingual-e5-large".to_string()),  // Model
+    Some("0dinai/0din-jailbreak-embeddings-small".to_string()),  // Model
     Some("onnx".to_string()),                             // Name
 ).await?;
 ```
@@ -194,7 +194,7 @@ from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 cache = ModelCache()
 provider = await OnnxProvider.new(
     cache,
-    model_name="intfloat/multilingual-e5-large",  # Optional
+    model_name="0dinai/0din-jailbreak-embeddings-small",  # Optional
     name="onnx",                                    # Optional
 )
 ```
@@ -208,7 +208,7 @@ import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(
   cache,
-  'intfloat/multilingual-e5-large',  // Optional
+  '0dinai/0din-jailbreak-embeddings-small',  // Optional
   'onnx'                               // Optional
 );
 ```

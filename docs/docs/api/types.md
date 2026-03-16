@@ -72,7 +72,7 @@ Enumeration of supported signature versions. Each version corresponds to a speci
 ```rust
 pub enum SignatureVersion {
     V0,      // OpenAI text-embedding-3-large (1536 dims)
-    V1,      // multilingual-e5-large ONNX (1024 dims)
+    V1,      // 0din-jailbreak-embeddings-small ONNX (1024 dims)
     Latest,  // Resolves to V1
 }
 ```
@@ -83,7 +83,7 @@ pub enum SignatureVersion {
 ```python
 class SignatureVersion(str, Enum):
     V0 = "v0"          # OpenAI text-embedding-3-large (1536 dims)
-    V1 = "v1"          # multilingual-e5-large ONNX (1024 dims)
+    V1 = "v1"          # 0din-jailbreak-embeddings-small ONNX (1024 dims)
     LATEST = "latest"  # Resolves to V1
 ```
 
@@ -93,7 +93,7 @@ class SignatureVersion(str, Enum):
 ```typescript
 enum SignatureVersion {
   V0 = 'v0',        // OpenAI text-embedding-3-large (1536 dims)
-  V1 = 'v1',        // multilingual-e5-large ONNX (1024 dims)
+  V1 = 'v1',        // 0din-jailbreak-embeddings-small ONNX (1024 dims)
   LATEST = 'latest' // Resolves to V1
 }
 ```

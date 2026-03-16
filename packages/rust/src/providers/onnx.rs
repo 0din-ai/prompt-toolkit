@@ -1,7 +1,7 @@
 //! ONNX embedding provider implementation using tract.
 //!
 //! This module provides embedding generation using ONNX models via the tract runtime.
-//! The default model is `intfloat/multilingual-e5-large` which produces 1024-dimensional embeddings.
+//! The default model is `0dinai/0din-jailbreak-embeddings-small` which produces 1024-dimensional embeddings.
 //!
 //! ## Features
 //!
@@ -53,7 +53,7 @@ type TractModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<d
 
 /// ONNX embedding provider using tract runtime.
 ///
-/// This provider uses the `intfloat/multilingual-e5-large` model by default,
+/// This provider uses the `0dinai/0din-jailbreak-embeddings-small` model by default,
 /// which produces 1024-dimensional embeddings suitable for multilingual text similarity.
 ///
 /// The model is automatically downloaded from HuggingFace on first use and cached locally.

@@ -214,10 +214,22 @@ for wheel in "${NATIVE_WHEELS[@]}"; do
     log_success "Copied: $(basename "$wheel")"
 done
 
-# Create requirements.txt
+# Create requirements.txt reflecting all dependencies installed by install.sh
+# install.sh installs the wheel with [onnx] extras, so these will be pulled in
+# automatically. This file documents them for air-gapped pre-download scenarios.
 cat > "$DELIVERABLE_DIR/sdk/requirements.txt" << EOF
-# Core dependencies for odin-prompt-toolkit v${VERSION}
-numpy>=1.24.0,<2.0.0
+# Dependencies for odin-prompt-toolkit v${VERSION}
+# install.sh installs the wheel with [onnx] extras which covers all entries below.
+# For air-gapped setups, pre-download these with:
+#   pip download -r requirements.txt -d ./pip-cache
+# then pass --find-links ./pip-cache --no-index to pip install.
+
+# Core
+numpy>=1.24.0
+
+# ONNX provider (required for V1 local inference)
+onnxruntime>=1.16.0
+sentence-transformers>=2.2.0
 EOF
 log_success "Created requirements.txt"
 echo ""

@@ -210,7 +210,7 @@ All three implementations follow the **canonical specification**:
 | Version | Model | Dimensions | Provider | Comparable |
 |---------|-------|------------|----------|------------|
 | V0      | text-embedding-3-large | 1536 | OpenAI API | V0 ↔ V0 ✅ |
-| V1      | multilingual-e5-large  | 1024 | ONNX local | V1 ↔ V1 ✅ |
+| V1      | 0din-jailbreak-embeddings-small  | 1024 | ONNX local | V1 ↔ V1 ✅ |
 
 **Cross-version**: V0 ↔ V1 ❌ (different embedding spaces)
 

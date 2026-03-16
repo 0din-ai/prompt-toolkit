@@ -222,7 +222,7 @@ Local ONNX-based embedding provider (no API key required).
 impl OnnxProvider {
     pub async fn new(
         cache: &ModelCache,
-        model_name: Option<String>,  // Default: "intfloat/multilingual-e5-large"
+        model_name: Option<String>,  // Default: "0dinai/0din-jailbreak-embeddings-small"
         name: Option<String>,        // Default: "onnx"
     ) -> Result<Self>
 }
@@ -247,7 +247,7 @@ class OnnxProvider:
     async def new(
         cls,
         cache: ModelCache,
-        model_name: str = "intfloat/multilingual-e5-large",
+        model_name: str = "0dinai/0din-jailbreak-embeddings-small",
         name: str = "onnx",
     ) -> "OnnxProvider"
 ```
@@ -269,7 +269,7 @@ provider = await OnnxProvider.new(cache)
 class OnnxProvider implements EmbeddingProvider {
   static async create(
     cache: ModelCache,
-    modelName?: string,  // Default: "intfloat/multilingual-e5-large"
+    modelName?: string,  // Default: "0dinai/0din-jailbreak-embeddings-small"
     name?: string        // Default: "onnx"
   ): Promise<OnnxProvider>
 }
@@ -290,7 +290,7 @@ const provider = await OnnxProvider.create(cache);
 
 ### Configuration
 
-**Model:** intfloat/multilingual-e5-large (custom fine-tuned variant for prompt similarity)
+**Model:** 0dinai/0din-jailbreak-embeddings-small (custom fine-tuned variant for prompt similarity)
 
 **Dimensions:** 384
 

@@ -43,7 +43,7 @@ See [VALIDATION.md](VALIDATION.md) for the complete cross-language validation re
 | Version | Provider | Model                        | Dimensions | Status |
 |---------|----------|------------------------------|------------|--------|
 | V0      | OpenAI   | text-embedding-3-large       | 1536       | ✅ Stable |
-| V1      | ONNX     | multilingual-e5-large (tuned)| 1024       | ✅ Stable |
+| V1      | ONNX     | 0din-jailbreak-embeddings-small| 1024       | ✅ Stable |
 | Latest  | →V1      | —                            | —          | Alias  |
 
 **⚠️ Important:** V0 and V1 signatures use different embedding spaces and are **not comparable**.

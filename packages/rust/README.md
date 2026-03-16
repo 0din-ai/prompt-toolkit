@@ -177,7 +177,7 @@ fn main() {
 
 | Provider | Feature Flag | Model | Dimensions | Use Case |
 |----------|-------------|-------|------------|----------|
-| `OnnxProvider` | `onnx` | multilingual-e5-large | 1024 | Local/offline, cost-free |
+| `OnnxProvider` | `onnx` | 0din-jailbreak-embeddings-small | 1024 | Local/offline, cost-free |
 | `OpenAIProvider` | `openai` | text-embedding-3-large | 1536 | Cloud-based, high quality |
 
 ### Hasher Abstraction
@@ -201,7 +201,7 @@ println!("Signature: {}", hash_output.signature);
 ## Signature Versions
 
 - **V0**: OpenAI text-embedding-3-large (1536 dimensions, API-based)
-- **V1**: multilingual-e5-large ONNX (1024 dimensions, local)
+- **V1**: 0din-jailbreak-embeddings-small ONNX (1024 dimensions, local)
 - **Latest**: Resolves to V1
 
 **Important**: V0 and V1 signatures are **not comparable** due to different embedding spaces.
