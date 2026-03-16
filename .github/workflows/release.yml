@@ -137,11 +137,9 @@ jobs:
     strategy:
       matrix:
         target:
-          - runner: macos-13        # Intel
-            arch: x86_64
-          - runner: macos-latest    # Apple Silicon
-            arch: aarch64
-    runs-on: ${{ matrix.target.runner }}
+          - arch: x86_64
+          - arch: aarch64
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: PyO3/maturin-action@v1
