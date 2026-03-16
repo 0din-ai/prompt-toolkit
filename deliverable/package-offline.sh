@@ -31,7 +31,8 @@
 #     odin_prompt_toolkit_native-{VERSION}-{platform}.whl  (if provided)
 #   model/
 #     v1/
-#       onnx/model_O4.onnx       (~235 MB)
+#       onnx/model.onnx          (~235 MB)
+#       onnx/model.onnx_data
 #       tokenizer.json
 #       config.json
 #
@@ -61,7 +62,7 @@ CREATE_ZIP=false
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-HF_REPO="0dinai/jailbreak-embeddings-small"
+HF_REPO="0dinai/jailbreak-embeddings-large-onnx"
 
 # ── argument parsing ──────────────────────────────────────────────────────────
 show_help() {
@@ -132,7 +133,7 @@ echo ""
 # ── step 2: locate / download model ──────────────────────────────────────────
 log_info "Step 2/5: Obtaining ONNX model..."
 
-REQUIRED_MODEL_FILES=("onnx/model_O4.onnx" "tokenizer.json" "config.json")
+REQUIRED_MODEL_FILES=("onnx/model.onnx" "onnx/model.onnx_data" "tokenizer.json" "config.json")
 
 if [[ -n "$MODEL_SOURCE" ]]; then
     [[ -d "$MODEL_SOURCE" ]] || die "Model source directory not found: $MODEL_SOURCE"
@@ -157,23 +158,19 @@ else
         --repo-type model \
         --local-dir "$TEMP_MODEL_DIR" \
         --quiet \
-        v1/onnx/model_O4.onnx \
-        v1/tokenizer.json \
-        v1/config.json || die "Model download failed. Check: huggingface-cli whoami"
+        onnx/model.onnx \
+        onnx/model.onnx_data \
+        tokenizer.json \
+        config.json || die "Model download failed. Check: huggingface-cli whoami"
 
-    # HuggingFace CLI may place files under v1/ or at root depending on version
-    if [[ -d "${TEMP_MODEL_DIR}/v1" ]]; then
-        MODEL_SOURCE="${TEMP_MODEL_DIR}/v1"
-    else
-        MODEL_SOURCE="$TEMP_MODEL_DIR"
-    fi
+    MODEL_SOURCE="$TEMP_MODEL_DIR"
 
     for f in "${REQUIRED_MODEL_FILES[@]}"; do
         [[ -f "${MODEL_SOURCE}/${f}" ]] || \
             die "Expected model file missing after download: ${f}"
     done
 
-    MODEL_SIZE=$(du -sh "${MODEL_SOURCE}/onnx/model_O4.onnx" | cut -f1)
+    MODEL_SIZE=$(du -sh "${MODEL_SOURCE}/onnx/model.onnx" | cut -f1)
     log_success "Model downloaded (ONNX: ${MODEL_SIZE})"
 fi
 
@@ -198,9 +195,10 @@ if [[ -n "$NATIVE_WHEEL" ]]; then
 fi
 
 # Model files
-cp "${MODEL_SOURCE}/onnx/model_O4.onnx" "${BUNDLE_DIR}/model/v1/onnx/"
-cp "${MODEL_SOURCE}/tokenizer.json"      "${BUNDLE_DIR}/model/v1/"
-cp "${MODEL_SOURCE}/config.json"         "${BUNDLE_DIR}/model/v1/"
+cp "${MODEL_SOURCE}/onnx/model.onnx"      "${BUNDLE_DIR}/model/v1/onnx/"
+cp "${MODEL_SOURCE}/onnx/model.onnx_data" "${BUNDLE_DIR}/model/v1/onnx/"
+cp "${MODEL_SOURCE}/tokenizer.json"       "${BUNDLE_DIR}/model/v1/"
+cp "${MODEL_SOURCE}/config.json"          "${BUNDLE_DIR}/model/v1/"
 
 # Installer and verifier
 cp "${SCRIPT_DIR}/install-offline.sh" "${BUNDLE_DIR}/install.sh"

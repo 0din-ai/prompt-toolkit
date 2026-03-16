@@ -56,8 +56,8 @@ EXAMPLES_DIR="$REPO_ROOT/packages/python/examples"
 INSTALL_MD="$REPO_ROOT/packages/python/INSTALL.md"
 
 # HuggingFace model repo
-HF_REPO="0dinai/jailbreak-embeddings-small"
-HF_MODEL_PATH="v1"
+HF_REPO="0dinai/jailbreak-embeddings-large-onnx"
+HF_MODEL_PATH=""
 
 # Functions
 log_info() {
@@ -269,18 +269,17 @@ else
         --repo-type model \
         --local-dir "$TEMP_MODEL_DIR" \
         --quiet \
-        ${HF_MODEL_PATH}/onnx/model_O4.onnx \
-        ${HF_MODEL_PATH}/tokenizer.json \
-        ${HF_MODEL_PATH}/config.json; then
-        
-        # Move files to deliverable
-        if [[ -d "$TEMP_MODEL_DIR/$HF_MODEL_PATH" ]]; then
-            cp -r "$TEMP_MODEL_DIR/$HF_MODEL_PATH"/* "$DELIVERABLE_DIR/model/v1/"
-        else
-            # Files might be at root
-            cp -r "$TEMP_MODEL_DIR"/* "$DELIVERABLE_DIR/model/v1/"
-        fi
-        
+        onnx/model.onnx \
+        onnx/model.onnx_data \
+        tokenizer.json \
+        config.json; then
+
+        mkdir -p "$DELIVERABLE_DIR/model/v1/onnx"
+        cp "$TEMP_MODEL_DIR/onnx/model.onnx"      "$DELIVERABLE_DIR/model/v1/onnx/"
+        cp "$TEMP_MODEL_DIR/onnx/model.onnx_data" "$DELIVERABLE_DIR/model/v1/onnx/"
+        cp "$TEMP_MODEL_DIR/tokenizer.json"        "$DELIVERABLE_DIR/model/v1/"
+        cp "$TEMP_MODEL_DIR/config.json"           "$DELIVERABLE_DIR/model/v1/"
+
         log_success "Downloaded model files from HuggingFace"
     else
         die "Failed to download model from HuggingFace (check: huggingface-cli whoami)"
@@ -289,7 +288,8 @@ fi
 
 # Verify critical model files exist
 REQUIRED_MODEL_FILES=(
-    "model/v1/onnx/model_O4.onnx"
+    "model/v1/onnx/model.onnx"
+    "model/v1/onnx/model.onnx_data"
     "model/v1/tokenizer.json"
     "model/v1/config.json"
 )
@@ -300,7 +300,7 @@ for file in "${REQUIRED_MODEL_FILES[@]}"; do
     fi
 done
 
-MODEL_SIZE=$(du -sh "$DELIVERABLE_DIR/model/v1/onnx/model_O4.onnx" | cut -f1)
+MODEL_SIZE=$(du -sh "$DELIVERABLE_DIR/model/v1/onnx/model.onnx" | cut -f1)
 log_success "Model validated (ONNX model size: $MODEL_SIZE)"
 echo ""
 

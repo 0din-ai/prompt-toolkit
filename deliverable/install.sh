@@ -16,7 +16,7 @@ RESET='\033[0m'
 REQUIRED_PYTHON_VERSION="3.10"
 VENV_DIR="./venv"
 CACHE_DIR="$HOME/.cache/odin-prompt-toolkit/models/v1"
-MODEL_ONLINE_URL="https://huggingface.co/0dinai/jailbreak-embeddings-small/resolve/main"
+MODEL_ONLINE_URL="https://huggingface.co/0dinai/jailbreak-embeddings-large-onnx/resolve/main"
 
 # Modes
 MODE="offline"  # default: expect bundled model
@@ -167,33 +167,35 @@ install_model() {
         fi
         
         if command -v curl &> /dev/null; then
-            curl -L -o "$CACHE_DIR/onnx/model_O4.onnx" "${MODEL_ONLINE_URL}/onnx/model_O4.onnx" || error "Failed to download model"
-            curl -L -o "$CACHE_DIR/tokenizer.json" "${MODEL_ONLINE_URL}/tokenizer.json" || error "Failed to download tokenizer"
-            curl -L -o "$CACHE_DIR/config.json" "${MODEL_ONLINE_URL}/config.json" || error "Failed to download config"
+            curl -L -o "$CACHE_DIR/onnx/model.onnx"      "${MODEL_ONLINE_URL}/onnx/model.onnx"      || error "Failed to download model"
+            curl -L -o "$CACHE_DIR/onnx/model.onnx_data" "${MODEL_ONLINE_URL}/onnx/model.onnx_data" || error "Failed to download model data"
+            curl -L -o "$CACHE_DIR/tokenizer.json"        "${MODEL_ONLINE_URL}/tokenizer.json"        || error "Failed to download tokenizer"
+            curl -L -o "$CACHE_DIR/config.json"           "${MODEL_ONLINE_URL}/config.json"           || error "Failed to download config"
         else
-            wget -O "$CACHE_DIR/onnx/model_O4.onnx" "${MODEL_ONLINE_URL}/onnx/model_O4.onnx" || error "Failed to download model"
-            wget -O "$CACHE_DIR/tokenizer.json" "${MODEL_ONLINE_URL}/tokenizer.json" || error "Failed to download tokenizer"
-            wget -O "$CACHE_DIR/config.json" "${MODEL_ONLINE_URL}/config.json" || error "Failed to download config"
+            wget -O "$CACHE_DIR/onnx/model.onnx"      "${MODEL_ONLINE_URL}/onnx/model.onnx"      || error "Failed to download model"
+            wget -O "$CACHE_DIR/onnx/model.onnx_data" "${MODEL_ONLINE_URL}/onnx/model.onnx_data" || error "Failed to download model data"
+            wget -O "$CACHE_DIR/tokenizer.json"        "${MODEL_ONLINE_URL}/tokenizer.json"        || error "Failed to download tokenizer"
+            wget -O "$CACHE_DIR/config.json"           "${MODEL_ONLINE_URL}/config.json"           || error "Failed to download config"
         fi
-        
+
         success "Model downloaded"
     else
         # Offline mode: copy from bundled files
         if [[ ! -d "model/v1" ]]; then
             error "Model directory not found. Run with --online to download, or ensure model/ directory exists."
         fi
-        
-        if [[ ! -f "model/v1/onnx/model_O4.onnx" ]]; then
-            error "Model file not found at model/v1/onnx/model_O4.onnx"
+
+        if [[ ! -f "model/v1/onnx/model.onnx" ]]; then
+            error "Model file not found at model/v1/onnx/model.onnx"
         fi
-        
+
         cp -r model/v1/* "$CACHE_DIR/"
         success "Model installed from bundle"
     fi
-    
+
     # Verify model files exist
-    if [[ ! -f "$CACHE_DIR/onnx/model_O4.onnx" ]]; then
-        error "Model installation failed: model_O4.onnx not found"
+    if [[ ! -f "$CACHE_DIR/onnx/model.onnx" ]]; then
+        error "Model installation failed: model.onnx not found"
     fi
     if [[ ! -f "$CACHE_DIR/tokenizer.json" ]]; then
         error "Model installation failed: tokenizer.json not found"

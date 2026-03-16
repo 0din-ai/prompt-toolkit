@@ -183,7 +183,7 @@ fi
 info "Installing ONNX model..."
 
 MODEL_SRC="${SCRIPT_DIR}/model/v1"
-REQUIRED_MODEL_FILES=("onnx/model_O4.onnx" "tokenizer.json" "config.json")
+REQUIRED_MODEL_FILES=("onnx/model.onnx" "onnx/model.onnx_data" "tokenizer.json" "config.json")
 
 for f in "${REQUIRED_MODEL_FILES[@]}"; do
     [[ -f "${MODEL_SRC}/${f}" ]] || \
@@ -191,11 +191,12 @@ for f in "${REQUIRED_MODEL_FILES[@]}"; do
 done
 
 mkdir -p "${MODEL_CACHE_DIR}/onnx"
-cp "${MODEL_SRC}/onnx/model_O4.onnx" "${MODEL_CACHE_DIR}/onnx/"
-cp "${MODEL_SRC}/tokenizer.json"      "${MODEL_CACHE_DIR}/"
-cp "${MODEL_SRC}/config.json"         "${MODEL_CACHE_DIR}/"
+cp "${MODEL_SRC}/onnx/model.onnx"      "${MODEL_CACHE_DIR}/onnx/"
+cp "${MODEL_SRC}/onnx/model.onnx_data" "${MODEL_CACHE_DIR}/onnx/"
+cp "${MODEL_SRC}/tokenizer.json"       "${MODEL_CACHE_DIR}/"
+cp "${MODEL_SRC}/config.json"          "${MODEL_CACHE_DIR}/"
 
-MODEL_SIZE=$(du -sh "${MODEL_CACHE_DIR}/onnx/model_O4.onnx" | cut -f1)
+MODEL_SIZE=$(du -sh "${MODEL_CACHE_DIR}/onnx/model.onnx" | cut -f1)
 success "Model installed to ${MODEL_CACHE_DIR} (${MODEL_SIZE})"
 
 # ── step 8: smoke test ────────────────────────────────────────────────────────
