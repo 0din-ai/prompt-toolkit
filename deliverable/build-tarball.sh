@@ -156,14 +156,11 @@ echo ""
 log_info "Step 1/8: Validating prerequisites..."
 
 # Check Python wheels exist
-if [[ ! -d "$PYTHON_DIST" ]]; then
-    die "Python dist directory not found: $PYTHON_DIST (run 'make package-python' first)"
-fi
-
 if [[ -n "$PURE_WHEEL_OVERRIDE" ]]; then
     PURE_WHEEL="$PURE_WHEEL_OVERRIDE"
     [[ -f "$PURE_WHEEL" ]] || die "Pure wheel not found at: $PURE_WHEEL"
 else
+    [[ -d "$PYTHON_DIST" ]] || die "Python dist directory not found: $PYTHON_DIST (run 'make package-python' first)"
     PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
     if [[ -z "$PURE_WHEEL" ]]; then
         die "Python wheel not found: odin_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
