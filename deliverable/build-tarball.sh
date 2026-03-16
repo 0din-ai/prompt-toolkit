@@ -46,6 +46,7 @@ MODEL_SOURCE=""
 SIG_PACK=""
 OUTPUT_DIR="."
 KEEP_STAGING=false
+PURE_WHEEL_OVERRIDE=""
 
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -95,6 +96,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --model-source)
             MODEL_SOURCE="$2"
+            shift 2
+            ;;
+        --pure-wheel)
+            PURE_WHEEL_OVERRIDE="$2"
             shift 2
             ;;
         --sig-pack)
@@ -155,9 +160,14 @@ if [[ ! -d "$PYTHON_DIST" ]]; then
     die "Python dist directory not found: $PYTHON_DIST (run 'make package-python' first)"
 fi
 
-PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
-if [[ -z "$PURE_WHEEL" ]]; then
-    die "Python wheel not found: odin_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
+if [[ -n "$PURE_WHEEL_OVERRIDE" ]]; then
+    PURE_WHEEL="$PURE_WHEEL_OVERRIDE"
+    [[ -f "$PURE_WHEEL" ]] || die "Pure wheel not found at: $PURE_WHEEL"
+else
+    PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
+    if [[ -z "$PURE_WHEEL" ]]; then
+        die "Python wheel not found: odin_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
+    fi
 fi
 log_success "Found Python wheel: $(basename "$PURE_WHEEL")"
 
