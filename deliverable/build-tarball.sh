@@ -253,37 +253,42 @@ else
     # Download from HuggingFace
     log_info "Downloading model from HuggingFace: $HF_REPO"
     
-    # Check if huggingface-cli is available
-    if ! command -v huggingface-cli &> /dev/null; then
-        die "huggingface-cli not found (install: pip install huggingface_hub[cli])"
+    # Check if Python + huggingface_hub is available
+    if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+        die "python3 not found (required to download model via huggingface_hub)"
     fi
-    
+    PYTHON=$(command -v python3 || command -v python)
+
     # Download model files
-    log_info "Downloading ONNX model (~235MB, this may take a few minutes)..."
-    
-    # Download files to temporary directory then move
+    log_info "Downloading ONNX model (~2GB, this may take a few minutes)..."
+
     TEMP_MODEL_DIR=$(mktemp -d)
     trap 'rm -rf "$TEMP_MODEL_DIR"' EXIT
-    
-    if huggingface-cli download "$HF_REPO" \
-        --repo-type model \
-        --local-dir "$TEMP_MODEL_DIR" \
-        --quiet \
-        onnx/model.onnx \
-        onnx/model.onnx_data \
-        tokenizer.json \
-        config.json; then
 
-        mkdir -p "$DELIVERABLE_DIR/model/v1/onnx"
-        cp "$TEMP_MODEL_DIR/onnx/model.onnx"      "$DELIVERABLE_DIR/model/v1/onnx/"
-        cp "$TEMP_MODEL_DIR/onnx/model.onnx_data" "$DELIVERABLE_DIR/model/v1/onnx/"
-        cp "$TEMP_MODEL_DIR/tokenizer.json"        "$DELIVERABLE_DIR/model/v1/"
-        cp "$TEMP_MODEL_DIR/config.json"           "$DELIVERABLE_DIR/model/v1/"
+    "$PYTHON" - <<EOF || die "Failed to download model from HuggingFace"
+import sys
+try:
+    import huggingface_hub
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "huggingface_hub", "-q"])
+    import huggingface_hub
+import os
+repo = "$HF_REPO"
+dest = "$TEMP_MODEL_DIR"
+for f in ["onnx/model.onnx", "onnx/model.onnx_data", "tokenizer.json", "config.json"]:
+    print(f"  downloading {f}...")
+    huggingface_hub.hf_hub_download(repo_id=repo, filename=f, repo_type="model", local_dir=dest)
+print("  download complete")
+EOF
 
-        log_success "Downloaded model files from HuggingFace"
-    else
-        die "Failed to download model from HuggingFace (check: huggingface-cli whoami)"
-    fi
+    mkdir -p "$DELIVERABLE_DIR/model/v1/onnx"
+    cp "$TEMP_MODEL_DIR/onnx/model.onnx"      "$DELIVERABLE_DIR/model/v1/onnx/"
+    cp "$TEMP_MODEL_DIR/onnx/model.onnx_data" "$DELIVERABLE_DIR/model/v1/onnx/"
+    cp "$TEMP_MODEL_DIR/tokenizer.json"        "$DELIVERABLE_DIR/model/v1/"
+    cp "$TEMP_MODEL_DIR/config.json"           "$DELIVERABLE_DIR/model/v1/"
+
+    log_success "Downloaded model files from HuggingFace"
 fi
 
 # Verify critical model files exist

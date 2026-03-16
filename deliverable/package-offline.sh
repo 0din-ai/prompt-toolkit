@@ -146,22 +146,27 @@ if [[ -n "$MODEL_SOURCE" ]]; then
 
 else
     # Download from HuggingFace into a temp dir so we can validate before copying
-    if ! command -v huggingface-cli &>/dev/null; then
-        die "huggingface-cli not found. Install with: pip install huggingface_hub[cli]\n       Or provide a local model with --model-source PATH."
-    fi
+    PYTHON=$(command -v python3 || command -v python || true)
+    [[ -n "$PYTHON" ]] || die "python3 not found (required to download model via huggingface_hub)"
 
     TEMP_MODEL_DIR=$(mktemp -d)
     trap 'rm -rf "$TEMP_MODEL_DIR"' EXIT
 
-    log_info "Downloading model from HuggingFace: ${HF_REPO} (~235 MB)..."
-    huggingface-cli download "$HF_REPO" \
-        --repo-type model \
-        --local-dir "$TEMP_MODEL_DIR" \
-        --quiet \
-        onnx/model.onnx \
-        onnx/model.onnx_data \
-        tokenizer.json \
-        config.json || die "Model download failed. Check: huggingface-cli whoami"
+    log_info "Downloading model from HuggingFace: ${HF_REPO} (~2 GB)..."
+    "$PYTHON" - <<EOF || die "Model download failed."
+import sys
+try:
+    import huggingface_hub
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "huggingface_hub", "-q"])
+    import huggingface_hub
+repo = "$HF_REPO"
+dest = "$TEMP_MODEL_DIR"
+for f in ["onnx/model.onnx", "onnx/model.onnx_data", "tokenizer.json", "config.json"]:
+    print(f"  downloading {f}...")
+    huggingface_hub.hf_hub_download(repo_id=repo, filename=f, repo_type="model", local_dir=dest)
+EOF
 
     MODEL_SOURCE="$TEMP_MODEL_DIR"
 
