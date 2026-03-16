@@ -17,7 +17,7 @@ odin-prompt-toolkit-deliverable-v0.1.1/
 ├── model/
 │   └── v1/
 │       ├── onnx/
-│       │   └── model_O4.onnx       # ~235MB (optimized ONNX model)
+│       │   └── model.onnx       # ~235MB (optimized ONNX model)
 │       ├── tokenizer.json
 │       └── config.json
 ├── signatures/
@@ -174,7 +174,7 @@ Signature packs are JSON files containing pre-computed signatures for known cont
 **Problem**: Model download fails in online mode
 - **Solution**: 
   1. Check internet connection
-  2. Verify HuggingFace access (model repo: `0dinai/jailbreak-embeddings-small`)
+  2. Verify HuggingFace access (model repo: `0dinai/jailbreak-embeddings-large-onnx`)
   3. Set `HF_TOKEN` environment variable if repo is private
   4. Use offline mode with bundled model files
 
@@ -351,7 +351,7 @@ odin-prompt-toolkit-offline-v0.1.1/
 │   └── odin_prompt_toolkit_native-0.1.1-*.whl  (if provided)
 └── model/
     └── v1/
-        ├── onnx/model_O4.onnx   (~235 MB)
+        ├── onnx/model.onnx   (~235 MB)
         ├── tokenizer.json
         └── config.json
 ```
@@ -401,7 +401,7 @@ For questions or issues with this deliverable package:
 - Rust SDK: `odin-prompt-toolkit` v0.1.1
 - Python SDK: `odin-prompt-toolkit` v0.1.1
 - Python Native: `odin-prompt-toolkit-native` v0.1.1
-- Model: `0dinai/jailbreak-embeddings-small` v1 (ONNX optimized, ~235MB)
+- Model: `0dinai/jailbreak-embeddings-large-onnx` v1 (ONNX optimized, ~235MB)
 
 ## License
 

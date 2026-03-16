@@ -287,40 +287,29 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
-          mkdir -p /tmp/model-cache/v1/onnx
-          
+          mkdir -p /tmp/model-cache/onnx
+
           python - <<'EOF'
           import os, huggingface_hub
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/onnx/model_O4.onnx",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/tokenizer.json",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/config.json",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
+          repo = "0dinai/jailbreak-embeddings-large-onnx"
+          token = os.environ.get("HF_TOKEN")
+          for filename in ["onnx/model.onnx", "onnx/model.onnx_data", "tokenizer.json", "config.json"]:
+              huggingface_hub.hf_hub_download(
+                  repo_id=repo,
+                  filename=filename,
+                  repo_type="model",
+                  local_dir="/tmp/model-cache",
+                  token=token,
+              )
           EOF
-          
+
           echo "Model files downloaded:"
           ls -lhR /tmp/model-cache/
-      
+
       - name: Build deliverable tarball
         run: |
           cd deliverable
-          ./build-tarball.sh --model-source /tmp/model-cache/v1
+          ./build-tarball.sh --model-source /tmp/model-cache
       
       - name: Calculate checksums
         run: |
@@ -385,31 +374,20 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
-          mkdir -p /tmp/model-cache/v1/onnx
+          mkdir -p /tmp/model-cache/onnx
 
           python - <<'EOF'
           import os, huggingface_hub
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/onnx/model_O4.onnx",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/tokenizer.json",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
-          huggingface_hub.hf_hub_download(
-              repo_id="0dinai/jailbreak-embeddings-small",
-              filename="v1/config.json",
-              repo_type="model",
-              local_dir="/tmp/model-cache",
-              token=os.environ.get("HF_TOKEN"),
-          )
+          repo = "0dinai/jailbreak-embeddings-large-onnx"
+          token = os.environ.get("HF_TOKEN")
+          for filename in ["onnx/model.onnx", "onnx/model.onnx_data", "tokenizer.json", "config.json"]:
+              huggingface_hub.hf_hub_download(
+                  repo_id=repo,
+                  filename=filename,
+                  repo_type="model",
+                  local_dir="/tmp/model-cache",
+                  token=token,
+              )
           EOF
 
           echo "Model files downloaded:"
@@ -418,9 +396,6 @@ jobs:
       - name: Build offline installer bundle
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          # Build one bundle per native platform (pick the linux x86_64 native
-          # wheel as the representative; recipients get the matching wheel for
-          # their platform from the platform-specific packages)
           NATIVE_WHEEL=$(find packages/python-native/dist \
             -name "odin_prompt_toolkit_native-${VERSION}-*-manylinux*_x86_64.whl" \
             | sort -V | tail -1)
@@ -428,13 +403,13 @@ jobs:
           cd deliverable
           if [[ -n "$NATIVE_WHEEL" ]]; then
             ./package-offline.sh \
-              --model-source /tmp/model-cache/v1 \
+              --model-source /tmp/model-cache \
               --native-wheel "../${NATIVE_WHEEL}" \
               --output-dir . \
               --zip
           else
             ./package-offline.sh \
-              --model-source /tmp/model-cache/v1 \
+              --model-source /tmp/model-cache \
               --output-dir . \
               --zip
           fi
