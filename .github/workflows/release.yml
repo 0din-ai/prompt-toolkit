@@ -256,9 +256,7 @@ jobs:
           python-version: '3.12'
       
       - name: Install dependencies
-        run: |
-          pip install huggingface_hub[cli]
-          huggingface-cli --version
+        run: pip install huggingface_hub
       
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
@@ -289,17 +287,33 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
-          mkdir -p /tmp/model-cache
+          mkdir -p /tmp/model-cache/v1/onnx
           
-          # Download model files to temp directory
-          huggingface-cli download 0dinai/jailbreak-embeddings-small \
-            --repo-type model \
-            --local-dir /tmp/model-cache \
-            v1/onnx/model_O4.onnx \
-            v1/tokenizer.json \
-            v1/config.json
+          python - <<'EOF'
+          import os, huggingface_hub
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/onnx/model_O4.onnx",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/tokenizer.json",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/config.json",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          EOF
           
-          # Verify files downloaded
           echo "Model files downloaded:"
           ls -lhR /tmp/model-cache/
       
@@ -342,9 +356,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          pip install huggingface_hub[cli]
-          huggingface-cli --version
+        run: pip install huggingface_hub
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
@@ -373,13 +385,33 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
-          mkdir -p /tmp/model-cache
-          huggingface-cli download 0dinai/jailbreak-embeddings-small \
-            --repo-type model \
-            --local-dir /tmp/model-cache \
-            v1/onnx/model_O4.onnx \
-            v1/tokenizer.json \
-            v1/config.json
+          mkdir -p /tmp/model-cache/v1/onnx
+
+          python - <<'EOF'
+          import os, huggingface_hub
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/onnx/model_O4.onnx",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/tokenizer.json",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          huggingface_hub.hf_hub_download(
+              repo_id="0dinai/jailbreak-embeddings-small",
+              filename="v1/config.json",
+              repo_type="model",
+              local_dir="/tmp/model-cache",
+              token=os.environ.get("HF_TOKEN"),
+          )
+          EOF
+
           echo "Model files downloaded:"
           ls -lhR /tmp/model-cache/
 
