@@ -318,20 +318,20 @@ The SDK generates **3 independent hash families** by default for improved recall
 
 **Important**: V0 and V1 signatures are NOT comparable (different embedding spaces).
 
-## Sneaker-Net Distribution
+## Offline Distribution
 
-Use the sneaker-net scripts when the recipient machine has **no internet access** or
+Use the offline scripts when the recipient machine has **no internet access** or
 when you need to hand-deliver the SDK on a USB drive.
 
-### Building a sneaker-net bundle (run on your build machine)
+### Building a offline bundle (run on your build machine)
 
 ```bash
 # Auto-detects version and wheels from packages/python/dist/
 # Downloads model from HuggingFace if no --model-source is provided
-./deliverable/package-sneakernet.sh
+./deliverable/package-offline.sh
 
 # Explicit paths + create a zip for easier copying
-./deliverable/package-sneakernet.sh \
+./deliverable/package-offline.sh \
     --pure-wheel packages/python/dist/odin_prompt_toolkit-0.1.1-py3-none-any.whl \
     --native-wheel packages/python-native/dist/odin_prompt_toolkit_native-0.1.1-cp311-cp311-manylinux_2_17_x86_64.whl \
     --model-source ~/.cache/odin-prompt-toolkit/models/v1 \
@@ -341,7 +341,7 @@ when you need to hand-deliver the SDK on a USB drive.
 
 Output:
 ```
-odin-prompt-toolkit-sneakernet-v0.1.1/
+odin-prompt-toolkit-offline-v0.1.1/
 ├── install.sh          ← recipient runs this
 ├── verify.py
 ├── README.txt
@@ -360,7 +360,7 @@ odin-prompt-toolkit-sneakernet-v0.1.1/
 
 ```bash
 # Copy the bundle directory to the target machine, then:
-cd odin-prompt-toolkit-sneakernet-v0.1.1
+cd odin-prompt-toolkit-offline-v0.1.1
 
 # Install into a new venv (default)
 bash install.sh
@@ -378,7 +378,7 @@ from PyPI at install time. For fully air-gapped machines, pre-download them firs
 ```bash
 # On a machine with internet access:
 pip download onnxruntime>=1.16.0 sentence-transformers>=2.2.0 numpy>=1.24.0 \
-    -d odin-prompt-toolkit-sneakernet-v0.1.1/deps/
+    -d odin-prompt-toolkit-offline-v0.1.1/deps/
 
 # The installer detects deps/ automatically and uses --no-index --find-links
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 0DIN Prompt Toolkit — Sneaker-Net Installer
+# 0DIN Prompt Toolkit — Offline Installer
 #
 # Installs odin-prompt-toolkit from locally-bundled wheel files.
 # Run this on the recipient machine (no internet required for the SDK itself;
@@ -69,7 +69,7 @@ fi
 # ── banner ────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${CYAN}║       0DIN Prompt Toolkit — Sneaker-Net Installer            ║${RESET}"
+echo -e "${CYAN}║       0DIN Prompt Toolkit — Offline Installer            ║${RESET}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 
