@@ -236,8 +236,8 @@ jobs:
             dist/*.tgz
             /tmp/odin-prompt-toolkit-typescript-*.zip
 
-  # Build design partner deliverable tarball
-  build-deliverable:
+  # Build deliverable tarball and offline installer bundle (single job — shares model download)
+  build-bundles:
     needs: [
       version-check,
       ci,
@@ -250,45 +250,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: pip install huggingface_hub
-      
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
-      
-      - name: Copy wheels to expected locations
-        run: |
-          echo "=== Artifact structure ==="
-          find artifacts/python-dist -type f | sort
-          echo "=========================="
 
-          # Python pure wheel
-          mkdir -p packages/python/dist
+      - name: Locate wheels
+        run: |
+          echo "=== python-dist artifact structure ==="
+          find artifacts/python-dist -type f | sort
+          echo "======================================"
+
+          # Pure Python wheel (path includes full runner path prefix)
           PURE_WHEEL=$(find artifacts/python-dist -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
           if [[ -z "$PURE_WHEEL" ]]; then
             echo "ERROR: Pure Python wheel not found in artifact" && exit 1
           fi
-          cp "$PURE_WHEEL" packages/python/dist/
-          echo "Copied pure wheel: $PURE_WHEEL"
+          echo "Pure wheel: $PURE_WHEEL"
+          echo "PURE_WHEEL=$PURE_WHEEL" >> $GITHUB_ENV
 
-          # Native wheels (all platforms)
+          # Native wheels — copy all platforms to packages/python-native/dist/
           mkdir -p packages/python-native/dist
-          cp artifacts/native-linux-x86_64/*.whl packages/python-native/dist/ || true
-          cp artifacts/native-linux-aarch64/*.whl packages/python-native/dist/ || true
-          cp artifacts/native-macos-x86_64/*.whl packages/python-native/dist/ || true
-          cp artifacts/native-macos-aarch64/*.whl packages/python-native/dist/ || true
+          cp artifacts/native-linux-x86_64/*.whl   packages/python-native/dist/ || true
+          cp artifacts/native-linux-aarch64/*.whl  packages/python-native/dist/ || true
+          cp artifacts/native-macos-x86_64/*.whl   packages/python-native/dist/ || true
+          cp artifacts/native-macos-aarch64/*.whl  packages/python-native/dist/ || true
           cp artifacts/native-windows-x86_64/*.whl packages/python-native/dist/ || true
-          cp artifacts/native-sdist/*.tar.gz packages/python-native/dist/ || true
+          cp artifacts/native-sdist/*.tar.gz       packages/python-native/dist/ || true
 
-          echo "Wheels collected:"
-          ls -lh packages/python/dist/
+          echo "Native wheels:"
           ls -lh packages/python-native/dist/
 
       - name: Download model from HuggingFace
@@ -317,96 +315,16 @@ jobs:
       - name: Build deliverable tarball
         run: |
           cd deliverable
-          ./build-tarball.sh --model-source /tmp/model-cache --pure-wheel "../$PURE_WHEEL"
-      
-      - name: Calculate checksums
+          ./build-tarball.sh \
+            --pure-wheel "../$PURE_WHEEL" \
+            --model-source /tmp/model-cache
+
+      - name: Calculate deliverable checksum
         run: |
           cd deliverable
-          sha256sum odin-prompt-toolkit-deliverable-*.tar.gz > odin-prompt-toolkit-deliverable-${GITHUB_REF_NAME#v}.tar.gz.sha256
+          sha256sum odin-prompt-toolkit-deliverable-*.tar.gz \
+            > odin-prompt-toolkit-deliverable-${GITHUB_REF_NAME#v}.tar.gz.sha256
           cat *.sha256
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: deliverable-tarball
-          path: |
-            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz
-            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz.sha256
-          retention-days: 90
-
-  # Build offline installer bundle (for USB / air-gapped delivery)
-  build-offline:
-    needs: [
-      version-check,
-      ci,
-      build-python,
-      build-native-linux,
-      build-native-macos,
-      build-native-windows,
-      build-native-sdist
-    ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: pip install huggingface_hub
-
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-
-      - name: Copy wheels to expected locations
-        run: |
-          echo "=== Artifact structure ==="
-          find artifacts/python-dist -type f | sort
-          echo "=========================="
-
-          # Python pure wheel
-          PURE_WHEEL=$(find artifacts/python-dist -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
-          if [[ -z "$PURE_WHEEL" ]]; then
-            echo "ERROR: Pure Python wheel not found in artifact" && exit 1
-          fi
-          echo "Found pure wheel: $PURE_WHEEL"
-          echo "PURE_WHEEL=$PURE_WHEEL" >> $GITHUB_ENV
-
-          # Native wheels (all platforms)
-          mkdir -p packages/python-native/dist
-          cp artifacts/native-linux-x86_64/*.whl   packages/python-native/dist/ || true
-          cp artifacts/native-linux-aarch64/*.whl  packages/python-native/dist/ || true
-          cp artifacts/native-macos-x86_64/*.whl   packages/python-native/dist/ || true
-          cp artifacts/native-macos-aarch64/*.whl  packages/python-native/dist/ || true
-          cp artifacts/native-windows-x86_64/*.whl packages/python-native/dist/ || true
-
-          echo "Native wheels collected:"
-          ls -lh packages/python-native/dist/
-
-      - name: Download model from HuggingFace
-        env:
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
-        run: |
-          mkdir -p /tmp/model-cache/onnx
-
-          python - <<'EOF'
-          import os, huggingface_hub
-          repo = "0dinai/jailbreak-embeddings-large-onnx"
-          token = os.environ.get("HF_TOKEN")
-          for filename in ["onnx/model.onnx", "onnx/model.onnx_data", "tokenizer.json", "config.json"]:
-              huggingface_hub.hf_hub_download(
-                  repo_id=repo,
-                  filename=filename,
-                  repo_type="model",
-                  local_dir="/tmp/model-cache",
-                  token=token,
-              )
-          EOF
-
-          echo "Model files downloaded:"
-          ls -lhR /tmp/model-cache/
 
       - name: Build offline installer bundle
         run: |
@@ -416,20 +334,20 @@ jobs:
             | sort -V | tail -1)
 
           cd deliverable
-          if [[ -n "$NATIVE_WHEEL" ]]; then
-            ./package-offline.sh \
-              --pure-wheel "../$PURE_WHEEL" \
-              --model-source /tmp/model-cache \
-              --native-wheel "../${NATIVE_WHEEL}" \
-              --output-dir . \
-              --zip
-          else
-            ./package-offline.sh \
-              --pure-wheel "../$PURE_WHEEL" \
-              --model-source /tmp/model-cache \
-              --output-dir . \
-              --zip
-          fi
+          ./package-offline.sh \
+            --pure-wheel "../$PURE_WHEEL" \
+            --model-source /tmp/model-cache \
+            ${NATIVE_WHEEL:+--native-wheel "../${NATIVE_WHEEL}"} \
+            --output-dir . \
+            --zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deliverable-tarball
+          path: |
+            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz
+            deliverable/odin-prompt-toolkit-deliverable-*.tar.gz.sha256
+          retention-days: 90
 
       - uses: actions/upload-artifact@v4
         with:
@@ -448,8 +366,7 @@ jobs:
       build-native-sdist,
       build-rust,
       build-typescript,
-      build-deliverable,
-      build-offline
+      build-bundles
     ]
     runs-on: ubuntu-latest
     permissions:
