@@ -89,7 +89,7 @@ jobs:
         run: |
           python -m venv /tmp/test-env
           /tmp/test-env/bin/pip install dist/*.whl
-          /tmp/test-env/bin/python -c "import odin_prompt_toolkit; print(signature_sdk.__version__)"
+          /tmp/test-env/bin/python -c "import odin_prompt_toolkit; print(odin_prompt_toolkit.__version__)"
       - name: Create customer zip
         run: |
           VERSION=${GITHUB_REF_NAME#v}
@@ -201,7 +201,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           mkdir -p /tmp/odin-prompt-toolkit-rust-${VERSION}
-          cp dist/signature-sdk-${VERSION}.crate /tmp/odin-prompt-toolkit-rust-${VERSION}/
+          cp dist/odin-prompt-toolkit-${VERSION}.crate /tmp/odin-prompt-toolkit-rust-${VERSION}/
           cp packages/rust/README.md /tmp/odin-prompt-toolkit-rust-${VERSION}/
           cd /tmp && zip -r odin-prompt-toolkit-rust-${VERSION}.zip odin-prompt-toolkit-rust-${VERSION}/
       - uses: actions/upload-artifact@v4
@@ -324,6 +324,98 @@ jobs:
             deliverable/odin-prompt-toolkit-deliverable-*.tar.gz.sha256
           retention-days: 90
 
+  # Build offline installer bundle (for USB / air-gapped delivery)
+  build-offline:
+    needs: [
+      version-check,
+      ci,
+      build-python,
+      build-native-linux,
+      build-native-macos,
+      build-native-windows,
+      build-native-sdist
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install huggingface_hub[cli]
+          huggingface-cli --version
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Copy wheels to expected locations
+        run: |
+          # Python pure wheel
+          mkdir -p packages/python/dist
+          cp artifacts/python-dist/dist/*.whl packages/python/dist/ || true
+
+          # Native wheels (all platforms)
+          mkdir -p packages/python-native/dist
+          cp artifacts/native-linux-x86_64/*.whl   packages/python-native/dist/ || true
+          cp artifacts/native-linux-aarch64/*.whl  packages/python-native/dist/ || true
+          cp artifacts/native-macos-x86_64/*.whl   packages/python-native/dist/ || true
+          cp artifacts/native-macos-aarch64/*.whl  packages/python-native/dist/ || true
+          cp artifacts/native-windows-x86_64/*.whl packages/python-native/dist/ || true
+
+          echo "Wheels collected:"
+          ls -lh packages/python/dist/
+          ls -lh packages/python-native/dist/
+
+      - name: Download model from HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+        run: |
+          mkdir -p /tmp/model-cache
+          huggingface-cli download 0dinai/jailbreak-embeddings-small \
+            --repo-type model \
+            --local-dir /tmp/model-cache \
+            v1/onnx/model_O4.onnx \
+            v1/tokenizer.json \
+            v1/config.json
+          echo "Model files downloaded:"
+          ls -lhR /tmp/model-cache/
+
+      - name: Build offline installer bundle
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          # Build one bundle per native platform (pick the linux x86_64 native
+          # wheel as the representative; recipients get the matching wheel for
+          # their platform from the platform-specific packages)
+          NATIVE_WHEEL=$(find packages/python-native/dist \
+            -name "odin_prompt_toolkit_native-${VERSION}-*-manylinux*_x86_64.whl" \
+            | sort -V | tail -1)
+
+          cd deliverable
+          if [[ -n "$NATIVE_WHEEL" ]]; then
+            ./package-offline.sh \
+              --model-source /tmp/model-cache/v1 \
+              --native-wheel "../${NATIVE_WHEEL}" \
+              --output-dir . \
+              --zip
+          else
+            ./package-offline.sh \
+              --model-source /tmp/model-cache/v1 \
+              --output-dir . \
+              --zip
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-bundle
+          path: |
+            deliverable/odin-prompt-toolkit-offline-v*.zip
+          retention-days: 90
+
   # Create GitHub Release with all artifacts
   release:
     needs: [
@@ -334,7 +426,8 @@ jobs:
       build-native-sdist,
       build-rust,
       build-typescript,
-      build-deliverable
+      build-deliverable,
+      build-offline
     ]
     runs-on: ubuntu-latest
     permissions:
@@ -371,10 +464,13 @@ jobs:
           cp artifacts/typescript-dist/dist/*.tgz release-files/ || true
           cp artifacts/typescript-dist/tmp/odin-prompt-toolkit-typescript-*.zip release-files/ || true
           
-          # Design partner deliverable
+          # Design partner deliverable tarball
           cp artifacts/deliverable-tarball/*.tar.gz release-files/ || true
           cp artifacts/deliverable-tarball/*.sha256 release-files/ || true
-          
+
+          # Offline installer bundle
+          cp artifacts/offline-bundle/*.zip release-files/ || true
+
           echo "Release files:"
           ls -lh release-files/
 
@@ -407,7 +503,7 @@ jobs:
   #         # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
 
   # Publish to PyPI (native wheels)
-  # TODO: Enable this job once PyPI trusted publisher is configured for signature-sdk-native
+  # TODO: Enable this job once PyPI trusted publisher is configured for odin-prompt-toolkit-native
   # publish-pypi-native:
   #   needs: [release]
   #   runs-on: ubuntu-latest

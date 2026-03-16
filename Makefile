@@ -1,4 +1,4 @@
-.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript deliverable deliverable-with-model showcase showcase-install
+.PHONY: help test test-rust test-python test-typescript test-all cross-validate build build-rust build-python build-typescript clean clean-rust clean-python clean-typescript generate-vectors examples examples-rust examples-python examples-typescript install install-rust install-python install-typescript lint fmt check docs docs-dev package package-python package-rust package-typescript deliverable deliverable-with-model offline offline-with-model showcase showcase-install
 
 # Default target
 .DEFAULT_GOAL := help
@@ -69,7 +69,7 @@ build-rust: ## Build Rust package
 
 build-python: ## Check Python package (no build step needed)
 	@echo "$(CYAN)Checking Python package...$(RESET)"
-	@cd packages/python && python -c "import signature_sdk; print('✅ Python package OK')"
+	@cd packages/python && python -c "import odin_prompt_toolkit; print('✅ Python package OK')"
 
 build-typescript: ## Build TypeScript package
 	@echo "$(CYAN)Building TypeScript package...$(RESET)"
@@ -134,6 +134,29 @@ deliverable-with-model: package-python ## Build deliverable with local model (fa
 	@echo ""
 	@echo "$(GREEN)✅ Deliverable built successfully$(RESET)"
 	@echo "   Location: deliverable/0DIN Prompt Toolkit-deliverable-*.tar.gz"
+
+offline: package-python ## Build offline installer bundle (downloads model from HuggingFace)
+	@echo ""
+	@echo "$(CYAN)Building offline installer bundle...$(RESET)"
+	@if [ ! -f deliverable/package-offline.sh ]; then \
+		echo "$(RED)Error: deliverable/package-offline.sh not found$(RESET)"; \
+		exit 1; \
+	fi
+	@cd deliverable && ./package-offline.sh
+	@echo ""
+	@echo "$(GREEN)✅ Offline installer bundle built successfully$(RESET)"
+
+offline-with-model: package-python ## Build offline installer bundle using local cached model (faster)
+	@echo ""
+	@echo "$(CYAN)Building offline installer bundle (using local model)...$(RESET)"
+	@if [ ! -d ~/.cache/odin-prompt-toolkit/models/v1 ]; then \
+		echo "$(YELLOW)Warning: Model not found in cache, will download from HuggingFace$(RESET)"; \
+		cd deliverable && ./package-offline.sh; \
+	else \
+		cd deliverable && ./package-offline.sh --model-source ~/.cache/odin-prompt-toolkit/models/v1; \
+	fi
+	@echo ""
+	@echo "$(GREEN)✅ Offline installer bundle built successfully$(RESET)"
 
 ##@ Test Vectors
 
@@ -231,7 +254,7 @@ lint-rust: ## Run Rust linter
 
 lint-python: ## Run Python linter
 	@echo "$(CYAN)Linting Python code...$(RESET)"
-	@cd packages/python && ruff check signature_sdk/ tests/
+	@cd packages/python && ruff check odin_prompt_toolkit/ tests/
 
 lint-typescript: ## Run TypeScript linter
 	@echo "$(CYAN)Linting TypeScript code...$(RESET)"
@@ -246,7 +269,7 @@ fmt-rust: ## Format Rust code
 
 fmt-python: ## Format Python code
 	@echo "$(CYAN)Formatting Python code...$(RESET)"
-	@cd packages/python && black signature_sdk/ tests/
+	@cd packages/python && black odin_prompt_toolkit/ tests/
 	@echo "$(GREEN)✅ Python code formatted$(RESET)"
 
 fmt-typescript: ## Format TypeScript code
@@ -289,8 +312,8 @@ docs: docs-rust docs-python docs-typescript ## Build all documentation (API docs
 	@echo "$(GREEN)✅ All documentation built successfully$(RESET)"
 	@echo ""
 	@echo "$(CYAN)Generated API docs:$(RESET)"
-	@echo "  • Rust:       docs/static/api/rust/signature_sdk/index.html"
-	@echo "  • Python:     docs/static/api/python/signature_sdk.html"
+	@echo "  • Rust:       docs/static/api/rust/odin_prompt_toolkit/index.html"
+	@echo "  • Python:     docs/static/api/python/odin_prompt_toolkit.html"
 	@echo "  • TypeScript: docs/static/api/typescript/index.html"
 	@echo ""
 	@echo "$(CYAN)To serve locally:$(RESET)"
@@ -307,7 +330,7 @@ docs-rust: ## Generate Rust API documentation (cargo doc)
 docs-python: ## Generate Python API documentation (pdoc)
 	@echo "$(CYAN)Generating Python API docs...$(RESET)"
 	@mkdir -p docs/static/api/python
-	@cd packages/python && python -m pdoc signature_sdk -o ../../docs/static/api/python --html
+	@cd packages/python && python -m pdoc odin_prompt_toolkit -o ../../docs/static/api/python --html
 	@echo "$(GREEN)✅ Python API docs generated → docs/static/api/python/$(RESET)"
 
 docs-typescript: ## Generate TypeScript API documentation (typedoc)
