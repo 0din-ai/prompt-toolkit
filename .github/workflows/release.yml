@@ -265,10 +265,18 @@ jobs:
       
       - name: Copy wheels to expected locations
         run: |
-          # Python pure wheel — artifact uploads from repo root dist/, lands flat
+          echo "=== Artifact structure ==="
+          find artifacts/python-dist -type f | sort
+          echo "=========================="
+
+          # Python pure wheel
           mkdir -p packages/python/dist
-          cp artifacts/python-dist/*.whl  packages/python/dist/ || true
-          cp artifacts/python-dist/*.tar.gz packages/python/dist/ || true
+          PURE_WHEEL=$(find artifacts/python-dist -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
+          if [[ -z "$PURE_WHEEL" ]]; then
+            echo "ERROR: Pure Python wheel not found in artifact" && exit 1
+          fi
+          cp "$PURE_WHEEL" packages/python/dist/
+          echo "Copied pure wheel: $PURE_WHEEL"
 
           # Native wheels (all platforms)
           mkdir -p packages/python-native/dist
@@ -309,7 +317,7 @@ jobs:
       - name: Build deliverable tarball
         run: |
           cd deliverable
-          ./build-tarball.sh --model-source /tmp/model-cache
+          ./build-tarball.sh --model-source /tmp/model-cache --pure-wheel "../$PURE_WHEEL"
       
       - name: Calculate checksums
         run: |
@@ -354,9 +362,17 @@ jobs:
 
       - name: Copy wheels to expected locations
         run: |
-          # Python pure wheel — artifact uploads from repo root dist/, lands flat
-          mkdir -p packages/python/dist
-          cp artifacts/python-dist/*.whl  packages/python/dist/ || true
+          echo "=== Artifact structure ==="
+          find artifacts/python-dist -type f | sort
+          echo "=========================="
+
+          # Python pure wheel
+          PURE_WHEEL=$(find artifacts/python-dist -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
+          if [[ -z "$PURE_WHEEL" ]]; then
+            echo "ERROR: Pure Python wheel not found in artifact" && exit 1
+          fi
+          echo "Found pure wheel: $PURE_WHEEL"
+          echo "PURE_WHEEL=$PURE_WHEEL" >> $GITHUB_ENV
 
           # Native wheels (all platforms)
           mkdir -p packages/python-native/dist
@@ -366,8 +382,7 @@ jobs:
           cp artifacts/native-macos-aarch64/*.whl  packages/python-native/dist/ || true
           cp artifacts/native-windows-x86_64/*.whl packages/python-native/dist/ || true
 
-          echo "Wheels collected:"
-          ls -lh packages/python/dist/
+          echo "Native wheels collected:"
           ls -lh packages/python-native/dist/
 
       - name: Download model from HuggingFace
@@ -403,12 +418,14 @@ jobs:
           cd deliverable
           if [[ -n "$NATIVE_WHEEL" ]]; then
             ./package-offline.sh \
+              --pure-wheel "../$PURE_WHEEL" \
               --model-source /tmp/model-cache \
               --native-wheel "../${NATIVE_WHEEL}" \
               --output-dir . \
               --zip
           else
             ./package-offline.sh \
+              --pure-wheel "../$PURE_WHEEL" \
               --model-source /tmp/model-cache \
               --output-dir . \
               --zip
