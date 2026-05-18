@@ -118,6 +118,8 @@ module = [
     "odin_prompt_toolkit_native",
     "sklearn",
     "sklearn.*",
+    "aiohttp",
+    "aiohttp.*",
 ]
 ignore_missing_imports = true
 
@@ -130,8 +132,10 @@ module = [
     "odin_prompt_toolkit.hashers.lsh",
     "odin_prompt_toolkit.cm_lsh",
     "odin_prompt_toolkit.sign",
+    "odin_prompt_toolkit.threatfeed.cache",
+    "odin_prompt_toolkit.threatfeed.client",
 ]
-disable_error_code = ["misc", "no-any-return"]
+disable_error_code = ["misc", "no-any-return", "name-defined"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

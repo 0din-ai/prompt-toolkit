@@ -7,10 +7,14 @@ import os
 import tempfile
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from odin_prompt_toolkit.error import ThreatFeedCacheError
 from odin_prompt_toolkit.lsh import cosine_from_hamming, hamming_distance_hex
 from odin_prompt_toolkit.types import SignatureVersion
+
+if TYPE_CHECKING:
+    from odin_prompt_toolkit.threatfeed.client import ThreatFeedClient
 
 from .types import CachedSignature, SyncResult, ThreatMatch
 

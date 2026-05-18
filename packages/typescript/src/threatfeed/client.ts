@@ -75,7 +75,7 @@ export class ThreatFeedClient {
     const allEntries: ThreatFeedEntry[] = [];
     let page = 1;
 
-    while (true) {
+    for (;;) {
       const data = await this.fetchPage(page, since);
       const response = parseThreatFeedResponse(data);
       allEntries.push(...response.threatFeeds);

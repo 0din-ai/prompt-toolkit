@@ -65,7 +65,7 @@ function pageResponse(
 
 function mockFetch(responses: Array<{ body: unknown; status?: number }>): jest.SpyInstance {
   let callCount = 0;
-  return jest.spyOn(global, 'fetch').mockImplementation(async (url, init) => {
+  return jest.spyOn(global, 'fetch').mockImplementation(async (_url, _init) => {
     const resp = responses[callCount] ?? responses[responses.length - 1];
     callCount++;
     const status = resp.status ?? 200;
