@@ -108,3 +108,32 @@ export class InvalidInputError extends SigError {
     this.name = 'InvalidInputError';
   }
 }
+
+/**
+ * Threat feed API error.
+ *
+ * Thrown when HTTP requests to the 0din threat feed API fail,
+ * such as authentication errors, network issues, or bad responses.
+ */
+export class ThreatFeedApiError extends SigError {
+  public readonly statusCode?: number;
+
+  constructor(message: string, statusCode?: number) {
+    super(message);
+    this.name = 'ThreatFeedApiError';
+    this.statusCode = statusCode;
+  }
+}
+
+/**
+ * Threat feed cache error.
+ *
+ * Thrown when cache I/O operations fail, such as corrupt cache files,
+ * write failures, or schema version mismatches.
+ */
+export class ThreatFeedCacheError extends SigError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ThreatFeedCacheError';
+  }
+}

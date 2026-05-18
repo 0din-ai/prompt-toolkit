@@ -13,6 +13,7 @@ default = ["openai", "onnx"]
 openai = ["dep:reqwest"]
 onnx = ["dep:tract-onnx", "dep:tokenizers", "dep:dirs"]
 cm-lsh = []  # CM-LSH support (no extra deps, uses existing lsh.rs internals)
+threatfeed = ["dep:reqwest", "dep:dirs", "dep:chrono", "dep:urlencoding"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -31,6 +32,10 @@ reqwest = { version = "0.12", features = ["json"], optional = true }
 tract-onnx = { version = "0.21", optional = true }
 tokenizers = { version = "0.20", features = ["http"], optional = true }
 dirs = { version = "5.0", optional = true }
+
+# Threat feed feature
+chrono = { version = "0.4", features = ["serde"], optional = true }
+urlencoding = { version = "2.1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.40", features = ["full", "test-util"] }

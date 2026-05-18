@@ -19,6 +19,12 @@ pub enum SigError {
 
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    #[error("Threat feed API error: {0}")]
+    ThreatFeedApi(String),
+
+    #[error("Threat feed cache error: {0}")]
+    ThreatFeedCache(String),
 }
 
 pub type Result<T> = std::result::Result<T, SigError>;

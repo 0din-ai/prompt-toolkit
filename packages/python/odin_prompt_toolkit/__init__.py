@@ -48,6 +48,9 @@ from odin_prompt_toolkit.error import (
     ModelError,
     ProviderError,
     SigError,
+    ThreatFeedApiError,
+    ThreatFeedCacheError,
+    ThreatFeedError,
 )
 from odin_prompt_toolkit.hasher import Hasher
 from odin_prompt_toolkit.hashers import SimHashLsh, get_hasher
@@ -101,6 +104,9 @@ __all__ = [
     "ProviderError",
     "ModelError",
     "InvalidInputError",
+    "ThreatFeedError",
+    "ThreatFeedApiError",
+    "ThreatFeedCacheError",
     # Types
     "SignatureVersion",
     "HashAlgorithm",

@@ -75,6 +75,8 @@ export {
   ProviderError,
   ModelError,
   InvalidInputError,
+  ThreatFeedApiError,
+  ThreatFeedCacheError,
 } from './error';
 
 // Core LSH functions
@@ -119,3 +121,17 @@ export {
   type HybridParams,
   type CalibratorConfig,
 } from './cm-lsh';
+
+// Threat feed integration
+export {
+  ThreatFeedCache,
+  ThreatFeedClient,
+  compareToThreatfeed,
+  parseThreatFeedResponse,
+  type CachedSignature,
+  type DetectionSignature,
+  type SyncResult,
+  type ThreatFeedEntry,
+  type ThreatFeedResponse,
+  type ThreatMatch,
+} from './threatfeed';
