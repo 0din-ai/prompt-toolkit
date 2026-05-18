@@ -10,7 +10,10 @@ import { parseThreatFeedResponse } from './types';
  * Options for creating a ThreatFeedClient.
  */
 export interface ThreatFeedClientOptions {
-  /** Raw API token (no Bearer prefix). Falls back to ODIN_THREATFEED_API_TOKEN env var. */
+  /**
+   * Raw API token (no Bearer prefix).
+   * Falls back to ODIN_THREATFEED_API_TOKEN, then ODIN_API_TOKEN env vars.
+   */
   apiToken?: string;
   /** API base URL (default: https://0din.ai). Falls back to ODIN_THREATFEED_BASE_URL env var. */
   baseUrl?: string;
@@ -22,6 +25,11 @@ export interface ThreatFeedClientOptions {
  * Client for the 0din threat feed API.
  *
  * Fetches detection signatures from the paginated threat feed endpoint.
+ *
+ * Token resolution order:
+ * 1. Explicit `apiToken` option
+ * 2. `ODIN_THREATFEED_API_TOKEN` env var (dedicated)
+ * 3. `ODIN_API_TOKEN` env var (shared with Thor / portal)
  */
 export class ThreatFeedClient {
   private readonly apiToken: string;
@@ -30,11 +38,14 @@ export class ThreatFeedClient {
 
   constructor(options: ThreatFeedClientOptions = {}) {
     this.apiToken =
-      options.apiToken ?? process.env.ODIN_THREATFEED_API_TOKEN ?? '';
+      options.apiToken ??
+      process.env.ODIN_THREATFEED_API_TOKEN ??
+      process.env.ODIN_API_TOKEN ??
+      '';
 
     if (!this.apiToken) {
       throw new ThreatFeedApiError(
-        'API token required: pass apiToken or set ODIN_THREATFEED_API_TOKEN',
+        'API token required: pass apiToken or set ODIN_THREATFEED_API_TOKEN / ODIN_API_TOKEN',
       );
     }
 

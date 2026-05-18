@@ -66,16 +66,31 @@ def page_response(entries: list, page: int = 1, total_pages: int = 1) -> dict:
 class TestThreatFeedClientConstructor:
     def test_requires_token(self, monkeypatch):
         monkeypatch.delenv("ODIN_THREATFEED_API_TOKEN", raising=False)
+        monkeypatch.delenv("ODIN_API_TOKEN", raising=False)
         with pytest.raises(ThreatFeedApiError, match="API token required"):
             ThreatFeedClient()
 
-    def test_token_from_env(self, monkeypatch):
-        monkeypatch.setenv("ODIN_THREATFEED_API_TOKEN", "env-token")
+    def test_token_from_dedicated_env(self, monkeypatch):
+        monkeypatch.delenv("ODIN_API_TOKEN", raising=False)
+        monkeypatch.setenv("ODIN_THREATFEED_API_TOKEN", "dedicated-token")
         client = ThreatFeedClient()
-        assert client._api_token == "env-token"
+        assert client._api_token == "dedicated-token"
 
-    def test_explicit_token_overrides_env(self, monkeypatch):
-        monkeypatch.setenv("ODIN_THREATFEED_API_TOKEN", "env-token")
+    def test_token_falls_back_to_odin_api_token(self, monkeypatch):
+        monkeypatch.delenv("ODIN_THREATFEED_API_TOKEN", raising=False)
+        monkeypatch.setenv("ODIN_API_TOKEN", "portal-token")
+        client = ThreatFeedClient()
+        assert client._api_token == "portal-token"
+
+    def test_dedicated_env_takes_precedence_over_shared(self, monkeypatch):
+        monkeypatch.setenv("ODIN_THREATFEED_API_TOKEN", "dedicated-token")
+        monkeypatch.setenv("ODIN_API_TOKEN", "portal-token")
+        client = ThreatFeedClient()
+        assert client._api_token == "dedicated-token"
+
+    def test_explicit_token_overrides_all_env(self, monkeypatch):
+        monkeypatch.setenv("ODIN_THREATFEED_API_TOKEN", "dedicated-token")
+        monkeypatch.setenv("ODIN_API_TOKEN", "portal-token")
         client = ThreatFeedClient(api_token="explicit-token")
         assert client._api_token == "explicit-token"
 

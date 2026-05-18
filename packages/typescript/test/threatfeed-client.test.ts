@@ -88,6 +88,7 @@ describe('ThreatFeedClient constructor', () => {
   beforeEach(() => {
     process.env = { ...OLD_ENV };
     delete process.env.ODIN_THREATFEED_API_TOKEN;
+    delete process.env.ODIN_API_TOKEN;
     delete process.env.ODIN_THREATFEED_BASE_URL;
   });
 
@@ -100,14 +101,28 @@ describe('ThreatFeedClient constructor', () => {
     expect(() => new ThreatFeedClient()).toThrow('API token required');
   });
 
-  test('reads token from env', () => {
-    process.env.ODIN_THREATFEED_API_TOKEN = 'env-token';
+  test('reads token from dedicated env', () => {
+    process.env.ODIN_THREATFEED_API_TOKEN = 'dedicated-token';
     const client = new ThreatFeedClient();
-    expect(client['apiToken']).toBe('env-token');
+    expect(client['apiToken']).toBe('dedicated-token');
   });
 
-  test('explicit token overrides env', () => {
-    process.env.ODIN_THREATFEED_API_TOKEN = 'env-token';
+  test('falls back to ODIN_API_TOKEN', () => {
+    process.env.ODIN_API_TOKEN = 'portal-token';
+    const client = new ThreatFeedClient();
+    expect(client['apiToken']).toBe('portal-token');
+  });
+
+  test('dedicated env takes precedence over shared', () => {
+    process.env.ODIN_THREATFEED_API_TOKEN = 'dedicated-token';
+    process.env.ODIN_API_TOKEN = 'portal-token';
+    const client = new ThreatFeedClient();
+    expect(client['apiToken']).toBe('dedicated-token');
+  });
+
+  test('explicit token overrides all env', () => {
+    process.env.ODIN_THREATFEED_API_TOKEN = 'dedicated-token';
+    process.env.ODIN_API_TOKEN = 'portal-token';
     const client = new ThreatFeedClient({ apiToken: 'explicit-token' });
     expect(client['apiToken']).toBe('explicit-token');
   });
