@@ -125,3 +125,7 @@ pub use hashers::{
     create_default_cm_lsh, gen_hyperplanes, Calibrator, DualHash, HybridCMLSH, HybridParams,
     ITQParams,
 };
+
+// Threat feed integration
+#[cfg(feature = "threatfeed")]
+pub mod threatfeed;

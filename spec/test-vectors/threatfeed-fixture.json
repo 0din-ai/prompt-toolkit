@@ -1,0 +1,332 @@
+{
+  "description": "Threat feed fixture for cross-language cache and query testing",
+  "notes": [
+    "Signatures are 64 hex chars (256 bits). Bands are 16 x 4 hex chars each.",
+    "entry_exact_match and query_exact share the same signature to test exact matching.",
+    "entry_similar differs from query_similar by a few bits (low Hamming distance).",
+    "entry_dissimilar is maximally different from all queries.",
+    "Entries with no detection_signatures test filtering behavior."
+  ],
+  "lsh_config": {
+    "bits": 256,
+    "bands": 16
+  },
+  "api_response": {
+    "description": "Simulated paginated API response from GET /api/v1/threatfeed",
+    "pages": [
+      {
+        "page": 1,
+        "total_pages": 2,
+        "total_count": 8,
+        "threat_feeds": [
+          {
+            "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "title": "DAN Jailbreak v12",
+            "summary": "Classic DAN jailbreak prompt",
+            "severity": "high",
+            "security_boundary": "guardrail_jailbreak",
+            "source": "internal",
+            "disclosed_at": "2025-01-10T12:00:00.000Z",
+            "published_at": "2025-01-15T12:00:00.000Z",
+            "updated_at": "2025-03-01T10:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v1",
+                "signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+              }
+            ],
+            "models": [{"id": 1, "name": "GPT-4", "vendor": {"name": "OpenAI"}}],
+            "messages": [],
+            "taxonomies": [{"category": "rhetoric", "strategy": "persuasion_and_manipulation", "technique": "role_play"}],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            "title": "System Prompt Extraction",
+            "summary": "Attempts to extract system prompt",
+            "severity": "medium",
+            "security_boundary": "prompt_extraction",
+            "source": "internal",
+            "disclosed_at": "2025-02-01T12:00:00.000Z",
+            "published_at": "2025-02-10T12:00:00.000Z",
+            "updated_at": "2025-03-05T14:30:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v0",
+                "signature": "1111111111111111111111111111111111111111111111111111111111111111"
+              },
+              {
+                "version": "v1",
+                "signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b3"
+              }
+            ],
+            "models": [{"id": 2, "name": "Claude", "vendor": {"name": "Anthropic"}}],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "title": "Interpreter Escape",
+            "summary": "Code interpreter sandbox escape",
+            "severity": "severe",
+            "security_boundary": "interpreter_jailbreak",
+            "source": "internal",
+            "disclosed_at": "2025-01-20T12:00:00.000Z",
+            "published_at": "2025-02-01T12:00:00.000Z",
+            "updated_at": "2025-03-10T08:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v1",
+                "signature": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              }
+            ],
+            "models": [{"id": 3, "name": "Gemini", "vendor": {"name": "Google"}}],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "title": "No Signature Entry",
+            "summary": "Entry with no detection signatures yet",
+            "severity": "low",
+            "security_boundary": "guardrail_jailbreak",
+            "source": "internal",
+            "disclosed_at": "2025-03-01T12:00:00.000Z",
+            "published_at": null,
+            "updated_at": "2025-03-15T12:00:00.000Z",
+            "detection_signatures": [],
+            "models": [],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          }
+        ]
+      },
+      {
+        "page": 2,
+        "total_pages": 2,
+        "total_count": 8,
+        "threat_feeds": [
+          {
+            "uuid": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+            "title": "Content Manipulation via Encoding",
+            "summary": "Base64 encoded harmful content",
+            "severity": "high",
+            "security_boundary": "content_manipulation",
+            "source": "internal",
+            "disclosed_at": "2025-02-15T12:00:00.000Z",
+            "published_at": "2025-03-01T12:00:00.000Z",
+            "updated_at": "2025-03-20T16:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v1",
+                "signature": "0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            ],
+            "models": [{"id": 4, "name": "Llama-3", "vendor": {"name": "Meta"}}],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            "title": "Multi-turn Prompt Injection",
+            "summary": "Multi-turn conversation to inject instructions",
+            "severity": "medium",
+            "security_boundary": "prompt_injection",
+            "source": "internal",
+            "disclosed_at": "2025-03-10T12:00:00.000Z",
+            "published_at": "2025-03-15T12:00:00.000Z",
+            "updated_at": "2025-03-25T10:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v1",
+                "signature": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+              }
+            ],
+            "models": [{"id": 5, "name": "Mistral", "vendor": {"name": "Mistral AI"}}],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "11111111-1111-1111-1111-111111111111",
+            "title": "V0 Only Signature",
+            "summary": "Only has a V0 detection signature",
+            "severity": "low",
+            "security_boundary": "guardrail_jailbreak",
+            "source": "internal",
+            "disclosed_at": "2025-01-05T12:00:00.000Z",
+            "published_at": "2025-01-20T12:00:00.000Z",
+            "updated_at": "2025-02-01T12:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v0",
+                "signature": "2222222222222222222222222222222222222222222222222222222222222222"
+              }
+            ],
+            "models": [],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          },
+          {
+            "uuid": "22222222-2222-2222-2222-222222222222",
+            "title": "Dual Version Entry",
+            "summary": "Has both v0 and v1 signatures",
+            "severity": "high",
+            "security_boundary": "guardrail_jailbreak",
+            "source": "internal",
+            "disclosed_at": "2025-02-20T12:00:00.000Z",
+            "published_at": "2025-03-01T12:00:00.000Z",
+            "updated_at": "2025-03-30T12:00:00.000Z",
+            "detection_signatures": [
+              {
+                "version": "v0",
+                "signature": "3333333333333333333333333333333333333333333333333333333333333333"
+              },
+              {
+                "version": "v1",
+                "signature": "4444444444444444444444444444444444444444444444444444444444444444"
+              }
+            ],
+            "models": [{"id": 1, "name": "GPT-4", "vendor": {"name": "OpenAI"}}],
+            "messages": [],
+            "taxonomies": [],
+            "test_results": [],
+            "metadata": [],
+            "reference_urls": [],
+            "variant_prompts": []
+          }
+        ]
+      }
+    ]
+  },
+  "expected_v1_cache": {
+    "description": "Expected cache state after syncing the above API response with version=v1",
+    "entry_count": 6,
+    "entries": [
+      {
+        "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "title": "DAN Jailbreak v12",
+        "severity": "high",
+        "security_boundary": "guardrail_jailbreak",
+        "signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+        "bands": ["a1b2", "c3d4", "e5f6", "a7b8", "c9d0", "e1f2", "a3b4", "c5d6", "e7f8", "a9b0", "c1d2", "e3f4", "a5b6", "c7d8", "e9f0", "a1b2"]
+      },
+      {
+        "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "title": "System Prompt Extraction",
+        "severity": "medium",
+        "security_boundary": "prompt_extraction",
+        "signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b3",
+        "bands": ["a1b2", "c3d4", "e5f6", "a7b8", "c9d0", "e1f2", "a3b4", "c5d6", "e7f8", "a9b0", "c1d2", "e3f4", "a5b6", "c7d8", "e9f0", "a1b3"]
+      },
+      {
+        "uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "title": "Interpreter Escape",
+        "severity": "severe",
+        "security_boundary": "interpreter_jailbreak",
+        "signature": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "bands": ["ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff", "ffff"]
+      },
+      {
+        "uuid": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "title": "Content Manipulation via Encoding",
+        "severity": "high",
+        "security_boundary": "content_manipulation",
+        "signature": "0000000000000000000000000000000000000000000000000000000000000000",
+        "bands": ["0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000", "0000"]
+      },
+      {
+        "uuid": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        "title": "Multi-turn Prompt Injection",
+        "severity": "medium",
+        "security_boundary": "prompt_injection",
+        "signature": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+        "bands": ["abcd", "ef01", "2345", "6789", "abcd", "ef01", "2345", "6789", "abcd", "ef01", "2345", "6789", "abcd", "ef01", "2345", "6789"]
+      },
+      {
+        "uuid": "22222222-2222-2222-2222-222222222222",
+        "title": "Dual Version Entry",
+        "severity": "high",
+        "security_boundary": "guardrail_jailbreak",
+        "signature": "4444444444444444444444444444444444444444444444444444444444444444",
+        "bands": ["4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444", "4444"]
+      }
+    ],
+    "notes": [
+      "dddddddd entry is excluded (no detection signatures)",
+      "11111111 entry is excluded (only has v0 signature, not v1)",
+      "bbbbbbbb entry uses only the v1 signature (has both v0 and v1)",
+      "22222222 entry uses only the v1 signature '4444...' (has both v0 and v1)"
+    ]
+  },
+  "query_tests": {
+    "description": "Test cases for querying the v1 cache",
+    "tests": [
+      {
+        "name": "exact_match",
+        "description": "Query with a signature identical to entry aaaaaaaa",
+        "query_signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+        "threshold": 0.85,
+        "expected_match_uuids": ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"],
+        "expected_top_match_uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "expected_top_hamming_distance": 0,
+        "expected_top_cosine_similarity": 1.0,
+        "notes": "Also matches bbbbbbbb because it differs by only 4 bits (last hex char b2 vs b3 = 1 bit difference). cosine_from_hamming(1, 256) ≈ 0.99993"
+      },
+      {
+        "name": "near_match",
+        "description": "Query with entry bbbbbbbb's signature (differs from aaaaaaaa by 1 bit in last hex char)",
+        "query_signature": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b3",
+        "threshold": 0.85,
+        "expected_match_uuids": ["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"],
+        "expected_top_match_uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "expected_top_hamming_distance": 0,
+        "expected_top_cosine_similarity": 1.0
+      },
+      {
+        "name": "no_match",
+        "description": "Query with a random signature that shares no bands with any entry",
+        "query_signature": "5678901234567890567890123456789056789012345678905678901234567890",
+        "threshold": 0.85,
+        "expected_match_uuids": [],
+        "notes": "No bands overlap with any cached entry, so no candidates are even checked"
+      },
+      {
+        "name": "all_zeros_exact",
+        "description": "Query with all-zeros matches eeeeeeee exactly",
+        "query_signature": "0000000000000000000000000000000000000000000000000000000000000000",
+        "threshold": 0.85,
+        "expected_match_uuids": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+        "expected_top_match_uuid": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "expected_top_hamming_distance": 0,
+        "expected_top_cosine_similarity": 1.0
+      }
+    ]
+  }
+}
