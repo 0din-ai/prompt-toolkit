@@ -35,7 +35,15 @@ def compute_bands(signature: str, num_bands: int = DEFAULT_BANDS) -> list[str]:
 
     Returns:
         List of hex strings, one per band.
+
+    Raises:
+        ValueError: If the signature is too short to split into the requested bands.
     """
+    if not signature or len(signature) < num_bands:
+        raise ValueError(
+            f"Signature too short to split into {num_bands} bands: "
+            f"{len(signature)} chars (need at least {num_bands})"
+        )
     band_len = len(signature) // num_bands
     return [signature[i * band_len : (i + 1) * band_len] for i in range(num_bands)]
 
@@ -170,8 +178,6 @@ class ThreatFeedCache:
             SyncResult with counts of added/updated entries.
         """
         from datetime import datetime, timezone
-
-        from .client import ThreatFeedClient  # noqa: F811
 
         since = None if full else self._last_updated_at()
         self._source_url = client.base_url

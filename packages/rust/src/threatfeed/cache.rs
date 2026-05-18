@@ -356,7 +356,19 @@ impl ThreatFeedCache {
 /// Compute bands from a hex signature string.
 ///
 /// Splits a 64 hex char signature into `num_bands` equal-length bands.
+///
+/// # Panics
+///
+/// Panics if `signature` is shorter than `num_bands` characters, which would
+/// indicate a malformed signature from the API.
 pub fn compute_bands(signature: &str, num_bands: usize) -> Vec<String> {
+    assert!(
+        signature.len() >= num_bands,
+        "Signature too short to split into {} bands: {} chars (need at least {})",
+        num_bands,
+        signature.len(),
+        num_bands
+    );
     let band_len = signature.len() / num_bands;
     (0..num_bands)
         .map(|i| signature[i * band_len..(i + 1) * band_len].to_string())

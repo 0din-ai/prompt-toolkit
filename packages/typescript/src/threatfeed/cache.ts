@@ -45,8 +45,15 @@ interface CacheFile {
  * Compute bands from a hex signature string.
  *
  * Splits a 64 hex char signature into `numBands` equal-length bands.
+ *
+ * @throws ThreatFeedCacheError if the signature is too short to split into the requested bands.
  */
 export function computeBands(signature: string, numBands: number = DEFAULT_BANDS): string[] {
+  if (!signature || signature.length < numBands) {
+    throw new ThreatFeedCacheError(
+      `Signature too short to split into ${numBands} bands: ${signature.length} chars (need at least ${numBands})`,
+    );
+  }
   const bandLen = Math.floor(signature.length / numBands);
   const bands: string[] = [];
   for (let i = 0; i < numBands; i++) {
