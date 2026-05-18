@@ -1,6 +1,6 @@
 import { ThreatFeedCache, computeBands } from '../src/threatfeed/cache';
 import { compareToThreatfeed } from '../src/threatfeed/compare';
-import { SignatureVersion, type SignatureResult, type LshConfig } from '../src/types';
+import { SignatureVersion, type SignatureResult } from '../src/types';
 import type { CachedSignature } from '../src/threatfeed/types';
 
 const SIG_A = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
