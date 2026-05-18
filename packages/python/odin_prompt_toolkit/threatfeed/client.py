@@ -15,9 +15,14 @@ class ThreatFeedClient:
 
     Fetches detection signatures from the paginated threat feed endpoint.
 
+    Token resolution order:
+        1. Explicit ``api_token`` parameter
+        2. ``ODIN_THREATFEED_API_TOKEN`` env var (dedicated)
+        3. ``ODIN_API_TOKEN`` env var (shared with Thor / portal)
+
     Args:
         api_token: Raw API token (no Bearer prefix). Falls back to
-            ODIN_THREATFEED_API_TOKEN env var.
+            ODIN_THREATFEED_API_TOKEN, then ODIN_API_TOKEN env vars.
         base_url: API base URL (default: https://0din.ai). Falls back to
             ODIN_THREATFEED_BASE_URL env var.
         per_page: Page size for paginated requests (default: 100).
@@ -29,10 +34,16 @@ class ThreatFeedClient:
         base_url: str | None = None,
         per_page: int = 100,
     ):
-        self._api_token = api_token or os.environ.get("ODIN_THREATFEED_API_TOKEN", "")
+        self._api_token = (
+            api_token
+            or os.environ.get("ODIN_THREATFEED_API_TOKEN")
+            or os.environ.get("ODIN_API_TOKEN")
+            or ""
+        )
         if not self._api_token:
             raise ThreatFeedApiError(
-                "API token required: pass api_token or set ODIN_THREATFEED_API_TOKEN"
+                "API token required: pass api_token or set "
+                "ODIN_THREATFEED_API_TOKEN / ODIN_API_TOKEN"
             )
 
         self._base_url = (

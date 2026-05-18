@@ -12,7 +12,7 @@
 //! use odin_prompt_toolkit::SignatureVersion;
 //!
 //! // Sync signatures from the portal
-//! let client = ThreatFeedClient::new("your-api-token", None, None);
+//! let client = ThreatFeedClient::new(Some("your-api-token"), None, None)?;
 //! let mut cache = ThreatFeedCache::new(SignatureVersion::V1, None, None);
 //! cache.sync(&client, true).await?;
 //!

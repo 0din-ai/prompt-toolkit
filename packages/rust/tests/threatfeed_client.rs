@@ -53,6 +53,60 @@ mod tests {
     // -----------------------------------------------------------------------
     // fetch_all tests
     // -----------------------------------------------------------------------
+    // Constructor / token resolution tests
+    //
+    // NOTE: Env var tests can interfere with each other since Rust tests
+    // run in parallel in the same process. We use explicit tokens for most
+    // tests and only test env var resolution in a single combined test.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_explicit_token() {
+        let client = ThreatFeedClient::new(Some("my-token"), None, None).unwrap();
+        assert_eq!(client.base_url(), "https://0din.ai");
+    }
+
+    #[test]
+    fn test_token_resolution_order() {
+        // This test exercises all env var fallback paths sequentially
+        // to avoid parallel test interference.
+
+        // 1. Clear everything — should fail
+        std::env::remove_var("ODIN_THREATFEED_API_TOKEN");
+        std::env::remove_var("ODIN_API_TOKEN");
+        assert!(
+            ThreatFeedClient::new(None, None, None).is_err(),
+            "Should fail with no token"
+        );
+
+        // 2. Set ODIN_API_TOKEN only — should succeed via fallback
+        std::env::set_var("ODIN_API_TOKEN", "portal-token");
+        assert!(
+            ThreatFeedClient::new(None, None, None).is_ok(),
+            "Should succeed with ODIN_API_TOKEN fallback"
+        );
+
+        // 3. Set both — dedicated should take precedence (client created OK)
+        std::env::set_var("ODIN_THREATFEED_API_TOKEN", "dedicated-token");
+        assert!(
+            ThreatFeedClient::new(None, None, None).is_ok(),
+            "Should succeed with ODIN_THREATFEED_API_TOKEN"
+        );
+
+        // 4. Explicit param overrides everything
+        assert!(
+            ThreatFeedClient::new(Some("explicit"), None, None).is_ok(),
+            "Should succeed with explicit token"
+        );
+
+        // Clean up
+        std::env::remove_var("ODIN_THREATFEED_API_TOKEN");
+        std::env::remove_var("ODIN_API_TOKEN");
+    }
+
+    // -----------------------------------------------------------------------
+    // fetch_all tests
+    // -----------------------------------------------------------------------
 
     #[tokio::test]
     async fn test_fetch_all_single_page() {
@@ -68,7 +122,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let entries = client.fetch_all(None).await.unwrap();
 
         assert_eq!(entries.len(), 2);
@@ -105,7 +159,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let entries = client.fetch_all(None).await.unwrap();
 
         assert_eq!(entries.len(), 3);
@@ -131,7 +185,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let entries = client.fetch_all(None).await.unwrap();
         assert_eq!(entries.len(), 0);
 
@@ -155,7 +209,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let entries = client.fetch_all(None).await.unwrap();
         assert!(entries.is_empty());
     }
@@ -172,7 +226,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new("bad-token", Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some("bad-token"), Some(&server.url()), None).unwrap();
         let result = client.fetch_all(None).await;
 
         assert!(result.is_err());
@@ -194,7 +248,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let result = client.fetch_all(None).await;
 
         assert!(result.is_err());
@@ -223,7 +277,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let result = client.fetch_all(Some(since)).await;
 
         // If the query param didn't match, mockito returns 501 and we'd get an error
@@ -248,7 +302,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let result = client.fetch_all(None).await;
         // If updated_at_gteq were included, the mock wouldn't match and
         // the request would fail. A successful response proves it was omitted.
@@ -277,7 +331,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let entries = client.fetch_all(None).await.unwrap();
 
         assert_eq!(entries[0].detection_signatures.len(), 2);
@@ -309,7 +363,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let result = client.fetch_one(uuid).await.unwrap();
 
         assert_eq!(result.uuid, uuid);
@@ -329,7 +383,7 @@ mod tests {
             .create_async()
             .await;
 
-        let client = ThreatFeedClient::new(TOKEN, Some(&server.url()), None);
+        let client = ThreatFeedClient::new(Some(TOKEN), Some(&server.url()), None).unwrap();
         let result = client.fetch_one(uuid).await;
 
         assert!(result.is_err());

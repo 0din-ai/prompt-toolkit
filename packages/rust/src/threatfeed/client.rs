@@ -7,6 +7,11 @@ use super::types::{ThreatFeedEntry, ThreatFeedResponse};
 /// Client for the 0din threat feed API.
 ///
 /// Fetches detection signatures from the paginated threat feed endpoint.
+///
+/// Token resolution order:
+/// 1. Explicit `api_token` parameter
+/// 2. `ODIN_THREATFEED_API_TOKEN` env var (dedicated)
+/// 3. `ODIN_API_TOKEN` env var (shared with Thor / portal)
 pub struct ThreatFeedClient {
     api_token: String,
     base_url: String,
@@ -19,21 +24,43 @@ impl ThreatFeedClient {
     ///
     /// # Arguments
     ///
-    /// * `api_token` - Raw API token (no Bearer prefix)
+    /// * `api_token` - Optional raw API token (no Bearer prefix). Falls back to
+    ///   `ODIN_THREATFEED_API_TOKEN`, then `ODIN_API_TOKEN` env vars.
     /// * `base_url` - Optional base URL override (default: `https://0din.ai`)
     /// * `per_page` - Optional page size override (default: 100)
-    pub fn new(api_token: &str, base_url: Option<&str>, per_page: Option<usize>) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// Returns `SigError::ThreatFeedApi` if no API token is found.
+    pub fn new(
+        api_token: Option<&str>,
+        base_url: Option<&str>,
+        per_page: Option<usize>,
+    ) -> Result<Self> {
+        let api_token = api_token
+            .map(String::from)
+            .filter(|s| !s.is_empty())
+            .or_else(|| std::env::var("ODIN_THREATFEED_API_TOKEN").ok().filter(|s| !s.is_empty()))
+            .or_else(|| std::env::var("ODIN_API_TOKEN").ok().filter(|s| !s.is_empty()))
+            .ok_or_else(|| {
+                SigError::ThreatFeedApi(
+                    "API token required: pass api_token or set \
+                     ODIN_THREATFEED_API_TOKEN / ODIN_API_TOKEN"
+                        .to_string(),
+                )
+            })?;
+
         let base_url = base_url
             .map(String::from)
             .or_else(|| std::env::var("ODIN_THREATFEED_BASE_URL").ok())
             .unwrap_or_else(|| String::from("https://0din.ai"));
 
-        Self {
-            api_token: api_token.to_string(),
+        Ok(Self {
+            api_token,
             base_url,
             per_page: per_page.unwrap_or(100),
             client: reqwest::Client::new(),
-        }
+        })
     }
 
     /// Get the base URL of the API.
