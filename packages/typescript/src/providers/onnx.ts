@@ -148,8 +148,8 @@ export class OnnxProvider implements EmbeddingProvider {
     const tokens = this.tokenizer.encode(prefixedText, OnnxProvider.MAX_SEQUENCE_LENGTH);
 
     // Prepare ONNX inputs
-    const inputIds = new BigInt64Array(tokens.inputIds);
-    const attentionMask = new BigInt64Array(tokens.attentionMask);
+    const inputIds = BigInt64Array.from(tokens.inputIds, (v: number) => BigInt(v));
+    const attentionMask = BigInt64Array.from(tokens.attentionMask, (v: number) => BigInt(v));
     const tokenTypeIds = new BigInt64Array(tokens.inputIds.length).fill(0n);
 
     // Create tensors
