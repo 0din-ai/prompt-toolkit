@@ -37,14 +37,18 @@
   },
   "homepage": "https://github.com/0din-ai/prompt-toolkit/tree/main/typescript",
   "peerDependencies": {
-    "openai": "^4.0.0",
-    "onnxruntime-node": "^1.16.0"
+    "@huggingface/transformers": "^4.2.0",
+    "onnxruntime-node": "^1.16.0",
+    "openai": "^4.0.0"
   },
   "peerDependenciesMeta": {
     "openai": {
       "optional": true
     },
     "onnxruntime-node": {
+      "optional": true
+    },
+    "@huggingface/transformers": {
       "optional": true
     }
   },

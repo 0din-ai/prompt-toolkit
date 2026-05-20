@@ -2,6 +2,8 @@
  * ONNX embedding provider implementation using onnxruntime-node.
  */
 
+import * as path from 'path';
+
 import { normalizeVector } from '../lsh';
 import { EmbeddingResult, computeEmbeddingSha256 } from '../types';
 import { EmbeddingProvider } from '../provider';
@@ -10,7 +12,7 @@ import { ModelCache } from './model-cache';
 /**
  * Embedding provider using local ONNX model inference.
  *
- * This provider uses the 0dinai/0din-jailbreak-embeddings-small model by default,
+ * This provider uses the 0dinai/0din-jailbreak-embeddings-large model by default,
  * which produces 1024-dimensional embeddings suitable for multilingual text similarity.
  *
  * The model is automatically loaded from the local cache directory.
@@ -30,7 +32,7 @@ export class OnnxProvider implements EmbeddingProvider {
   private static readonly MAX_SEQUENCE_LENGTH = 512;
 
   private session: any; // InferenceSession type
-  private tokenizer: any; // Tokenizer type
+  private tokenizer: any; // AutoTokenizer instance
   private providerName: string;
   private modelName: string;
   private dims: number;
@@ -58,16 +60,16 @@ export class OnnxProvider implements EmbeddingProvider {
   /**
    * Create a new ONNX provider instance.
    *
-   * Note: Requires 'onnxruntime-node' package to be installed:
+   * Requires both 'onnxruntime-node' and '@huggingface/transformers' packages:
    * ```bash
-   * npm install onnxruntime-node
+   * npm install onnxruntime-node @huggingface/transformers
    * ```
    *
    * @param cache - ModelCache instance for managing model files
-   * @param model - Model name or path (default: intfloat/multilingual-e5-small)
+   * @param model - Model name (default: intfloat/multilingual-e5-large)
    * @param name - Provider name (default: "onnx")
    * @returns Initialized OnnxProvider
-   * @throws Error if model files are not found or if onnxruntime-node is not installed
+   * @throws Error if model files are not found or required packages are not installed
    */
   static async create(
     cache: ModelCache,
@@ -101,18 +103,40 @@ export class OnnxProvider implements EmbeddingProvider {
     const modelPath = cache.getModelPath('v1');
     const session = await ort.InferenceSession.create(modelPath);
 
-    // Load tokenizer - use the built-in tokenizer loading
-    const tokenizerPath = cache.getTokenizerPath('v1');
-    const fs = require('fs');
-    const tokenizerData = JSON.parse(fs.readFileSync(tokenizerPath, 'utf-8'));
+    // Load tokenizer using @huggingface/transformers AutoTokenizer.
+    // This provides proper SentencePiece/Unigram tokenization via tokenizer.json,
+    // matching the Python (transformers.AutoTokenizer) and Rust (tokenizers crate)
+    // implementations exactly.
+    let AutoTokenizer: any;
+    let hfEnv: any;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const hf = require('@huggingface/transformers');
+      AutoTokenizer = hf.AutoTokenizer;
+      hfEnv = hf.env;
+    } catch (error) {
+      throw new Error(
+        "ONNX provider requires the '@huggingface/transformers' package. " +
+          'Install with: npm install @huggingface/transformers'
+      );
+    }
 
-    // Create a simple tokenizer wrapper
-    const tokenizer = new Tokenizer(tokenizerData);
+    // Configure @huggingface/transformers to load from the local model directory.
+    // localModelPath is the base directory; we pass the version folder name as the
+    // model identifier to from_pretrained(), so it looks for:
+    //   {localModelPath}/{version}/tokenizer.json
+    const modelDir = cache.modelDirectory('v1');
+    const parentDir = path.dirname(modelDir);
+    const versionName = path.basename(modelDir);
 
-    // Use default dimensions (model output shape not needed here)
-    const dimensions = OnnxProvider.DEFAULT_DIMENSIONS;
+    hfEnv.localModelPath = parentDir + path.sep;
+    hfEnv.allowRemoteModels = false;
 
-    // Load input prefix from config
+    const tokenizer = await AutoTokenizer.from_pretrained(versionName, {
+      local_files_only: true,
+    });
+
+    // Load input prefix from config (empty string for the 0din fine-tuned model)
     const config = cache.loadConfig('v1');
     const inputPrefix = config.inference?.input_prefix || '';
 
@@ -120,7 +144,7 @@ export class OnnxProvider implements EmbeddingProvider {
       session,
       tokenizer,
       modelName,
-      dimensions,
+      OnnxProvider.DEFAULT_DIMENSIONS,
       providerName,
       inputPrefix
     );
@@ -144,43 +168,51 @@ export class OnnxProvider implements EmbeddingProvider {
     // Prepend input prefix if configured
     const prefixedText = this.inputPrefix ? `${this.inputPrefix}${text}` : text;
 
-    // Tokenize input
-    const tokens = this.tokenizer.encode(prefixedText, OnnxProvider.MAX_SEQUENCE_LENGTH);
+    // Tokenize using @huggingface/transformers AutoTokenizer.
+    // This matches Python's: tokenizer(text, padding='max_length', truncation=True,
+    //                                   max_length=512, return_tensors='np')
+    const encoded = this.tokenizer(prefixedText, {
+      padding: 'max_length',
+      truncation: true,
+      max_length: OnnxProvider.MAX_SEQUENCE_LENGTH,
+    });
 
-    // Prepare ONNX inputs
-    const inputIds = BigInt64Array.from(tokens.inputIds, (v: number) => BigInt(v));
-    const attentionMask = BigInt64Array.from(tokens.attentionMask, (v: number) => BigInt(v));
-    const tokenTypeIds = new BigInt64Array(tokens.inputIds.length).fill(0n);
+    // encoded.input_ids and encoded.attention_mask are Tensor objects with .data (BigInt64Array)
+    const inputIdsData: BigInt64Array = encoded.input_ids.data;
+    const attentionMaskData: BigInt64Array = encoded.attention_mask.data;
 
-    // Create tensors
-    const ort = require('onnxruntime-node');
-    const inputIdsTensor = new ort.Tensor('int64', inputIds, [1, tokens.inputIds.length]);
-    const attentionMaskTensor = new ort.Tensor('int64', attentionMask, [1, tokens.attentionMask.length]);
-    const tokenTypeIdsTensor = new ort.Tensor('int64', tokenTypeIds, [1, tokens.inputIds.length]);
+    // token_type_ids: all zeros (XLM-RoBERTa segment IDs are always 0)
+    const tokenTypeIds = new BigInt64Array(inputIdsData.length).fill(0n);
+
+    const seqLen = inputIdsData.length;
+
+    // Create ONNX tensors
+    const ort = require('onnxruntime-node'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const inputIdsTensor = new ort.Tensor('int64', inputIdsData, [1, seqLen]);
+    const attentionMaskTensor = new ort.Tensor('int64', attentionMaskData, [1, seqLen]);
+    const tokenTypeIdsTensor = new ort.Tensor('int64', tokenTypeIds, [1, seqLen]);
 
     // Run inference
-    const feeds = {
+    const results = await this.session.run({
       input_ids: inputIdsTensor,
       attention_mask: attentionMaskTensor,
       token_type_ids: tokenTypeIdsTensor,
-    };
+    });
 
-    const results = await this.session.run(feeds);
-    const lastHiddenState = results[Object.keys(results)[0]].data;
+    const lastHiddenState = results[Object.keys(results)[0]].data as Float32Array;
 
-    // Mean pooling with attention mask
-    const seqLen = tokens.inputIds.length;
-    const hiddenSize = this.dims;
-    const embedding = this.meanPool(lastHiddenState, tokens.attentionMask, seqLen, hiddenSize);
+    // Mean pooling with attention mask (matches Python/Rust implementation)
+    const attentionMaskNumbers = Array.from(attentionMaskData, (v) => Number(v));
+    const embedding = this.meanPool(lastHiddenState, attentionMaskNumbers, seqLen, this.dims);
 
     const elapsedMs = Date.now() - startTime;
 
-    // Normalize and compute SHA256
+    // L2-normalize and compute SHA256
     const normalized = normalizeVector(embedding);
     const sha256 = computeEmbeddingSha256(normalized);
 
-    // Count tokens
-    const tokenCount = tokens.attentionMask.reduce((sum: number, val: number) => sum + val, 0);
+    // Count non-padding tokens (attention_mask sum)
+    const tokenCount = attentionMaskNumbers.reduce((sum, val) => sum + val, 0);
 
     return {
       embedding,
@@ -194,10 +226,13 @@ export class OnnxProvider implements EmbeddingProvider {
   }
 
   /**
-   * Apply mean pooling to token embeddings.
+   * Apply mean pooling to token embeddings weighted by attention mask.
+   *
+   * Matches the Python implementation:
+   *   embeddings = (last_hidden * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(1)
    */
   private meanPool(
-    hiddenStates: Float32Array | number[],
+    hiddenStates: Float32Array,
     attentionMask: number[],
     seqLen: number,
     hiddenSize: number
@@ -205,7 +240,6 @@ export class OnnxProvider implements EmbeddingProvider {
     const pooled = new Array(hiddenSize).fill(0);
     let maskSum = 0;
 
-    // Sum embeddings weighted by attention mask
     for (let i = 0; i < seqLen; i++) {
       const maskVal = attentionMask[i];
       if (maskVal === 1) {
@@ -216,7 +250,6 @@ export class OnnxProvider implements EmbeddingProvider {
       }
     }
 
-    // Average
     if (maskSum > 0) {
       for (let j = 0; j < hiddenSize; j++) {
         pooled[j] /= maskSum;
@@ -228,80 +261,5 @@ export class OnnxProvider implements EmbeddingProvider {
 
   async close(): Promise<void> {
     // ONNX session doesn't require explicit cleanup in Node.js
-  }
-}
-
-/**
- * Simple tokenizer implementation for XLM-RoBERTa.
- */
-class Tokenizer {
-  private vocab: Map<string, number>;
-  private merges: Map<string, number>;
-  private addedTokens: Map<string, number>;
-  private bosToken: number;
-  private eosToken: number;
-  private padToken: number;
-  private unkToken: number;
-
-  constructor(config: any) {
-    // Load vocabulary
-    this.vocab = new Map();
-    if (config.model && config.model.vocab) {
-      for (const [token, id] of Object.entries(config.model.vocab)) {
-        this.vocab.set(token, id as number);
-      }
-    }
-
-    // Load merges
-    this.merges = new Map();
-    if (config.model && config.model.merges) {
-      config.model.merges.forEach((merge: string, idx: number) => {
-        this.merges.set(merge, idx);
-      });
-    }
-
-    // Load added tokens
-    this.addedTokens = new Map();
-    if (config.added_tokens) {
-      config.added_tokens.forEach((token: any) => {
-        this.addedTokens.set(token.content, token.id);
-      });
-    }
-
-    // Special tokens
-    this.bosToken = this.vocab.get('<s>') || 0;
-    this.eosToken = this.vocab.get('</s>') || 2;
-    this.padToken = this.vocab.get('<pad>') || 1;
-    this.unkToken = this.vocab.get('<unk>') || 3;
-  }
-
-  /**
-   * Encode text to token IDs with attention mask.
-   */
-  encode(text: string, maxLength: number): { inputIds: number[]; attentionMask: number[] } {
-    // Simple whitespace tokenization (fallback)
-    // In production, this should use proper BPE tokenization
-    const tokens = text.toLowerCase().split(/\s+/).filter(t => t.length > 0);
-    
-    // Map to IDs
-    const ids = [this.bosToken];
-    for (const token of tokens) {
-      const id = this.vocab.get(token) || this.unkToken;
-      ids.push(id);
-      if (ids.length >= maxLength - 1) break;
-    }
-    ids.push(this.eosToken);
-
-    // Pad to max length
-    const attentionMask = new Array(ids.length).fill(1);
-    while (ids.length < maxLength) {
-      ids.push(this.padToken);
-      attentionMask.push(0);
-    }
-
-    return {
-      inputIds: ids.slice(0, maxLength),
-      attentionMask: attentionMask.slice(0, maxLength),
-    };
   }
 }
