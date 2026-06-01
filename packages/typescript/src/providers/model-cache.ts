@@ -94,6 +94,26 @@ export class ModelCache {
   }
 
   /**
+   * Check if a SusFactor ONNX model version is cached locally.
+   *
+   * The SusFactor export bakes pooling + head into the graph, so it needs only
+   * an `onnx/model.onnx` and a `tokenizer.json` (no root `config.json`, unlike
+   * the embedding models).
+   *
+   * @param version - Model version (default: "susfactor-v1")
+   */
+  hasSusfactorModel(version: string = 'susfactor-v1'): boolean {
+    const modelDir = this.modelDirectory(version);
+    if (!fs.existsSync(modelDir)) {
+      return false;
+    }
+    return (
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'tokenizer.json'))
+    );
+  }
+
+  /**
    * Get the path to the ONNX model file.
    *
    * Prefers the optimized model (model_O4.onnx) if available,

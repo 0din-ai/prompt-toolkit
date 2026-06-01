@@ -137,3 +137,16 @@ export class ThreatFeedCacheError extends SigError {
     this.name = 'ThreatFeedCacheError';
   }
 }
+
+/**
+ * SusFactor classification error.
+ *
+ * Thrown when the SusFactor jailbreak classifier fails to load its model
+ * files or run inference.
+ */
+export class SusFactorError extends SigError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SusFactorError';
+  }
+}
