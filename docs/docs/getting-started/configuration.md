@@ -182,6 +182,8 @@ let provider = OnnxProvider::new(
     &cache,
     Some("0dinai/0din-jailbreak-embeddings-small".to_string()),  // Model
     Some("onnx".to_string()),                             // Name
+    0,  // intra_threads (0 = auto)
+    2,  // pool_size (concurrent ORT sessions)
 ).await?;
 ```
 

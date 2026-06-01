@@ -21,7 +21,7 @@ odin-prompt-toolkit = { version = "0.1", features = ["openai", "onnx", "cm-lsh"]
 | Feature | Description | Dependencies | Use Case |
 |---------|-------------|--------------|----------|
 | `openai` | OpenAI embedding provider | `reqwest` | Cloud-based embeddings (1536-dim) |
-| `onnx` | ONNX embedding provider | `tract-onnx`, `tokenizers`, `dirs` | Local embeddings (1024-dim) |
+| `onnx` | ONNX embedding provider | `ort`, `ndarray`, `tokenizers`, `dirs` | Local embeddings (1024-dim) |
 | `cm-lsh` | Confidence Matrix LSH | None | Higher accuracy LSH (experimental) |
 | **default** | `openai + onnx` | — | Includes both providers |
 

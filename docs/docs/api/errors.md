@@ -263,7 +263,7 @@ Raised when ONNX model loading or inference fails.
 ```rust
 // Model file not found
 let cache = ModelCache::new()?;
-let provider = OnnxProvider::new(&cache, Some("nonexistent/model".to_string()), None).await;
+let provider = OnnxProvider::new(&cache, Some("nonexistent/model".to_string()), None, 0, 0).await;
 // Returns: Err(SigError::Model("Model file not found: nonexistent/model"))
 ```
 
