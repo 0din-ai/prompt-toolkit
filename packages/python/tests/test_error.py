@@ -6,6 +6,7 @@ from odin_prompt_toolkit import (
     ModelError,
     ProviderError,
     SigError,
+    SusFactorError,
     parse_signature_string,
 )
 
@@ -67,9 +68,26 @@ def test_invalid_input_error():
         assert False, "Should have caught InvalidInputError"
 
 
+def test_susfactor_error():
+    """Test SusFactorError can be raised and caught, and is a SigError."""
+    assert issubclass(SusFactorError, SigError)
+    try:
+        raise SusFactorError("classification failed")
+    except SusFactorError as e:
+        assert str(e) == "classification failed"
+    except Exception:
+        assert False, "Should have caught SusFactorError"
+
+
 def test_catch_sigerror_catches_all():
     """Test catching SigError catches all subtypes."""
-    for error_class in [ConfigError, ProviderError, ModelError, InvalidInputError]:
+    for error_class in [
+        ConfigError,
+        ProviderError,
+        ModelError,
+        InvalidInputError,
+        SusFactorError,
+    ]:
         try:
             raise error_class("test")
         except SigError:
