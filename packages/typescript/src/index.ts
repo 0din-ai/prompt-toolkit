@@ -77,6 +77,7 @@ export {
   InvalidInputError,
   ThreatFeedApiError,
   ThreatFeedCacheError,
+  SusFactorError,
 } from './error';
 
 // Core LSH functions
