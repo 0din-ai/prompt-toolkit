@@ -129,3 +129,10 @@ pub use hashers::{
 // Threat feed integration
 #[cfg(feature = "threatfeed")]
 pub mod threatfeed;
+
+// SusFactor jailbreak classifier
+#[cfg(feature = "susfactor")]
+pub mod susfactor;
+
+#[cfg(feature = "susfactor")]
+pub use susfactor::{SusFactorClassifier, SusFactorResult};

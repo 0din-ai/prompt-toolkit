@@ -18,7 +18,7 @@ pub mod openai;
 #[cfg(feature = "onnx")]
 pub mod onnx;
 
-#[cfg(feature = "onnx")]
+#[cfg(any(feature = "onnx", feature = "susfactor"))]
 pub mod model_cache;
 
 #[cfg(feature = "openai")]
@@ -27,5 +27,5 @@ pub use openai::OpenAIProvider;
 #[cfg(feature = "onnx")]
 pub use onnx::OnnxProvider;
 
-#[cfg(feature = "onnx")]
+#[cfg(any(feature = "onnx", feature = "susfactor"))]
 pub use model_cache::ModelCache;
