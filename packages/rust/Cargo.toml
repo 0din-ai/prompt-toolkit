@@ -12,6 +12,7 @@ categories = ["algorithms", "cryptography"]
 default = ["openai", "onnx"]
 openai = ["dep:reqwest", "reqwest?/json"]
 onnx = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs", "dep:reqwest", "dep:futures-util", "reqwest?/stream"]
+susfactor = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs", "dep:reqwest", "dep:futures-util", "reqwest?/stream"]
 cm-lsh = []  # CM-LSH support (no extra deps, uses existing lsh.rs internals)
 threatfeed = ["dep:reqwest", "reqwest?/json", "dep:dirs", "dep:chrono", "dep:urlencoding"]
 
