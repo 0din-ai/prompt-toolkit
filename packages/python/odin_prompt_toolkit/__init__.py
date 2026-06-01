@@ -48,6 +48,7 @@ from odin_prompt_toolkit.error import (
     ModelError,
     ProviderError,
     SigError,
+    SusFactorError,
     ThreatFeedApiError,
     ThreatFeedCacheError,
     ThreatFeedError,
@@ -107,6 +108,7 @@ __all__ = [
     "ThreatFeedError",
     "ThreatFeedApiError",
     "ThreatFeedCacheError",
+    "SusFactorError",
     # Types
     "SignatureVersion",
     "HashAlgorithm",
