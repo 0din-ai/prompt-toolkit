@@ -125,11 +125,21 @@ describe("SusFactorError", () => {
 // loading an ONNX session under jest.
 
 const MODEL_CACHE_DIR = process.env.SUSFACTOR_MODEL_DIR;
+// Use hasSusfactorModel as the gate so it mirrors the exact check the
+// classifier does — accepts model_O4.onnx or model.onnx, requires
+// the matching .onnx_data and tokenizer.json.
+const { ModelCache: _GateModelCache } = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require("../src/providers/model-cache");
+  } catch {
+    return { ModelCache: null };
+  }
+})();
 const MODEL_AVAILABLE = Boolean(
   MODEL_CACHE_DIR &&
-  fs.existsSync(
-    path.join(MODEL_CACHE_DIR, "susfactor-v1", "onnx", "model.onnx"),
-  ),
+    _GateModelCache &&
+    new _GateModelCache(MODEL_CACHE_DIR).hasSusfactorModel("susfactor-v1"),
 );
 const describeIfModel = MODEL_AVAILABLE ? describe : describe.skip;
 
