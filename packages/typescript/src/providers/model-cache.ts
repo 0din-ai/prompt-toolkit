@@ -107,10 +107,14 @@ export class ModelCache {
     if (!fs.existsSync(modelDir)) {
       return false;
     }
-    return (
-      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
-      fs.existsSync(path.join(modelDir, 'tokenizer.json'))
-    );
+    // Accept either the optimized or unoptimized ONNX file (mirrors getModelPath).
+    const hasOnnx =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx')) ||
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx'));
+    // The export script writes external weights to model.onnx_data alongside model.onnx.
+    const hasData = fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
+    const hasTokenizer = fs.existsSync(path.join(modelDir, 'tokenizer.json'));
+    return hasOnnx && hasData && hasTokenizer;
   }
 
   /**

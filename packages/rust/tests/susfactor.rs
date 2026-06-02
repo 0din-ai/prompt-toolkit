@@ -4,10 +4,9 @@
 //! `onnx/model.onnx` (+ `model.onnx_data`) and `tokenizer.json` (an ONNX export
 //! of `0dinai/susfactor-e5-large`).
 //!
-//! NOTE: tract's optimizer is slow on this 560M-parameter transformer — loading
-//! can take several minutes (vs. ~1s under onnxruntime in the Python/TS SDKs).
-//! Run with `--release` and a generous timeout. This is why the test is gated
-//! behind an env var and never runs in the default `cargo test`.
+//! NOTE: ONNX Runtime (`ort`) loading and optimisation of a 560M-parameter
+//! transformer can be slow. Run with `--release`. This is why the test is
+//! gated behind an env var and never runs in the default `cargo test`.
 
 #![cfg(feature = "susfactor")]
 
@@ -16,8 +15,12 @@ use odin_prompt_toolkit::susfactor::SusFactorClassifier;
 
 fn model_dir() -> Option<String> {
     let dir = std::env::var("SUSFACTOR_MODEL_DIR").ok()?;
-    let onnx = std::path::Path::new(&dir).join("onnx").join("model.onnx");
-    if onnx.exists() {
+    let base = std::path::Path::new(&dir);
+    // Require both the ONNX model and tokenizer so a partially-populated
+    // directory fails fast here rather than inside the classifier.
+    if base.join("onnx").join("model.onnx").exists()
+        && base.join("tokenizer.json").exists()
+    {
         Some(dir)
     } else {
         None

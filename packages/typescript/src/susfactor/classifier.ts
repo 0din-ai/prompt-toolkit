@@ -98,7 +98,7 @@ export class SusFactorClassifier {
         `SusFactor model not found in cache at ${cache.modelDirectory(
           MODEL_VERSION,
         )}. Download it from HuggingFace: ${HF_URL}\n` +
-          `Expected layout: <dir>/onnx/model.onnx (+ model.onnx_data) and <dir>/tokenizer.json`,
+          `Expected layout: <dir>/onnx/model.onnx + <dir>/onnx/model.onnx_data and <dir>/tokenizer.json`,
       );
     }
 
