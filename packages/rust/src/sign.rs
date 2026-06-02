@@ -235,16 +235,21 @@ pub async fn compare_text(
         let elapsed_ms = start.elapsed().as_millis() as f64;
 
         // Truncate at a char boundary to avoid panicking on non-ASCII UTF-8.
+        // Single bounded scan: collect at most 51 char boundaries, decide
+        // inline — no O(n) chars().count() over the full string.
         let prompt_preview = |text: &str| -> String {
-            if text.chars().count() <= 50 {
-                text.to_string()
-            } else {
-                let cut = text
-                    .char_indices()
-                    .nth(47)
-                    .map(|(i, _)| i)
-                    .unwrap_or(text.len());
-                format!("{}...", &text[..cut])
+            let mut indices = text.char_indices().take(51);
+            match indices.nth(50) {
+                None => text.to_string(), // ≤ 50 chars, no truncation needed
+                Some(_) => {
+                    // Re-scan for the 47th boundary (cheap: ≤ 47 steps)
+                    let cut = text
+                        .char_indices()
+                        .nth(47)
+                        .map(|(i, _)| i)
+                        .unwrap_or(text.len());
+                    format!("{}...", &text[..cut])
+                }
             }
         };
 
