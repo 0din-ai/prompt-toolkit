@@ -11,7 +11,7 @@ categories = ["algorithms", "cryptography"]
 [features]
 default = ["openai", "onnx"]
 openai = ["dep:reqwest"]
-onnx = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs"]
+onnx = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs", "dep:reqwest", "dep:futures-util"]
 cm-lsh = []  # CM-LSH support (no extra deps, uses existing lsh.rs internals)
 threatfeed = ["dep:reqwest", "dep:dirs", "dep:chrono", "dep:urlencoding"]
 
@@ -25,8 +25,9 @@ async-trait = "0.1"
 tokio = { version = "1.40", features = ["full"] }
 tracing = "0.1"
 
-# OpenAI feature
-reqwest = { version = "0.12", features = ["json"], optional = true }
+# OpenAI / ONNX download feature
+reqwest = { version = "0.12", features = ["json", "stream"], optional = true }
+futures-util = { version = "0.3", optional = true }
 
 # ONNX feature (ONNX Runtime via `ort`, matching Heimdall's production provider)
 ort = { version = "=2.0.0-rc.12", default-features = false, features = ["std", "ndarray", "download-binaries", "tls-rustls"], optional = true }
