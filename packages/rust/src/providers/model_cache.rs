@@ -180,7 +180,10 @@ impl ModelCache {
             );
         }
 
-        // Unique temp suffix to avoid collisions between concurrent downloaders (gap 3)
+        // Unique temp suffix — appended to the full dest path (including its existing
+        // extension) so `model.onnx` becomes `model.onnx.tmp.<pid>.<nanos>.<tid>`.
+        // Using OsString::push avoids with_extension(), which would silently replace
+        // the existing extension (e.g. `.onnx` → `.tmp.…`).
         let unique_id = format!(
             "{}.{}.{:?}",
             std::process::id(),
@@ -190,45 +193,67 @@ impl ModelCache {
                 .as_nanos(),
             std::thread::current().id()
         );
-        let temp_path = dest_path.with_extension(format!("tmp.{}", unique_id));
+        let temp_path = {
+            let mut s = dest_path.as_os_str().to_owned();
+            s.push(format!(".tmp.{}", unique_id));
+            PathBuf::from(s)
+        };
 
+        // Open temp file before starting the download so a mid-download failure
+        // (disk full, network drop) can clean up the partial file via the guard below.
         let mut file = fs::File::create(&temp_path)
             .await
             .map_err(|e| SigError::Provider(format!("Failed to create temporary file: {}", e)))?;
 
-        // Stream chunks to disk (gap 1) — never buffers the full body in memory
+        // Stream chunks to disk (gap 1) — never buffers the full body in memory.
+        // On failure we clean up the partial temp file before returning.
         let mut stream = response.bytes_stream();
         let mut downloaded: u64 = 0;
-        let progress_interval: u64 = 50 * 1024 * 1024; // log every 50 MB
+        // Log progress each time we cross a 50 MB boundary.
+        let progress_interval: u64 = 50 * 1024 * 1024;
+        let mut next_log_threshold: u64 = progress_interval;
 
-        while let Some(chunk) = stream.next().await {
-            let chunk =
-                chunk.map_err(|e| SigError::Provider(format!("Download interrupted: {}", e)))?;
+        let stream_result: Result<()> = async {
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk
+                    .map_err(|e| SigError::Provider(format!("Download interrupted: {}", e)))?;
 
-            file.write_all(&chunk)
-                .await
-                .map_err(|e| SigError::Provider(format!("Failed to write model file: {}", e)))?;
+                file.write_all(&chunk).await.map_err(|e| {
+                    SigError::Provider(format!("Failed to write model file: {}", e))
+                })?;
 
-            downloaded += chunk.len() as u64;
+                downloaded += chunk.len() as u64;
 
-            if total_size > 0
-                && downloaded > 0
-                && downloaded % progress_interval < chunk.len() as u64
-            {
-                info!(
-                    "Download progress: {:.0}%",
-                    (downloaded as f64 / total_size as f64) * 100.0
-                );
+                if total_size > 0 && downloaded >= next_log_threshold {
+                    info!(
+                        "Download progress: {:.0}%",
+                        (downloaded as f64 / total_size as f64) * 100.0
+                    );
+                    next_log_threshold += progress_interval;
+                }
             }
-        }
 
-        file.sync_all()
-            .await
-            .map_err(|e| SigError::Provider(format!("Failed to sync model file: {}", e)))?;
+            file.sync_all()
+                .await
+                .map_err(|e| SigError::Provider(format!("Failed to sync model file: {}", e)))?;
+
+            Ok(())
+        }
+        .await;
 
         drop(file);
 
-        // Atomic rename; handle AlreadyExists gracefully (gap 3)
+        if let Err(e) = stream_result {
+            // Clean up the partial temp file before propagating the error.
+            let _ = fs::remove_file(&temp_path).await;
+            return Err(e);
+        }
+
+        // Atomic rename (gap 3).
+        // On POSIX (Linux, macOS) rename(2) atomically replaces the destination, so
+        // a concurrent winner's file is safely overwritten with identical bytes.
+        // On Windows, rename fails with AlreadyExists if the destination exists; we
+        // treat that as a successful race loss and clean up.
         if let Err(e) = fs::rename(&temp_path, dest_path).await {
             if e.kind() == std::io::ErrorKind::AlreadyExists {
                 info!(
@@ -384,23 +409,22 @@ mod tests {
     }
 
     // --- Gap 2: connect timeout ---
-    // Verifies that a server that accepts TCP but never sends a response is
-    // abandoned within a reasonable time (we can't easily test connect timeout
-    // itself in unit tests, but we verify the Client is constructed with one
-    // by asserting the builder call doesn't panic and that the timeout constant
-    // is 30 seconds).
+    // Unit tests cannot easily simulate a TCP connection that accepts but never
+    // sends bytes (that would require a real listener and a multi-second wait).
+    // The behavioral integration test for this lives in tests/onnx_inference.rs.
+    // Here we verify the constant value matches the spec so a future change is
+    // caught at review time.
     #[test]
-    fn test_connect_timeout_is_thirty_seconds() {
-        // This is a compilation/API test: if connect_timeout is not set on the
-        // builder the production code will fail to compile after the refactor.
-        // We verify the constant we use matches the spec.
+    fn test_connect_timeout_constant_is_thirty_seconds() {
         assert_eq!(ModelCache::CONNECT_TIMEOUT_SECS, 30);
     }
 
     // --- Gap 3: race-safe rename ---
     // Simulates two concurrent downloaders writing the same destination file.
-    // Both should succeed: the winner atomically renames its temp file; the
-    // loser detects AlreadyExists and returns Ok(()) after cleaning up its temp.
+    // On POSIX (Linux, macOS) rename(2) atomically replaces the destination, so
+    // both calls succeed via the overwrite path. On Windows the second rename
+    // would return AlreadyExists and be handled gracefully. Either way both
+    // callers return Ok(()) and no temp files are left behind.
     #[tokio::test]
     async fn test_concurrent_download_both_succeed() {
         use mockito::Server;
