@@ -1,9 +1,8 @@
 """Tests for the high-level sus_factor() entry point."""
 
-# sus_factor imports from compare.py which imports classifier.py which raises
-# ImportError if torch is absent. Defer all imports that pull in the heavy
-# chain to inside the test functions so pytest can collect this file without
-# torch installed.
+# sus_factor and classifier are imported lazily inside each test function.
+# compare.py defers its SusFactorClassifier import to the auto-construct branch,
+# so this file is safe to collect without torch installed.
 from odin_prompt_toolkit.susfactor.types import SusFactorResult
 
 

@@ -139,8 +139,11 @@ def main() -> int:
 
     loaded = onnx.load(str(onnx_path))
     onnx.load_external_data_for_model(loaded, str(out_dir))
+    # Remove only the scattered external-data shards created by torch.onnx.export,
+    # not every file in out_dir (which may contain unrelated files if the caller
+    # points output_dir at an existing directory).
     for stray in out_dir.iterdir():
-        if stray.name != "model.onnx":
+        if stray.name not in ("model.onnx", "model.onnx_data"):
             stray.unlink()
     convert_model_to_external_data(
         loaded,
@@ -153,7 +156,10 @@ def main() -> int:
     # Verify ONNX runtime parity against torch.
     import onnxruntime as ort
 
-    sess = ort.InferenceSession(str(onnx_path))
+    # Pin to CPU so parity is stable regardless of available GPU providers.
+    sess = ort.InferenceSession(
+        str(onnx_path), providers=["CPUExecutionProvider"]
+    )
     onnx_logits = sess.run(
         None,
         {
