@@ -10,10 +10,10 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-odin-prompt-toolkit = "0.1"
+odin-prompt-toolkit = "0.2"
 
 # Or with specific features
-odin-prompt-toolkit = { version = "0.1", features = ["openai", "onnx", "cm-lsh"] }
+odin-prompt-toolkit = { version = "0.2", features = ["openai", "onnx", "cm-lsh"] }
 ```
 
 ### Feature Flags
@@ -21,7 +21,7 @@ odin-prompt-toolkit = { version = "0.1", features = ["openai", "onnx", "cm-lsh"]
 | Feature | Description | Dependencies | Use Case |
 |---------|-------------|--------------|----------|
 | `openai` | OpenAI embedding provider | `reqwest` | Cloud-based embeddings (1536-dim) |
-| `onnx` | ONNX embedding provider | `tract-onnx`, `tokenizers`, `dirs` | Local embeddings (1024-dim) |
+| `onnx` | ONNX embedding provider | `ort`, `ndarray`, `tokenizers`, `dirs` | Local embeddings (1024-dim) |
 | `cm-lsh` | Confidence Matrix LSH | None | Higher accuracy LSH (experimental) |
 | **default** | `openai + onnx` | — | Includes both providers |
 
@@ -29,16 +29,16 @@ odin-prompt-toolkit = { version = "0.1", features = ["openai", "onnx", "cm-lsh"]
 
 ```toml
 # Minimal (LSH only, no embedding providers)
-odin-prompt-toolkit = { version = "0.1", default-features = false }
+odin-prompt-toolkit = { version = "0.2", default-features = false }
 
 # OpenAI only
-odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["openai"] }
+odin-prompt-toolkit = { version = "0.2", default-features = false, features = ["openai"] }
 
 # Local ONNX only
-odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["onnx"] }
+odin-prompt-toolkit = { version = "0.2", default-features = false, features = ["onnx"] }
 
 # Everything (including experimental CM-LSH)
-odin-prompt-toolkit = { version = "0.1", features = ["cm-lsh"] }
+odin-prompt-toolkit = { version = "0.2", features = ["cm-lsh"] }
 ```
 
 ---
@@ -428,7 +428,7 @@ For deployments without internet access:
 
 1. **Use ONNX provider** (no API calls):
    ```toml
-   odin-prompt-toolkit = { version = "0.1", default-features = false, features = ["onnx"] }
+   odin-prompt-toolkit = { version = "0.2", default-features = false, features = ["onnx"] }
    ```
 
 2. **Pre-download ONNX model**:

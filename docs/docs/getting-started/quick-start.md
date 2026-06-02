@@ -29,7 +29,7 @@ use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize local ONNX provider (no API key needed)
     let cache = ModelCache::new()?;
-    let provider = OnnxProvider::new(&cache, None, None).await?;
+    let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
     
     // Generate signature from text in one call (uses latest model: V1)
     let result = sign_text(

@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Initialize model cache and ONNX provider
         println!("1. Initializing ONNX provider...");
         let cache = ModelCache::new()?;
-        let provider = OnnxProvider::new(&cache, None, None).await?;
+        let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
         println!("   Provider: {} ({})\n", provider.name(), provider.model());
 
         // Example prompts

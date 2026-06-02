@@ -6,12 +6,12 @@
 /// ## Available Providers
 ///
 /// - `OpenAIProvider` - OpenAI/OpenRouter API embeddings (always available)
-/// - `OnnxProvider` - Local ONNX embeddings with tract (requires `onnx` feature)
+/// - `OnnxProvider` - Local ONNX embeddings with ONNX Runtime (`ort`) (requires `onnx` feature)
 ///
 /// ## Feature Flags
 ///
 /// - `openai` (default) - Enables OpenAI provider
-/// - `onnx` (default) - Enables ONNX provider with tract runtime
+/// - `onnx` (default) - Enables ONNX provider with ONNX Runtime (`ort`)
 #[cfg(feature = "openai")]
 pub mod openai;
 

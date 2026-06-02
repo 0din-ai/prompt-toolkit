@@ -233,7 +233,7 @@ impl OnnxProvider {
 use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
-let provider = OnnxProvider::new(&cache, None, None).await?;
+let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
 
 // Provider auto-downloads model to cache directory
 ```

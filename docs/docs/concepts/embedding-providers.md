@@ -139,7 +139,7 @@ use odin_prompt_toolkit::{sign_text, SignatureVersion};
 use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 let cache = ModelCache::new()?;
-let provider = OnnxProvider::new(&cache, None, None).await?;
+let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
 
 // Uses latest model (V1) by default
 let result = sign_text("Your text here", &provider, SignatureVersion::Latest, None).await?;
