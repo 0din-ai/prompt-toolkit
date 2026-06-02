@@ -130,6 +130,14 @@ impl SignatureVersion {
             SignatureVersion::Latest => unreachable!("Latest should be resolved"),
         }
     }
+
+    /// Default version for serde deserialization of older payloads.
+    ///
+    /// Used by `#[serde(default = "SignatureVersion::default_version")]`
+    /// on `ComparisonResult.version` to maintain backward compatibility.
+    pub fn default_version() -> Self {
+        SignatureVersion::V1
+    }
 }
 
 /// LSH configuration parameters
@@ -398,6 +406,10 @@ pub struct ComparisonResult {
     /// Resolved signature version used for both embeddings.
     ///
     /// Always a concrete version (`V0` or `V1`) — never `Latest`.
+    ///
+    /// Defaults to `V1` when deserializing older payloads that lack this field,
+    /// preserving backward compatibility with pre-existing serialized results.
+    #[serde(default = "SignatureVersion::default_version")]
     pub version: SignatureVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quality_stats: Option<QualityStats>,
