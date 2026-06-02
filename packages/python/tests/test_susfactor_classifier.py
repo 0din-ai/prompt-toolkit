@@ -10,8 +10,9 @@ import numpy as np
 import pytest
 
 from odin_prompt_toolkit.error import SusFactorError
-from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
 
+# SusFactorClassifier is only importable when torch is installed.
+# Import it lazily inside tests; collect TORCH_AVAILABLE for skipif markers.
 TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
 
@@ -94,6 +95,8 @@ class FakeHead:
 @pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires torch")
 class TestClassifyWithFakes:
     def _make(self, suspicious=True, threshold=0.5):
+        from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
+
         return SusFactorClassifier(
             encoder=FakeEncoder(),
             tokenizer=FakeTokenizer(),
@@ -136,6 +139,7 @@ class TestClassifyWithFakes:
 async def test_new_raises_when_model_missing(tmp_path):
     """new() raises SusFactorError with the HF URL when files are absent."""
     from odin_prompt_toolkit.providers.model_cache import ModelCache
+    from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
 
     cache = ModelCache(cache_dir=str(tmp_path))
     with pytest.raises(SusFactorError) as exc:
