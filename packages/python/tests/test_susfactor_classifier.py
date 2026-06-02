@@ -149,19 +149,15 @@ async def test_new_raises_when_model_missing(tmp_path):
 
 def test_softmax_suspicious_index_is_one():
     """The score must be P(class 1) = suspicious, per the reference model."""
-    from odin_prompt_toolkit.susfactor.classifier import _suspicious_prob
+    from odin_prompt_toolkit.susfactor.types import suspicious_prob
 
-    # logits favour class 1 strongly -> prob near 1
-    prob = _suspicious_prob(np.array([-5.0, 5.0]))
-    assert prob > 0.99
-    # logits favour class 0 strongly -> prob near 0
-    prob = _suspicious_prob(np.array([5.0, -5.0]))
-    assert prob < 0.01
+    assert suspicious_prob([-5.0, 5.0]) > 0.99
+    assert suspicious_prob([5.0, -5.0]) < 0.01
 
 
 def test_label_for_score():
-    from odin_prompt_toolkit.susfactor.classifier import _label_for_score
+    from odin_prompt_toolkit.susfactor.types import label_for_score
 
-    assert _label_for_score(0.9, 0.5) == "suspicious"
-    assert _label_for_score(0.5, 0.5) == "suspicious"  # >= threshold
-    assert _label_for_score(0.49, 0.5) == "safe"
+    assert label_for_score(0.9, 0.5) == "suspicious"
+    assert label_for_score(0.5, 0.5) == "suspicious"  # >= threshold
+    assert label_for_score(0.49, 0.5) == "safe"

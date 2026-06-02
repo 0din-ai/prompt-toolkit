@@ -31,3 +31,22 @@ class SusFactorResult:
     def is_suspicious(self) -> bool:
         """Whether the prompt was classified as suspicious."""
         return self.label == LABEL_SUSPICIOUS
+
+
+def suspicious_prob(logits: list[float]) -> float:
+    """Softmax over a 2-logit list, returning P(class 1) = suspicious.
+
+    This is a pure function with no torch dependency — importable without the
+    ``susfactor`` extra.
+    """
+    import math
+
+    m = max(logits[0], logits[1])
+    e0 = math.exp(logits[0] - m)
+    e1 = math.exp(logits[1] - m)
+    return e1 / (e0 + e1)
+
+
+def label_for_score(score: float, threshold: float) -> str:
+    """Map a suspicious probability to a label using ``threshold``."""
+    return LABEL_SUSPICIOUS if score >= threshold else LABEL_SAFE
