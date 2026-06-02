@@ -31,7 +31,7 @@ export const DEFAULT_ONNX_REPO = "0dinai/susfactor-e5-large-onnx";
 export const DEFAULT_THRESHOLD = 0.5;
 export const MAX_SEQUENCE_LENGTH = 512;
 export const MODEL_VERSION = "susfactor-v1";
-const HF_URL = "https://huggingface.co/0dinai/susfactor-e5-large-onnx";
+const HF_URL = `https://huggingface.co/${DEFAULT_ONNX_REPO}`;
 
 /**
  * Softmax over a 2-logit vector, returning P(class 1) = suspicious.

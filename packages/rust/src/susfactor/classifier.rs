@@ -94,10 +94,15 @@ impl SusFactorClassifier {
         // The SusFactor ONNX export uses external weights stored alongside the
         // graph file. Download model.onnx_data before loading the session so
         // ORT can resolve the external data references.
-        let _data_path = cache
-            .get_model(&source, "onnx/model.onnx_data")
-            .await
-            .ok(); // Non-fatal: some exports may embed weights directly.
+        // Download the external weights file. Ignore 404-style errors (some
+        // exports embed weights directly in the .onnx), but propagate real
+        // failures (auth errors, network timeouts, I/O errors) so users see
+        // the actual cause rather than a cryptic ORT load error later.
+        match cache.get_model(&source, "onnx/model.onnx_data").await {
+            Ok(_) => {}
+            Err(SigError::Provider(ref msg)) if msg.contains("HTTP 404") => {}
+            Err(e) => return Err(e),
+        }
         let tokenizer_path = cache.get_tokenizer(&source).await?;
 
         // Build the ORT session and load the tokenizer inside spawn_blocking
