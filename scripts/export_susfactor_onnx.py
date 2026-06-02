@@ -26,6 +26,7 @@ Requires: torch, transformers, onnx, onnxruntime, numpy.
 
 from __future__ import annotations
 
+import inspect
 import sys
 from pathlib import Path
 
@@ -130,8 +131,6 @@ def main() -> int:
         },
         opset_version=OPSET,
     )
-    import inspect
-
     if "dynamo" in inspect.signature(torch.onnx.export).parameters:
         export_kwargs["dynamo"] = False
     torch.onnx.export(model, (input_ids, attention_mask), str(onnx_path), **export_kwargs)
