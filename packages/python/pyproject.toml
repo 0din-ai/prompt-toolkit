@@ -44,6 +44,10 @@ cm-lsh = [
 threatfeed = [
     "aiohttp>=3.9.0,<3.14.0",
 ]
+susfactor = [
+    "torch>=2.0.0",
+    "transformers>=4.0.0",
+]
 native = [
     "odin-prompt-toolkit-native>=0.1.0",  # Rust acceleration (~627× speedup) - not published yet
 ]
@@ -63,6 +67,8 @@ all = [
     "sentence-transformers>=2.2.0",
     "scikit-learn>=1.3.0",
     "aiohttp>=3.9.0,<3.14.0",
+    "torch>=2.0.0",
+    "transformers>=4.0.0",
     "odin-prompt-toolkit-native>=0.1.0",
 ]
 
@@ -116,6 +122,8 @@ module = [
     "onnxruntime.*",
     "transformers",
     "transformers.*",
+    "torch",
+    "torch.*",
     "odin_prompt_toolkit_native",
     "sklearn",
     "sklearn.*",
@@ -135,6 +143,8 @@ module = [
     "odin_prompt_toolkit.sign",
     "odin_prompt_toolkit.threatfeed.cache",
     "odin_prompt_toolkit.threatfeed.client",
+    "odin_prompt_toolkit.susfactor.classifier",
+    "odin_prompt_toolkit.susfactor.compare",
 ]
 disable_error_code = ["misc", "no-any-return", "name-defined"]
 

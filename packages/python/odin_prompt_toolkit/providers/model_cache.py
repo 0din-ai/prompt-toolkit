@@ -150,3 +150,32 @@ class ModelCache:
         config_path = self.get_config_path(version)
         with open(config_path) as f:
             return json.load(f)
+
+
+# --- SusFactor model-cache helpers -----------------------------------------
+#
+# The SusFactor classifier uses a different on-disk layout from the ONNX
+# embedding models (a HuggingFace ``encoder/`` directory plus a separate
+# ``head.pt``), so it gets dedicated helpers rather than overloading the
+# ONNX-specific ModelCache methods.
+
+# Files required for a usable SusFactor model, relative to the version dir.
+SUSFACTOR_REQUIRED_FILES = (
+    "encoder/config.json",
+    "encoder/model.safetensors",
+    "encoder/tokenizer.json",
+    "head.pt",
+)
+
+
+def susfactor_model_dir(cache: ModelCache, version: str = "susfactor-v1") -> Path:
+    """Return the cache directory for a SusFactor model version."""
+    return cache.model_directory(version)
+
+
+def susfactor_model_files_present(cache: ModelCache, version: str = "susfactor-v1") -> bool:
+    """Check whether all required SusFactor model files are cached locally."""
+    model_dir = susfactor_model_dir(cache, version)
+    if not model_dir.exists():
+        return False
+    return all((model_dir / rel).exists() for rel in SUSFACTOR_REQUIRED_FILES)
