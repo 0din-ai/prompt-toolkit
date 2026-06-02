@@ -116,7 +116,9 @@ impl OnnxSessionPool {
         model_path: &std::path::Path,
         intra_threads: usize,
     ) -> std::result::Result<(Self, bool), String> {
-        assert!(pool_size >= 1, "pool_size must be at least 1");
+        if pool_size == 0 {
+            return Err("pool_size must be at least 1".into());
+        }
 
         let mut sessions = Vec::with_capacity(pool_size);
         let mut requires_token_type_ids = false;
@@ -787,6 +789,16 @@ mod tests {
     #[test]
     fn test_session_pool_default_size() {
         assert_eq!(OnnxSessionPool::DEFAULT_POOL_SIZE, 2);
+    }
+
+    #[test]
+    fn test_session_pool_build_rejects_zero_pool_size() {
+        // pool_size=0 must return Err (not panic) so spawn_blocking propagates
+        // a clean SigError::Provider rather than a JoinError.
+        let result = OnnxSessionPool::build(0, std::path::Path::new("nonexistent"), 0);
+        assert!(result.is_err());
+        let msg = result.unwrap_err();
+        assert!(msg.contains("pool_size must be at least 1"), "unexpected: {msg}");
     }
 
     #[test]
