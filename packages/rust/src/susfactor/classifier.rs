@@ -98,9 +98,15 @@ impl SusFactorClassifier {
         // exports embed weights directly in the .onnx), but propagate real
         // failures (auth errors, network timeouts, I/O errors) so users see
         // the actual cause rather than a cryptic ORT load error later.
+        let source_is_dir = std::path::Path::new(&source).is_dir();
         match cache.get_model(&source, "onnx/model.onnx_data").await {
             Ok(_) => {}
-            Err(SigError::Provider(ref msg)) if msg.contains("HTTP 404") => {}
+            Err(SigError::Provider(ref msg))
+                if msg.contains("HTTP 404")
+                    || (source_is_dir
+                        && msg.contains("Local model directory")
+                        && msg.contains("onnx/model.onnx_data")
+                        && msg.contains("not found")) => {}
             Err(e) => return Err(e),
         }
         let tokenizer_path = cache.get_tokenizer(&source).await?;
