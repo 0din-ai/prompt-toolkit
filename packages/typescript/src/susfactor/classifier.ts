@@ -127,10 +127,21 @@ export class SusFactorClassifier {
       );
     }
 
-    const modelPath = cache.getModelPath(MODEL_VERSION);
+    // Pick whichever complete pair (graph + external weights) is available.
+    // getModelPath() always prefers model_O4.onnx regardless of whether its
+    // .onnx_data is present, so we select explicitly here.
+    const modelDir = cache.modelDirectory(MODEL_VERSION);
+    const optimizedOnnx = path.join(modelDir, "onnx", "model_O4.onnx");
+    const optimizedData = path.join(modelDir, "onnx", "model_O4.onnx_data");
+    const unoptimizedOnnx = path.join(modelDir, "onnx", "model.onnx");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fsSync = require("fs");
+    const modelPath =
+      fsSync.existsSync(optimizedOnnx) && fsSync.existsSync(optimizedData)
+        ? optimizedOnnx
+        : unoptimizedOnnx;
     const session = await ort.InferenceSession.create(modelPath);
 
-    const modelDir = cache.modelDirectory(MODEL_VERSION);
     const parentDir = path.dirname(modelDir);
     const versionName = path.basename(modelDir);
     hfEnv.localModelPath = parentDir + path.sep;
