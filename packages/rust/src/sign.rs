@@ -3,7 +3,7 @@ use std::time::Instant;
 use crate::error::{Result, SigError};
 use crate::lsh::{cosine_from_hamming, hamming_distance_hex, simhash_lsh_multi};
 use crate::provider::EmbeddingProvider;
-use crate::types::{ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult, SignatureVersion};
+use crate::types::{signature_string, ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult, SignatureVersion};
 
 /// Generate a signature from text.
 ///
@@ -160,7 +160,10 @@ pub async fn sign_text(
 /// # Arguments
 ///
 /// * `text_a` / `text_b` - The two prompts to compare
-/// * `version` - Signature version (use `SignatureVersion::Latest` for the latest model)
+/// * `version` - Requested signature version. When a provider is supplied the
+///   effective version is inferred from `provider.dimensions()` (1024 → V1,
+///   1536 → V0), identical to `sign_text`. Passing `Latest` with a V0 provider
+///   therefore yields `version = V0` in the result.
 /// * `provider` - Optional provider; auto-constructed if `None` (same semantics as `sign_text`)
 /// * `config` - Optional LSH config; defaults to 3 families, 256 bits, 16 bands
 ///
@@ -214,14 +217,23 @@ pub async fn compare_text(
 
         // Use family 0 (primary) signature for distance computation.
         let hamming = hamming_distance_hex(&sigs_a[0].signature, &sigs_b[0].signature);
-        // Use the bits count from the actual signature (simhash_lsh_multi clamps
-        // config.bits to a minimum of 64 internally), so the cosine computation
-        // is consistent with the bits actually used.
+        // sigs_a[0].bits holds the value after simhash_lsh_multi's internal
+        // clamping (min 64), so cosine_from_hamming is consistent with the
+        // bits actually used.
         let cosine = cosine_from_hamming(hamming, sigs_a[0].bits);
+
+        // Build the effective config from the clamped values so the returned
+        // lsh_config matches what was actually used for the signatures.
+        let effective_config = LshConfig {
+            families: lsh_config.families.max(1),
+            bits: lsh_config.bits.max(64),
+            bands: lsh_config.bands.max(1),
+        };
 
         let elapsed_ms = start.elapsed().as_millis() as f64;
 
         // Truncate at a char boundary to avoid panicking on non-ASCII UTF-8.
+        // Use char count (not byte length) for the `length` field as well.
         let prompt_preview = |text: &str| -> String {
             if text.chars().count() <= 50 {
                 text.to_string()
@@ -238,17 +250,17 @@ pub async fn compare_text(
         Ok(ComparisonResult {
             prompt_a: PromptInfo {
                 preview: prompt_preview(text_a),
-                length: text_a.len(),
-                signature: sigs_a[0].signature.clone(),
+                length: text_a.chars().count(),
+                signature: signature_string(resolved_version, &sigs_a[0].signature),
             },
             prompt_b: PromptInfo {
                 preview: prompt_preview(text_b),
-                length: text_b.len(),
-                signature: sigs_b[0].signature.clone(),
+                length: text_b.chars().count(),
+                signature: signature_string(resolved_version, &sigs_b[0].signature),
             },
             hamming_distance: hamming,
             cosine_similarity: cosine,
-            lsh_config,
+            lsh_config: effective_config,
             version: resolved_version,
             quality_stats: None,
             timing_ms: Some(elapsed_ms),
@@ -689,10 +701,12 @@ mod tests {
             .unwrap();
 
         assert_eq!(result.prompt_a.preview, "prompt a");
-        assert_eq!(result.prompt_a.length, 8);
+        assert_eq!(result.prompt_a.length, 8); // 8 ASCII chars
+        assert!(result.prompt_a.signature.starts_with("0din-v1:"));
         assert_eq!(result.prompt_b.preview, "prompt b");
         assert_eq!(result.prompt_b.length, 8);
+        assert!(result.prompt_b.signature.starts_with("0din-v1:"));
         assert!(result.timing_ms.is_some());
-        assert_eq!(result.lsh_config, LshConfig::default());
+        assert_eq!(result.lsh_config, LshConfig::default()); // default is within clamped range
     }
 }
