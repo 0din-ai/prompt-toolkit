@@ -222,18 +222,19 @@ pub async fn compare_text(
         // bits actually used.
         let cosine = cosine_from_hamming(hamming, sigs_a[0].bits);
 
-        // Build the effective config from the clamped values so the returned
-        // lsh_config matches what was actually used for the signatures.
+        // Build the effective config from the values actually used.
+        // families and bits come from simhash_lsh_multi's clamping; bands is
+        // taken from the actual band count in the output (the implementation
+        // may produce fewer bands than requested when bits is small).
         let effective_config = LshConfig {
-            families: lsh_config.families.max(1),
-            bits: lsh_config.bits.max(64),
-            bands: lsh_config.bands.max(1),
+            families: sigs_a.len(),
+            bits: sigs_a[0].bits,
+            bands: sigs_a[0].bands.len(),
         };
 
         let elapsed_ms = start.elapsed().as_millis() as f64;
 
         // Truncate at a char boundary to avoid panicking on non-ASCII UTF-8.
-        // Use char count (not byte length) for the `length` field as well.
         let prompt_preview = |text: &str| -> String {
             if text.chars().count() <= 50 {
                 text.to_string()

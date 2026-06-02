@@ -405,7 +405,10 @@ pub struct ComparisonResult {
     pub lsh_config: LshConfig,
     /// Resolved signature version used for both embeddings.
     ///
-    /// Always a concrete version (`V0` or `V1`) — never `Latest`.
+    /// When produced by `compare_text` this is always a concrete version
+    /// (`V0` or `V1`) — never `Latest`. Deserialized values may technically
+    /// contain any `SignatureVersion` variant; callers should call `.resolve()`
+    /// if they need a guaranteed concrete version.
     ///
     /// Defaults to `V1` when deserializing older payloads that lack this field,
     /// preserving backward compatibility with pre-existing serialized results.
