@@ -305,8 +305,12 @@ export interface ComparisonResult {
   cosineSimilarity: number;
   /** LSH configuration used */
   lshConfig: LshConfig;
-  /** Resolved signature version used for both embeddings (V0 or V1). */
-  version: SignatureVersion;
+  /**
+   * Resolved signature version used for both embeddings (V0 or V1).
+   * Optional for backward compatibility with older serialized results;
+   * treat as V1 when absent.
+   */
+  version?: SignatureVersion;
   /** Optional quality statistics if ground truth available */
   qualityStats?: QualityStats;
   /** Optional timing information in milliseconds */
