@@ -27,7 +27,7 @@ from .types import LABEL_SAFE, LABEL_SUSPICIOUS, SusFactorResult, label_for_scor
 _INSTALL_HINT = "pip install 'odin-prompt-toolkit[susfactor]'"
 
 
-def _require_torch() -> "torch":  # type: ignore[name-defined]
+def _require_torch() -> Any:
     try:
         import torch
 
