@@ -49,7 +49,7 @@ use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
 /// use odin_prompt_toolkit::provider::EmbeddingProvider;
 ///
 /// let cache = ModelCache::new()?;
-/// let provider = OnnxProvider::new(&cache, None, None).await?;
+/// let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
 /// let result = sign_text(
 ///     "How do I reset my password?",
 ///     SignatureVersion::Latest,
@@ -167,7 +167,8 @@ async fn create_provider_for_version(version: SignatureVersion) -> Result<Box<dy
             {
                 use crate::providers::{ModelCache, OnnxProvider};
                 let cache = ModelCache::new()?;
-                let provider = OnnxProvider::new(&cache, None, None).await?;
+                // intra_threads=0 (auto), pool_size=0 (default pool of 2).
+                let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
                 Ok(Box::new(provider))
             }
             #[cfg(not(feature = "onnx"))]

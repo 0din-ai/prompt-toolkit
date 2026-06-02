@@ -31,6 +31,17 @@ odin-prompt-toolkit = {
 | `onnx` | ✅ Yes | Local ONNX embedding provider (V1 signatures) |
 | `cm-lsh` | ❌ No | Confidence Matrix LSH (experimental) |
 
+:::note ONNX Runtime build requirement
+
+The `onnx` feature uses [ONNX Runtime](https://onnxruntime.ai/) via the `ort`
+crate with `download-binaries`, which fetches a prebuilt native ONNX Runtime
+library **at build time**. This means building the `onnx` feature requires
+network access (or a pre-cached binary). For air-gapped or offline builds,
+supply your own ONNX Runtime library via the `ORT_DYLIB_PATH` environment
+variable. A prebuilt binary must exist for your target triple.
+
+:::
+
 ### Verify Installation
 
 ```bash
