@@ -4,9 +4,18 @@ use crate::error::{Result, SigError};
 use futures_util::StreamExt;
 use std::env;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tracing::{debug, info, warn};
+
+/// Process-global counter for temp file uniqueness.
+///
+/// `SystemTime` resolution can be coarser than nanoseconds on some platforms,
+/// so two rapid calls may produce the same timestamp. The counter guarantees
+/// each temp path is distinct within the process lifetime regardless of clock
+/// resolution.
+static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Model cache for downloading and storing ONNX models.
 ///
@@ -129,9 +138,10 @@ impl ModelCache {
     /// Robustness properties (matching Heimdall's production implementation):
     /// 1. **Streaming** — response body is written chunk-by-chunk; the entire
     ///    file is never buffered in memory.
-    /// 2. **Connect timeout** — the HTTP client enforces a 30-second connect
-    ///    timeout so a misbehaving mirror cannot hang the caller indefinitely.
-    /// 3. **Race-safe rename** — a unique temp path (`<dest>.tmp.<pid>.<nanos>.<tid>`)
+    /// 2. **Connect timeout** — the HTTP client enforces a 30-second TCP
+    ///    connect timeout (bounds connection establishment only; the overall
+    ///    transfer duration is unbounded by design for large models).
+    /// 3. **Race-safe rename** — a unique temp path (`<dest>.tmp.<pid>.<counter>.<nanos>.<tid>`)
     ///    is used so concurrent downloaders do not collide.  If the atomic rename
     ///    fails with `AlreadyExists` another caller already won the race; we clean
     ///    up the temp file and return `Ok(())`.
@@ -181,12 +191,16 @@ impl ModelCache {
         }
 
         // Unique temp suffix — appended to the full dest path (including its existing
-        // extension) so `model.onnx` becomes `model.onnx.tmp.<pid>.<nanos>.<tid>`.
+        // extension) so `model.onnx` becomes `model.onnx.tmp.<pid>.<counter>.<nanos>.<tid>`.
         // Using OsString::push avoids with_extension(), which would silently replace
         // the existing extension (e.g. `.onnx` → `.tmp.…`).
+        // The monotonic counter guarantees uniqueness even when SystemTime resolution
+        // is coarser than nanoseconds (e.g. some Linux/VM configurations return
+        // the same nanosecond timestamp across rapid successive calls).
         let unique_id = format!(
-            "{}.{}.{:?}",
+            "{}.{}.{}.{:?}",
             std::process::id(),
+            TEMP_FILE_COUNTER.fetch_add(1, Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
@@ -224,10 +238,12 @@ impl ModelCache {
 
                 downloaded += chunk.len() as u64;
 
-                if total_size > 0 && downloaded >= next_log_threshold {
+                // Log every crossed 50 MB boundary. Use a while loop so a single
+                // large chunk that spans multiple thresholds logs each one.
+                while total_size > 0 && downloaded >= next_log_threshold {
                     info!(
                         "Download progress: {:.0}%",
-                        (downloaded as f64 / total_size as f64) * 100.0
+                        (next_log_threshold as f64 / total_size as f64) * 100.0
                     );
                     next_log_threshold += progress_interval;
                 }
@@ -372,9 +388,10 @@ mod tests {
     }
 
     // --- Gap 1: streaming download (chunks, not buffered) ---
-    // Verifies that download_file writes a chunked response to disk without
-    // buffering the entire body in memory.  We use mockito to serve a response
-    // in two discrete chunks and assert the final file contains both.
+    // Verifies that download_file_from_url correctly writes the response body
+    // to disk and returns the expected bytes. Mockito serves a single response
+    // body; the streaming code paths (bytes_stream + write_all loop) are
+    // exercised regardless of how many TCP chunks the body arrives in.
     #[tokio::test]
     async fn test_download_streams_chunks_to_disk() {
         use mockito::Server;
@@ -409,11 +426,10 @@ mod tests {
     }
 
     // --- Gap 2: connect timeout ---
-    // Unit tests cannot easily simulate a TCP connection that accepts but never
-    // sends bytes (that would require a real listener and a multi-second wait).
-    // The behavioral integration test for this lives in tests/onnx_inference.rs.
-    // Here we verify the constant value matches the spec so a future change is
-    // caught at review time.
+    // Behaviorally testing connect_timeout requires a listener that accepts the
+    // TCP handshake but never sends bytes, plus waiting 30+ seconds — impractical
+    // for a unit test. We verify the constant value matches the spec so any
+    // future change to the timeout is visible at review time.
     #[test]
     fn test_connect_timeout_constant_is_thirty_seconds() {
         assert_eq!(ModelCache::CONNECT_TIMEOUT_SECS, 30);
