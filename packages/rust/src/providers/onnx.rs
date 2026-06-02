@@ -558,20 +558,42 @@ impl OnnxProvider {
                     .map_err(|e| SigError::Provider(format!("Model inference failed: {e}")))?
             };
 
-            // Extract last_hidden_state (shape: [1, seq_len, hidden_dim]).
-            // Use get() so a missing/renamed key produces a recoverable error.
+            // Extract the first hidden-state output tensor.
+            //
+            // Standard ONNX exports from HuggingFace name this output
+            // "last_hidden_state". Custom or re-exported models sometimes
+            // omit the name or use "output_0", "output", etc.  Try the
+            // canonical name first; fall back to the first output so the
+            // provider works with a broader range of ONNX exports.
+            let available_names: Vec<&str> = outputs.iter().map(|(k, _)| k).collect();
+            let output_key: &str = if outputs.get("last_hidden_state").is_some() {
+                "last_hidden_state"
+            } else {
+                let fallback = available_names.first().copied().ok_or_else(|| {
+                    SigError::Provider(format!(
+                        "Model produced no outputs. \
+                         Expected 'last_hidden_state'. \
+                         Available outputs: {:?}",
+                        available_names
+                    ))
+                })?;
+                debug!(
+                    "Output 'last_hidden_state' not found; falling back to '{}'. \
+                     Available outputs: {:?}",
+                    fallback, available_names
+                );
+                fallback
+            };
             let output_view = outputs
-                .get("last_hidden_state")
-                .ok_or_else(|| {
-                    SigError::Provider(
-                        "Model output 'last_hidden_state' not found. \
-                         Check the model ONNX graph outputs."
-                            .into(),
-                    )
-                })?
+                .get(output_key)
+                .expect("key was just confirmed present")
                 .try_extract_array::<f32>()
                 .map_err(|e| {
-                    SigError::Provider(format!("Failed to extract output tensor: {e}"))
+                    SigError::Provider(format!(
+                        "Failed to extract output '{}' as f32 tensor \
+                         (available outputs: {:?}): {e}",
+                        output_key, available_names
+                    ))
                 })?;
 
             let shape = output_view.shape();
@@ -783,7 +805,9 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // OnnxSessionPool round-robin tests — no model required
+    // Round-robin counter arithmetic tests (no model required)
+    // These verify the modulo math used by OnnxSessionPool::get_session,
+    // not the pool or session lifecycle end-to-end.
     // -----------------------------------------------------------------------
 
     #[test]

@@ -264,7 +264,7 @@ Raised when ONNX model loading or inference fails.
 // Model file not found
 let cache = ModelCache::new()?;
 let provider = OnnxProvider::new(&cache, Some("nonexistent/model".to_string()), None, 0, 0).await;
-// Returns: Err(SigError::Model("Model file not found: nonexistent/model"))
+// Returns: Err(SigError::Provider("Failed to download model: ..."))
 ```
 
 </TabItem>
