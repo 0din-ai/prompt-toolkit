@@ -111,7 +111,17 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_all_single_page() {
         let mut server = mockito::Server::new_async().await;
-        let body = page_response(vec![make_entry("aaa", Some("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2")), make_entry("bbb", None)], 1, 1);
+        let body = page_response(
+            vec![
+                make_entry(
+                    "aaa",
+                    Some("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"),
+                ),
+                make_entry("bbb", None),
+            ],
+            1,
+            1,
+        );
 
         let _mock = server
             .mock("GET", "/api/v1/threatfeed")

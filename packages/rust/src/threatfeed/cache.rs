@@ -100,9 +100,8 @@ impl ThreatFeedCache {
             return Ok(false);
         }
 
-        let content = std::fs::read_to_string(&path).map_err(|e| {
-            SigError::ThreatFeedCache(format!("Failed to read cache file: {}", e))
-        })?;
+        let content = std::fs::read_to_string(&path)
+            .map_err(|e| SigError::ThreatFeedCache(format!("Failed to read cache file: {}", e)))?;
 
         let cache_file: CacheFile = serde_json::from_str(&content).map_err(|e| {
             tracing::warn!("Corrupt cache file, will be discarded: {}", e);
@@ -149,9 +148,8 @@ impl ThreatFeedCache {
             band_index: self.band_index.clone(),
         };
 
-        let json = serde_json::to_string_pretty(&cache_file).map_err(|e| {
-            SigError::ThreatFeedCache(format!("Failed to serialize cache: {}", e))
-        })?;
+        let json = serde_json::to_string_pretty(&cache_file)
+            .map_err(|e| SigError::ThreatFeedCache(format!("Failed to serialize cache: {}", e)))?;
 
         // Atomic write: temp file + rename
         let path = self.cache_file_path();
@@ -173,11 +171,7 @@ impl ThreatFeedCache {
     /// * `client` - Threat feed API client
     /// * `full` - If true, fetch all entries; if false, fetch only entries updated since last sync
     pub async fn sync(&mut self, client: &ThreatFeedClient, full: bool) -> Result<SyncResult> {
-        let since = if full {
-            None
-        } else {
-            self.last_updated_at()
-        };
+        let since = if full { None } else { self.last_updated_at() };
 
         self.source_url = client.base_url().to_string();
 
@@ -229,12 +223,7 @@ impl ThreatFeedCache {
     /// * `signature` - 64 hex char signature to query (raw, no `0din-` prefix)
     /// * `threshold` - Minimum cosine similarity threshold (default: 0.85)
     /// * `max_results` - Maximum number of results to return (default: 10)
-    pub fn query(
-        &self,
-        signature: &str,
-        threshold: f64,
-        max_results: usize,
-    ) -> Vec<ThreatMatch> {
+    pub fn query(&self, signature: &str, threshold: f64, max_results: usize) -> Vec<ThreatMatch> {
         let query_bands = compute_bands(signature, self.bands);
 
         // Collect candidate indices from band index

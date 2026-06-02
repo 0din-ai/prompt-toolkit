@@ -51,8 +51,8 @@ mod tests {
     }
 
     fn load_fixture() -> Fixture {
-        let fixture_path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../spec/test-vectors/threatfeed-fixture.json");
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../spec/test-vectors/threatfeed-fixture.json");
         let content = std::fs::read_to_string(&fixture_path)
             .unwrap_or_else(|e| panic!("Failed to read fixture at {:?}: {}", fixture_path, e));
         serde_json::from_str(&content).expect("Failed to parse fixture JSON")
@@ -83,11 +83,7 @@ mod tests {
         let fixture = load_fixture();
         for entry in &fixture.expected_v1_cache.entries {
             let computed = compute_bands(&entry.signature, 16);
-            assert_eq!(
-                computed, entry.bands,
-                "Band mismatch for {}",
-                entry.uuid
-            );
+            assert_eq!(computed, entry.bands, "Band mismatch for {}", entry.uuid);
         }
     }
 

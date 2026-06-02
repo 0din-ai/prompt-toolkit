@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{SigError, Result};
+use crate::error::{Result, SigError};
 use crate::lsh::{compute_embedding_sha256, normalize_vector};
 use crate::provider::EmbeddingProvider;
 use crate::types::EmbeddingResult;
@@ -101,9 +101,7 @@ impl OpenAIProvider {
         name: Option<String>,
     ) -> Result<Self> {
         if api_key.is_empty() {
-            return Err(SigError::InvalidInput(
-                "API key is required".to_string(),
-            ));
+            return Err(SigError::InvalidInput("API key is required".to_string()));
         }
 
         let client = Client::builder()
@@ -214,10 +212,7 @@ mod tests {
     fn test_new_requires_api_key() {
         let result = OpenAIProvider::new(String::new(), None, None, None, None);
         assert!(result.is_err());
-        assert!(matches!(
-            result.unwrap_err(),
-            SigError::InvalidInput(_)
-        ));
+        assert!(matches!(result.unwrap_err(), SigError::InvalidInput(_)));
     }
 
     #[test]

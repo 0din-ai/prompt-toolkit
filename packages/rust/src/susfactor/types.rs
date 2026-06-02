@@ -6,7 +6,7 @@ pub const LABEL_SUSPICIOUS: &str = "suspicious";
 pub const LABEL_SAFE: &str = "safe";
 
 /// Result of a SusFactor classification.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct SusFactorResult {
     /// Probability that the prompt is suspicious/malicious, in `[0, 1]`.
     pub score: f32,

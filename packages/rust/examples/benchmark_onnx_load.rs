@@ -148,7 +148,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("max latency: {:.1}ms", all_latencies[n - 1]);
 
     if total_failures > 0 {
-        eprintln!("WARNING: {total_failures} requests failed — results may not reflect true throughput.");
+        eprintln!(
+            "WARNING: {total_failures} requests failed — results may not reflect true throughput."
+        );
         std::process::exit(1);
     }
 

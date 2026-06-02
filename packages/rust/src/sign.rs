@@ -3,7 +3,10 @@ use std::time::Instant;
 use crate::error::{Result, SigError};
 use crate::lsh::{cosine_from_hamming, hamming_distance_hex, simhash_lsh_multi};
 use crate::provider::EmbeddingProvider;
-use crate::types::{signature_string, ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult, SignatureVersion};
+use crate::types::{
+    signature_string, ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult,
+    SignatureVersion,
+};
 
 /// Generate a signature from text.
 ///
@@ -289,7 +292,9 @@ pub async fn compare_text(
 /// - Required feature flag is not enabled
 /// - Required environment variables are missing
 /// - Provider initialization fails
-async fn create_provider_for_version(version: SignatureVersion) -> Result<Box<dyn EmbeddingProvider>> {
+async fn create_provider_for_version(
+    version: SignatureVersion,
+) -> Result<Box<dyn EmbeddingProvider>> {
     let resolved = version.resolve();
 
     match resolved {
@@ -542,10 +547,7 @@ mod tests {
         let result = sign_text("test", SignatureVersion::V0, Some(&provider), None).await;
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Version mismatch"));
+        assert!(result.unwrap_err().to_string().contains("Version mismatch"));
     }
 
     #[tokio::test]
@@ -633,9 +635,15 @@ mod tests {
             dimensions: 1024,
             embedding,
         };
-        let result = compare_text("hello", "hello", SignatureVersion::V1, Some(&provider), None)
-            .await
-            .unwrap();
+        let result = compare_text(
+            "hello",
+            "hello",
+            SignatureVersion::V1,
+            Some(&provider),
+            None,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(result.hamming_distance, 0);
         assert!((result.cosine_similarity - 1.0).abs() < 1e-6);
@@ -685,10 +693,15 @@ mod tests {
             dimensions: 1024,
             embedding,
         };
-        let result =
-            compare_text(&long_unicode, "hello", SignatureVersion::V1, Some(&provider), None)
-                .await
-                .unwrap();
+        let result = compare_text(
+            &long_unicode,
+            "hello",
+            SignatureVersion::V1,
+            Some(&provider),
+            None,
+        )
+        .await
+        .unwrap();
         // Should not panic; preview is at most 47 chars + "..." = 50 chars total.
         assert!(result.prompt_a.preview.chars().count() <= 50);
     }
@@ -702,9 +715,15 @@ mod tests {
             dimensions: 1024,
             embedding,
         };
-        let result = compare_text("prompt a", "prompt b", SignatureVersion::V1, Some(&provider), None)
-            .await
-            .unwrap();
+        let result = compare_text(
+            "prompt a",
+            "prompt b",
+            SignatureVersion::V1,
+            Some(&provider),
+            None,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(result.prompt_a.preview, "prompt a");
         assert_eq!(result.prompt_a.length, 8); // 8 bytes (ASCII, matches sign_text byte semantics)

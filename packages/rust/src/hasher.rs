@@ -19,9 +19,5 @@ pub trait Hasher: Send + Sync {
     ///
     /// # Returns
     /// Vector of `LshFamily` results, one per family
-    fn compute(
-        &self,
-        embedding: &[f32],
-        config: &LshConfig,
-    ) -> Result<Vec<LshFamily>, SigError>;
+    fn compute(&self, embedding: &[f32], config: &LshConfig) -> Result<Vec<LshFamily>, SigError>;
 }
