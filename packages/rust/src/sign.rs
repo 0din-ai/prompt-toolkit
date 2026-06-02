@@ -214,15 +214,24 @@ pub async fn compare_text(
 
         // Use family 0 (primary) signature for distance computation.
         let hamming = hamming_distance_hex(&sigs_a[0].signature, &sigs_b[0].signature);
-        let cosine = cosine_from_hamming(hamming, lsh_config.bits);
+        // Use the bits count from the actual signature (simhash_lsh_multi clamps
+        // config.bits to a minimum of 64 internally), so the cosine computation
+        // is consistent with the bits actually used.
+        let cosine = cosine_from_hamming(hamming, sigs_a[0].bits);
 
         let elapsed_ms = start.elapsed().as_millis() as f64;
 
+        // Truncate at a char boundary to avoid panicking on non-ASCII UTF-8.
         let prompt_preview = |text: &str| -> String {
-            if text.len() <= 50 {
+            if text.chars().count() <= 50 {
                 text.to_string()
             } else {
-                format!("{}...", &text[..47])
+                let cut = text
+                    .char_indices()
+                    .nth(47)
+                    .map(|(i, _)| i)
+                    .unwrap_or(text.len());
+                format!("{}...", &text[..cut])
             }
         };
 
@@ -644,6 +653,26 @@ mod tests {
             .await
             .unwrap();
         assert_ne!(result.version, SignatureVersion::Latest);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_unicode_preview_does_not_panic() {
+        // "日" is 3 bytes; 51 of them = 153 bytes but only 51 chars.
+        // Slicing at byte 47 would land mid-codepoint and panic without the fix.
+        let long_unicode = "日".repeat(51);
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result =
+            compare_text(&long_unicode, "hello", SignatureVersion::V1, Some(&provider), None)
+                .await
+                .unwrap();
+        // Should not panic, and the preview should be ≤ 50 chars + "..."
+        assert!(result.prompt_a.preview.chars().count() <= 50);
     }
 
     #[tokio::test]
