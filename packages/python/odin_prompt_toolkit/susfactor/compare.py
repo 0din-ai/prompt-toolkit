@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-from .classifier import DEFAULT_THRESHOLD, SusFactorClassifier
 from .types import SusFactorResult
+
+if TYPE_CHECKING:
+    from .classifier import SusFactorClassifier
+
+# Mirror DEFAULT_THRESHOLD without importing classifier at module level.
+_DEFAULT_THRESHOLD = 0.5
 
 
 async def sus_factor(
     text: str,
     *,
-    classifier: Optional[SusFactorClassifier] = None,
+    classifier: Optional["SusFactorClassifier"] = None,
     cache: Optional[Any] = None,
     model: Optional[str] = None,
-    threshold: float = DEFAULT_THRESHOLD,
+    threshold: float = _DEFAULT_THRESHOLD,
     device: Optional[str] = None,
 ) -> SusFactorResult:
     """Classify a prompt as safe vs. suspicious.
@@ -50,6 +55,8 @@ async def sus_factor(
         from ..providers.model_cache import ModelCache
 
         cache = ModelCache()
+
+    from .classifier import SusFactorClassifier
 
     owned = await SusFactorClassifier.new(
         cache,
