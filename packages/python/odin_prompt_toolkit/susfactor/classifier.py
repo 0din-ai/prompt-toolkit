@@ -17,8 +17,6 @@ from __future__ import annotations
 import time
 from typing import Any, Optional
 
-import numpy as np
-
 from ..error import SusFactorError
 from ..providers.model_cache import (
     susfactor_model_dir,
@@ -26,21 +24,29 @@ from ..providers.model_cache import (
 )
 from .types import LABEL_SAFE, LABEL_SUSPICIOUS, SusFactorResult, label_for_score, suspicious_prob
 
-try:
-    import torch
-except ImportError as e:  # pragma: no cover - exercised via install env
-    raise ImportError(
-        "SusFactor requires the 'torch' package. "
-        "Install with: pip install 'odin-prompt-toolkit[susfactor]'"
-    ) from e
+_INSTALL_HINT = "pip install 'odin-prompt-toolkit[susfactor]'"
 
-try:
-    from transformers import AutoModel, AutoTokenizer
-except ImportError as e:  # pragma: no cover - exercised via install env
-    raise ImportError(
-        "SusFactor requires the 'transformers' package. "
-        "Install with: pip install 'odin-prompt-toolkit[susfactor]'"
-    ) from e
+
+def _require_torch() -> "torch":  # type: ignore[name-defined]
+    try:
+        import torch
+
+        return torch
+    except ImportError as e:
+        raise ImportError(
+            f"SusFactor requires the 'torch' package. Install with: {_INSTALL_HINT}"
+        ) from e
+
+
+def _require_transformers() -> tuple:
+    try:
+        from transformers import AutoModel, AutoTokenizer
+
+        return AutoModel, AutoTokenizer
+    except ImportError as e:
+        raise ImportError(
+            f"SusFactor requires the 'transformers' package. Install with: {_INSTALL_HINT}"
+        ) from e
 
 
 DEFAULT_MODEL = "0dinai/susfactor-e5-large"
@@ -54,19 +60,9 @@ HF_URL = "https://huggingface.co/0dinai/susfactor-e5-large"
 
 
 
-def _build_head(hidden_dim: int) -> "torch.nn.Module":
-    """Build the SusFactor MLP head.
-
-    Matches ``susfactor_training.models.ClassificationHead`` exactly, including
-    the ``classifier`` submodule name so the saved ``head.pt`` state dict (whose
-    keys are prefixed ``classifier.``) loads cleanly. Dropout is disabled for
-    inference:
-
-        classifier = Sequential(
-            Dropout, Linear(EMBEDDING_DIM, hidden_dim), GELU,
-            Dropout, Linear(hidden_dim, NUM_CLASSES),
-        )
-    """
+def _build_head(hidden_dim: int) -> Any:
+    """Build the SusFactor MLP head."""
+    torch = _require_torch()
 
     class ClassificationHead(torch.nn.Module):
         def __init__(self) -> None:
@@ -79,18 +75,18 @@ def _build_head(hidden_dim: int) -> "torch.nn.Module":
                 torch.nn.Linear(hidden_dim, NUM_CLASSES),
             )
 
-        def forward(self, embeddings: "torch.Tensor") -> "torch.Tensor":
+        def forward(self, embeddings: Any) -> Any:
             return self.classifier(embeddings)
 
     return ClassificationHead()
 
 
 def _resolve_device(device: Optional[str]) -> str:
+    torch = _require_torch()
     if device is not None:
         return device
     if torch.cuda.is_available():
         return "cuda"
-    # torch.backends.mps may be absent on some builds; guard defensively.
     mps = getattr(torch.backends, "mps", None)
     if mps is not None and mps.is_available():
         return "mps"
@@ -178,11 +174,15 @@ class SusFactorClassifier:
         head_path = model_dir / "head.pt"
 
         try:
+            torch = _require_torch()
+            AutoModel, AutoTokenizer = _require_transformers()
             encoder = AutoModel.from_pretrained(str(encoder_dir), local_files_only=True)
             tokenizer = AutoTokenizer.from_pretrained(str(encoder_dir), local_files_only=True)
             head = _build_head(hidden_dim)
             state_dict = torch.load(head_path, map_location="cpu", weights_only=True)
             head.load_state_dict(state_dict)
+        except SusFactorError:
+            raise
         except Exception as e:  # noqa: BLE001 - surface as a domain error
             raise SusFactorError(f"Failed to load SusFactor model: {e}") from e
 
@@ -230,6 +230,7 @@ class SusFactorClassifier:
                 max_length=MAX_SEQUENCE_LENGTH,
             ).to(self._device)
 
+            torch = _require_torch()
             with torch.no_grad():
                 outputs = self._encoder(
                     input_ids=inputs["input_ids"],
