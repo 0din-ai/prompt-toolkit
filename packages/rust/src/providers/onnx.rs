@@ -33,8 +33,8 @@
 //! use odin_prompt_toolkit::provider::EmbeddingProvider;
 //!
 //! let cache = ModelCache::new()?;
-//! // intra_threads=0 (auto), pool_size=2 (default).
-//! let provider = OnnxProvider::new(&cache, None, None, 0, 2).await?;
+//! // intra_threads=0 (auto), pool_size=0 (use the default of 2).
+//! let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
 //!
 //! let result = provider.generate_embedding("Hello, world!").await?;
 //! println!("Embedding dimensions: {}", result.embedding.len());
@@ -418,11 +418,17 @@ impl OnnxProvider {
             .await?;
 
         let config_str = tokio::fs::read_to_string(&config_path).await.map_err(|e| {
-            SigError::Provider(format!("Failed to read sentence_transformers config: {}", e))
+            SigError::Provider(format!(
+                "Failed to read sentence_transformers config: {}",
+                e
+            ))
         })?;
 
         let config: serde_json::Value = serde_json::from_str(&config_str).map_err(|e| {
-            SigError::Provider(format!("Failed to parse sentence_transformers config: {}", e))
+            SigError::Provider(format!(
+                "Failed to parse sentence_transformers config: {}",
+                e
+            ))
         })?;
 
         // Check if prompts.query is non-empty
@@ -499,87 +505,96 @@ impl OnnxProvider {
         let token_count = seq_len;
 
         // Build input tensors (shape: [1, seq_len])
-        let input_ids_array = Array2::from_shape_vec((1, seq_len), input_ids).map_err(|e| {
-            SigError::Provider(format!("Failed to create input_ids array: {e}"))
-        })?;
+        let input_ids_array = Array2::from_shape_vec((1, seq_len), input_ids)
+            .map_err(|e| SigError::Provider(format!("Failed to create input_ids array: {e}")))?;
         let attention_mask_array = Array2::from_shape_vec((1, seq_len), attention_mask.clone())
             .map_err(|e| {
                 SigError::Provider(format!("Failed to create attention_mask array: {e}"))
             })?;
 
-        let input_ids_tensor = Tensor::<i64>::from_array(input_ids_array).map_err(|e| {
-            SigError::Provider(format!("Failed to create input_ids tensor: {e}"))
-        })?;
+        let input_ids_tensor = Tensor::<i64>::from_array(input_ids_array)
+            .map_err(|e| SigError::Provider(format!("Failed to create input_ids tensor: {e}")))?;
         let attention_mask_tensor =
             Tensor::<i64>::from_array(attention_mask_array).map_err(|e| {
                 SigError::Provider(format!("Failed to create attention_mask tensor: {e}"))
             })?;
 
-        // Acquire the session lock for the duration of the forward pass.
-        let mut session_guard = session
-            .lock()
-            .map_err(|_| SigError::Provider("Session mutex was poisoned".into()))?;
+        // Acquire the session lock only for the forward pass + tensor extraction.
+        // We call `.to_owned()` on the extracted array to detach it from the
+        // `SessionOutputs` borrow, allowing the lock to be released before the
+        // purely CPU post-processing steps (pooling, normalization, sha256).
+        let output_2d = {
+            let mut session_guard = session
+                .lock()
+                .map_err(|_| SigError::Provider("Session mutex was poisoned".into()))?;
 
-        // Run inference using named inputs. Only pass token_type_ids when the
-        // model declares that input (BERT-style); XLM-RoBERTa models don't.
-        let outputs = if requires_token_type_ids {
-            let token_type_ids: Vec<i64> = vec![0i64; seq_len];
-            let token_type_ids_array =
-                Array2::from_shape_vec((1, seq_len), token_type_ids).map_err(|e| {
-                    SigError::Provider(format!("Failed to create token_type_ids array: {e}"))
+            // Run inference using named inputs. Only pass token_type_ids when the
+            // model declares that input (BERT-style); XLM-RoBERTa models don't.
+            let outputs = if requires_token_type_ids {
+                let token_type_ids: Vec<i64> = vec![0i64; seq_len];
+                let token_type_ids_array =
+                    Array2::from_shape_vec((1, seq_len), token_type_ids).map_err(|e| {
+                        SigError::Provider(format!("Failed to create token_type_ids array: {e}"))
+                    })?;
+                let token_type_ids_tensor =
+                    Tensor::<i64>::from_array(token_type_ids_array).map_err(|e| {
+                        SigError::Provider(format!("Failed to create token_type_ids tensor: {e}"))
+                    })?;
+                session_guard
+                    .run(ort::inputs![
+                        "input_ids" => input_ids_tensor,
+                        "attention_mask" => attention_mask_tensor,
+                        "token_type_ids" => token_type_ids_tensor,
+                    ])
+                    .map_err(|e| SigError::Provider(format!("Model inference failed: {e}")))?
+            } else {
+                session_guard
+                    .run(ort::inputs![
+                        "input_ids" => input_ids_tensor,
+                        "attention_mask" => attention_mask_tensor,
+                    ])
+                    .map_err(|e| SigError::Provider(format!("Model inference failed: {e}")))?
+            };
+
+            // Extract last_hidden_state (shape: [1, seq_len, hidden_dim]).
+            // Use get() so a missing/renamed key produces a recoverable error.
+            let output_view = outputs
+                .get("last_hidden_state")
+                .ok_or_else(|| {
+                    SigError::Provider(
+                        "Model output 'last_hidden_state' not found. \
+                         Check the model ONNX graph outputs."
+                            .into(),
+                    )
+                })?
+                .try_extract_array::<f32>()
+                .map_err(|e| {
+                    SigError::Provider(format!("Failed to extract output tensor: {e}"))
                 })?;
-            let token_type_ids_tensor =
-                Tensor::<i64>::from_array(token_type_ids_array).map_err(|e| {
-                    SigError::Provider(format!("Failed to create token_type_ids tensor: {e}"))
-                })?;
-            session_guard
-                .run(ort::inputs![
-                    "input_ids" => input_ids_tensor,
-                    "attention_mask" => attention_mask_tensor,
-                    "token_type_ids" => token_type_ids_tensor,
-                ])
-                .map_err(|e| SigError::Provider(format!("Model inference failed: {e}")))?
-        } else {
-            session_guard
-                .run(ort::inputs![
-                    "input_ids" => input_ids_tensor,
-                    "attention_mask" => attention_mask_tensor,
-                ])
-                .map_err(|e| SigError::Provider(format!("Model inference failed: {e}")))?
+
+            let shape = output_view.shape();
+            if shape.len() != 3 || shape[0] != 1 {
+                return Err(SigError::Provider(format!(
+                    "Unexpected output shape: {:?}",
+                    shape
+                )));
+            }
+
+            let out_seq_len = shape[1];
+            let hidden_dim = shape[2];
+
+            // `.to_owned()` copies the data out of the ORT-owned buffer, letting
+            // the `outputs` / `session_guard` borrow end here.
+            let output_2d = output_view
+                .index_axis(Axis(0), 0)
+                .to_owned()
+                .into_shape_with_order((out_seq_len, hidden_dim))
+                .map_err(|e| SigError::Provider(format!("Failed to reshape output: {e}")))?;
+
+            output_2d
+            // session_guard (and outputs) are dropped here — lock released
+            // before mean_pool, normalize_vector, and sha256.
         };
-
-        // Extract last_hidden_state output (shape: [1, seq_len, hidden_dim]).
-        // Use get() rather than indexing so a missing/renamed output key produces
-        // a recoverable error instead of a panic.
-        let output_view = outputs
-            .get("last_hidden_state")
-            .ok_or_else(|| {
-                SigError::Provider(
-                    "Model output 'last_hidden_state' not found. \
-                     Check the model ONNX graph outputs."
-                        .into(),
-                )
-            })?
-            .try_extract_array::<f32>()
-            .map_err(|e| SigError::Provider(format!("Failed to extract output tensor: {e}")))?;
-
-        let shape = output_view.shape();
-        if shape.len() != 3 || shape[0] != 1 {
-            return Err(SigError::Provider(format!(
-                "Unexpected output shape: {:?}",
-                shape
-            )));
-        }
-
-        let out_seq_len = shape[1];
-        let hidden_dim = shape[2];
-
-        // Slice off the batch dimension and get a 2D view [seq_len, hidden_dim].
-        let output_2d = output_view
-            .index_axis(Axis(0), 0)
-            .to_owned()
-            .into_shape_with_order((out_seq_len, hidden_dim))
-            .map_err(|e| SigError::Provider(format!("Failed to reshape output: {e}")))?;
 
         // Mean pooling (weighted by attention mask)
         let embedding = mean_pool(&output_2d, &attention_mask)?;
