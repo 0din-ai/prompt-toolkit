@@ -112,7 +112,7 @@ impl SusFactorClassifier {
             })
             .await
             .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))?
-            .map_err(|e| SigError::Model(e))?;
+            .map_err(SigError::Model)?;
 
         Ok(Self {
             session: Arc::new(Mutex::new(session)),
