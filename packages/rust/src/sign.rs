@@ -1,9 +1,9 @@
 use std::time::Instant;
 
 use crate::error::{Result, SigError};
-use crate::lsh::simhash_lsh_multi;
+use crate::lsh::{cosine_from_hamming, hamming_distance_hex, simhash_lsh_multi};
 use crate::provider::EmbeddingProvider;
-use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
+use crate::types::{ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult, SignatureVersion};
 
 /// Generate a signature from text.
 ///
@@ -143,6 +143,110 @@ pub async fn sign_text(
     .await;
 
     // Clean up owned provider if we created one
+    if let Some(owned) = owned_provider {
+        let _ = owned.close().await;
+    }
+
+    result
+}
+
+/// Compare two prompts and return their similarity.
+///
+/// Generates embeddings for both prompts concurrently, computes LSH signatures,
+/// then derives the Hamming distance and estimated cosine similarity. The
+/// `version` field on the returned result reflects the resolved signature version
+/// (always `V0` or `V1`, never `Latest`).
+///
+/// # Arguments
+///
+/// * `text_a` / `text_b` - The two prompts to compare
+/// * `version` - Signature version (use `SignatureVersion::Latest` for the latest model)
+/// * `provider` - Optional provider; auto-constructed if `None` (same semantics as `sign_text`)
+/// * `config` - Optional LSH config; defaults to 3 families, 256 bits, 16 bands
+///
+/// # Errors
+///
+/// Returns an error if embedding generation, LSH computation, or version
+/// resolution fails.
+pub async fn compare_text(
+    text_a: &str,
+    text_b: &str,
+    version: SignatureVersion,
+    provider: Option<&dyn EmbeddingProvider>,
+    config: Option<LshConfig>,
+) -> Result<ComparisonResult> {
+    let start = Instant::now();
+
+    let owned_provider = if provider.is_none() {
+        Some(create_provider_for_version(version).await?)
+    } else {
+        None
+    };
+
+    let provider_ref: &dyn EmbeddingProvider = match (&owned_provider, provider) {
+        (Some(owned), None) => owned.as_ref(),
+        (None, Some(provided)) => provided,
+        _ => unreachable!(),
+    };
+
+    let result = async {
+        let resolved_version = resolve_version(version, provider_ref)?;
+        let lsh_config = config.unwrap_or_default();
+
+        // Generate both embeddings concurrently.
+        let (emb_a, emb_b) = tokio::try_join!(
+            provider_ref.generate_embedding(text_a),
+            provider_ref.generate_embedding(text_b),
+        )?;
+
+        let expected_dims = resolved_version.embedding_dimensions();
+        for (dims, label) in [(emb_a.dimensions, "text_a"), (emb_b.dimensions, "text_b")] {
+            if dims != expected_dims {
+                return Err(SigError::InvalidInput(format!(
+                    "Embedding dimensions mismatch for {label}: expected {expected_dims} \
+                     for {resolved_version:?}, got {dims}"
+                )));
+            }
+        }
+
+        let sigs_a = simhash_lsh_multi(&emb_a.normalized_embedding, &lsh_config);
+        let sigs_b = simhash_lsh_multi(&emb_b.normalized_embedding, &lsh_config);
+
+        // Use family 0 (primary) signature for distance computation.
+        let hamming = hamming_distance_hex(&sigs_a[0].signature, &sigs_b[0].signature);
+        let cosine = cosine_from_hamming(hamming, lsh_config.bits);
+
+        let elapsed_ms = start.elapsed().as_millis() as f64;
+
+        let prompt_preview = |text: &str| -> String {
+            if text.len() <= 50 {
+                text.to_string()
+            } else {
+                format!("{}...", &text[..47])
+            }
+        };
+
+        Ok(ComparisonResult {
+            prompt_a: PromptInfo {
+                preview: prompt_preview(text_a),
+                length: text_a.len(),
+                signature: sigs_a[0].signature.clone(),
+            },
+            prompt_b: PromptInfo {
+                preview: prompt_preview(text_b),
+                length: text_b.len(),
+                signature: sigs_b[0].signature.clone(),
+            },
+            hamming_distance: hamming,
+            cosine_similarity: cosine,
+            lsh_config,
+            version: resolved_version,
+            quality_stats: None,
+            timing_ms: Some(elapsed_ms),
+        })
+    }
+    .await;
+
     if let Some(owned) = owned_provider {
         let _ = owned.close().await;
     }
@@ -487,5 +591,79 @@ mod tests {
         assert_eq!(result.prompt_preview.len(), 50);
         assert!(result.prompt_preview.ends_with("..."));
         assert_eq!(result.prompt_length, 100);
+    }
+
+    // -----------------------------------------------------------------------
+    // compare_text tests
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_compare_text_same_prompt_is_identical() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("hello", "hello", SignatureVersion::V1, Some(&provider), None)
+            .await
+            .unwrap();
+
+        assert_eq!(result.hamming_distance, 0);
+        assert!((result.cosine_similarity - 1.0).abs() < 1e-6);
+        assert_eq!(result.version, SignatureVersion::V1);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_version_is_resolved() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("a", "b", SignatureVersion::Latest, Some(&provider), None)
+            .await
+            .unwrap();
+        // Latest should resolve to V1 (1024 dims)
+        assert_eq!(result.version, SignatureVersion::V1);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_version_never_latest_in_result() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("a", "b", SignatureVersion::Latest, Some(&provider), None)
+            .await
+            .unwrap();
+        assert_ne!(result.version, SignatureVersion::Latest);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_result_fields() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("prompt a", "prompt b", SignatureVersion::V1, Some(&provider), None)
+            .await
+            .unwrap();
+
+        assert_eq!(result.prompt_a.preview, "prompt a");
+        assert_eq!(result.prompt_a.length, 8);
+        assert_eq!(result.prompt_b.preview, "prompt b");
+        assert_eq!(result.prompt_b.length, 8);
+        assert!(result.timing_ms.is_some());
+        assert_eq!(result.lsh_config, LshConfig::default());
     }
 }

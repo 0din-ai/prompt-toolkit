@@ -133,7 +133,7 @@ impl SignatureVersion {
 }
 
 /// LSH configuration parameters
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LshConfig {
     pub families: usize,
     pub bits: usize,
@@ -395,6 +395,10 @@ pub struct ComparisonResult {
     pub hamming_distance: usize,
     pub cosine_similarity: f64,
     pub lsh_config: LshConfig,
+    /// Resolved signature version used for both embeddings.
+    ///
+    /// Always a concrete version (`V0` or `V1`) — never `Latest`.
+    pub version: SignatureVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quality_stats: Option<QualityStats>,
     #[serde(skip_serializing_if = "Option::is_none")]
