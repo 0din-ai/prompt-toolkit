@@ -250,12 +250,12 @@ pub async fn compare_text(
         Ok(ComparisonResult {
             prompt_a: PromptInfo {
                 preview: prompt_preview(text_a),
-                length: text_a.chars().count(),
+                length: text_a.len(), // byte length, consistent with sign_text's prompt_length
                 signature: signature_string(resolved_version, &sigs_a[0].signature),
             },
             prompt_b: PromptInfo {
                 preview: prompt_preview(text_b),
-                length: text_b.chars().count(),
+                length: text_b.len(), // byte length, consistent with sign_text's prompt_length
                 signature: signature_string(resolved_version, &sigs_b[0].signature),
             },
             hamming_distance: hamming,
@@ -683,7 +683,7 @@ mod tests {
             compare_text(&long_unicode, "hello", SignatureVersion::V1, Some(&provider), None)
                 .await
                 .unwrap();
-        // Should not panic, and the preview should be ≤ 50 chars + "..."
+        // Should not panic; preview is at most 47 chars + "..." = 50 chars total.
         assert!(result.prompt_a.preview.chars().count() <= 50);
     }
 
@@ -701,7 +701,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(result.prompt_a.preview, "prompt a");
-        assert_eq!(result.prompt_a.length, 8); // 8 ASCII chars
+        assert_eq!(result.prompt_a.length, 8); // 8 bytes (ASCII, matches sign_text byte semantics)
         assert!(result.prompt_a.signature.starts_with("0din-v1:"));
         assert_eq!(result.prompt_b.preview, "prompt b");
         assert_eq!(result.prompt_b.length, 8);
