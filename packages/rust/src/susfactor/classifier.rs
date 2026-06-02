@@ -235,6 +235,7 @@ impl SusFactorClassifier {
 
         let session = Arc::clone(&self.session);
         let logits = tokio::task::spawn_blocking(move || {
+            // &Arc<Mutex<Session>> coerces to &Mutex<Session> via Arc's Deref impl.
             Self::run_inference_sync(&session, input_ids, attention_mask)
         })
         .await

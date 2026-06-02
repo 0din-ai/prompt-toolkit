@@ -167,8 +167,12 @@ export class SusFactorClassifier {
   async classify(text: string): Promise<SusFactorResult> {
     const start = Date.now();
 
+    // Use padding=true (pad to the longest sequence in the batch, i.e. the actual
+    // input length for a single prompt) rather than "max_length" so short prompts
+    // don't wastefully run 512-token inference. The ONNX graph exports with a
+    // dynamic seq axis, so variable-length inputs are supported.
     const encoded = this.tokenizer(text, {
-      padding: "max_length",
+      padding: true,
       truncation: true,
       max_length: MAX_SEQUENCE_LENGTH,
     });
