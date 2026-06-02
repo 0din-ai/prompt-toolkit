@@ -3,10 +3,10 @@
 //! This test verifies that the same input produces identical signatures
 //! across Rust, Python, and TypeScript implementations.
 
-use odin_prompt_toolkit::{sign_text, EmbeddingResult, SignatureVersion};
-use odin_prompt_toolkit::provider::EmbeddingProvider;
-use odin_prompt_toolkit::error::Result;
 use async_trait::async_trait;
+use odin_prompt_toolkit::error::Result;
+use odin_prompt_toolkit::provider::EmbeddingProvider;
+use odin_prompt_toolkit::{sign_text, EmbeddingResult, SignatureVersion};
 
 /// Mock provider that returns a fixed embedding for cross-validation.
 struct FixedEmbeddingProvider {
@@ -66,13 +66,7 @@ async fn test_cross_validation_v1() -> Result<()> {
     let provider = FixedEmbeddingProvider::new(1024);
 
     // Generate signature
-    let result = sign_text(
-        "test prompt",
-        SignatureVersion::V1,
-        Some(&provider),
-        None,
-    )
-    .await?;
+    let result = sign_text("test prompt", SignatureVersion::V1, Some(&provider), None).await?;
 
     let signature = result.to_signature_string();
 
@@ -87,7 +81,7 @@ async fn test_cross_validation_v1() -> Result<()> {
     // Expected signature for [0.5; 1024] embedding
     // This should match across all three implementations
     let _expected_sig = "0din-v1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    
+
     // Note: The actual signature will depend on the LSH implementation
     // For a [0.5; 1024] vector, all hyperplane projections will be the same
     // So we expect a pattern, but let's just verify the format for now
@@ -103,13 +97,7 @@ async fn test_cross_validation_v0() -> Result<()> {
     let provider = FixedEmbeddingProvider::new(1536);
 
     // Generate signature
-    let result = sign_text(
-        "test prompt",
-        SignatureVersion::V0,
-        Some(&provider),
-        None,
-    )
-    .await?;
+    let result = sign_text("test prompt", SignatureVersion::V0, Some(&provider), None).await?;
 
     let signature = result.to_signature_string();
 
@@ -128,7 +116,7 @@ async fn test_cross_validation_v0() -> Result<()> {
 async fn test_cross_validation_different_vectors() -> Result<()> {
     // Test with a more complex vector pattern
     let mut embedding = vec![0.0; 1024];
-    
+
     // Create a pattern: alternating positive/negative after normalization
     for (i, val) in embedding.iter_mut().enumerate() {
         *val = if i % 2 == 0 { 1.0 } else { -1.0 };
@@ -174,13 +162,7 @@ async fn test_cross_validation_different_vectors() -> Result<()> {
 
     let provider = PatternProvider { embedding };
 
-    let result = sign_text(
-        "test prompt",
-        SignatureVersion::V1,
-        Some(&provider),
-        None,
-    )
-    .await?;
+    let result = sign_text("test prompt", SignatureVersion::V1, Some(&provider), None).await?;
 
     let signature = result.to_signature_string();
 
