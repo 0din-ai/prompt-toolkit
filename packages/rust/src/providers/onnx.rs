@@ -1,8 +1,16 @@
 //! ONNX embedding provider implementation using ONNX Runtime (`ort`).
 //!
 //! This module provides embedding generation using ONNX models via the `ort` crate,
-//! which wraps Microsoft's ONNX Runtime for high-performance inference. The default
-//! model is `models/v1` which produces 1024-dimensional embeddings.
+//! which wraps Microsoft's ONNX Runtime for high-performance inference.
+//!
+//! The default model identifier is `"models/v1"`, which is treated as a **local
+//! directory path** by [`ModelCache`]. In production, the model files
+//! (`onnx/model.onnx`, `tokenizer.json`, etc.) should be pre-loaded into that
+//! directory via a Kubernetes init container, Docker `COPY`, or volume mount.
+//! To auto-download from HuggingFace, pass the HuggingFace model ID explicitly:
+//! `Some("0dinai/0din-jailbreak-embeddings-small".to_string())`. The model
+//! produces 1024-dimensional embeddings optimised for jailbreak/prompt-injection
+//! detection.
 //!
 //! ## Features
 //!
@@ -240,8 +248,11 @@ fn mean_pool(embeddings: &Array2<f32>, attention_mask: &[i64]) -> Result<Vec<f32
 
 /// ONNX embedding provider using ONNX Runtime.
 ///
-/// This provider uses the `models/v1` model by default, which produces
-/// 1024-dimensional embeddings suitable for jailbreak/prompt-injection detection.
+/// By default this provider looks for model files at the local path `models/v1`
+/// (see [`OnnxProvider::DEFAULT_MODEL`]). Pass a HuggingFace model ID such as
+/// `"0dinai/0din-jailbreak-embeddings-small"` to trigger auto-download instead.
+/// The model produces 1024-dimensional embeddings optimised for
+/// jailbreak/prompt-injection detection.
 ///
 /// The model is loaded once at construction into a pool of ORT sessions.
 ///
@@ -280,7 +291,14 @@ pub struct OnnxProvider {
 }
 
 impl OnnxProvider {
-    /// Default model for ONNX embeddings.
+    /// Default model identifier — treated as a **local directory path** by
+    /// [`ModelCache`].
+    ///
+    /// Production deployments should pre-populate `models/v1/onnx/model.onnx`
+    /// and `models/v1/tokenizer.json` via init container, Docker `COPY`, or
+    /// volume mount. To download the model from HuggingFace instead, pass
+    /// `Some("0dinai/0din-jailbreak-embeddings-small".to_string())` as the
+    /// `model` argument to [`OnnxProvider::new`].
     pub const DEFAULT_MODEL: &'static str = "models/v1";
 
     /// Default embedding dimensions.

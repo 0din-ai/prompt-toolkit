@@ -102,27 +102,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let prompts: Vec<String> = prompts.iter().map(|s| s.to_string()).collect();
         handles.push(tokio::spawn(async move {
             let mut latencies_ms = Vec::with_capacity(iterations);
+            let mut failures = 0usize;
             for it in 0..iterations {
                 let text = &prompts[(w + it) % prompts.len()];
                 let start = Instant::now();
                 let res = p.generate_embedding(text).await;
                 let ms = start.elapsed().as_secs_f64() * 1000.0;
-                if res.is_ok() {
-                    latencies_ms.push(ms);
+                match res {
+                    Ok(_) => latencies_ms.push(ms),
+                    Err(e) => {
+                        failures += 1;
+                        eprintln!("worker {w} request {it} failed: {e}");
+                    }
                 }
             }
-            latencies_ms
+            (latencies_ms, failures)
         }));
     }
 
     let mut all_latencies: Vec<f64> = Vec::new();
+    let mut total_failures = 0usize;
     for h in handles {
-        all_latencies.extend(h.await?);
+        let (latencies, failures) = h.await?;
+        all_latencies.extend(latencies);
+        total_failures += failures;
     }
     let wall = total_start.elapsed().as_secs_f64();
 
     if all_latencies.is_empty() {
-        eprintln!("No successful requests recorded.");
+        eprintln!("No successful requests recorded ({total_failures} failures).");
         std::process::exit(1);
     }
 
@@ -132,12 +140,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let throughput = n as f64 / wall;
 
     println!("--- Results ---");
-    println!("requests:    {n}");
+    println!("requests:    {n} succeeded, {total_failures} failed");
     println!("wall time:   {wall:.2}s");
     println!("throughput:  {throughput:.2} req/s");
     println!("p50 latency: {:.1}ms", pct(0.50));
     println!("p95 latency: {:.1}ms", pct(0.95));
     println!("max latency: {:.1}ms", all_latencies[n - 1]);
+
+    if total_failures > 0 {
+        eprintln!("WARNING: {total_failures} requests failed — results may not reflect true throughput.");
+        std::process::exit(1);
+    }
 
     Ok(())
 }
