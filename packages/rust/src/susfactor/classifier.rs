@@ -156,8 +156,7 @@ impl SusFactorClassifier {
             .encode(text, true)
             .map_err(|e| SigError::Model(format!("Tokenization failed: {e}")))?;
 
-        let mut input_ids: Vec<i64> =
-            encoding.get_ids().iter().map(|&id| id as i64).collect();
+        let mut input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
         let mut attention_mask: Vec<i64> = encoding
             .get_attention_mask()
             .iter()
@@ -179,19 +178,15 @@ impl SusFactorClassifier {
     ) -> Result<Vec<f32>> {
         let seq_len = input_ids.len();
 
-        let input_ids_array = Array2::from_shape_vec((1, seq_len), input_ids).map_err(|e| {
-            SigError::Model(format!("Failed to create input_ids array: {e}"))
-        })?;
-        let attention_mask_array =
-            Array2::from_shape_vec((1, seq_len), attention_mask).map_err(|e| {
-                SigError::Model(format!("Failed to create attention_mask array: {e}"))
-            })?;
+        let input_ids_array = Array2::from_shape_vec((1, seq_len), input_ids)
+            .map_err(|e| SigError::Model(format!("Failed to create input_ids array: {e}")))?;
+        let attention_mask_array = Array2::from_shape_vec((1, seq_len), attention_mask)
+            .map_err(|e| SigError::Model(format!("Failed to create attention_mask array: {e}")))?;
 
         let input_ids_tensor = Tensor::<i64>::from_array(input_ids_array)
             .map_err(|e| SigError::Model(format!("Failed to create input_ids tensor: {e}")))?;
-        let attention_mask_tensor = Tensor::<i64>::from_array(attention_mask_array).map_err(
-            |e| SigError::Model(format!("Failed to create attention_mask tensor: {e}")),
-        )?;
+        let attention_mask_tensor = Tensor::<i64>::from_array(attention_mask_array)
+            .map_err(|e| SigError::Model(format!("Failed to create attention_mask tensor: {e}")))?;
 
         let mut session_guard = session
             .lock()

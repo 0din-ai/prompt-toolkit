@@ -552,12 +552,12 @@ impl OnnxProvider {
             // model declares that input (BERT-style); XLM-RoBERTa models don't.
             let outputs = if requires_token_type_ids {
                 let token_type_ids: Vec<i64> = vec![0i64; seq_len];
-                let token_type_ids_array =
-                    Array2::from_shape_vec((1, seq_len), token_type_ids).map_err(|e| {
+                let token_type_ids_array = Array2::from_shape_vec((1, seq_len), token_type_ids)
+                    .map_err(|e| {
                         SigError::Provider(format!("Failed to create token_type_ids array: {e}"))
                     })?;
-                let token_type_ids_tensor =
-                    Tensor::<i64>::from_array(token_type_ids_array).map_err(|e| {
+                let token_type_ids_tensor = Tensor::<i64>::from_array(token_type_ids_array)
+                    .map_err(|e| {
                         SigError::Provider(format!("Failed to create token_type_ids tensor: {e}"))
                     })?;
                 session_guard
@@ -840,7 +840,10 @@ mod tests {
         let result = OnnxSessionPool::build(0, std::path::Path::new("nonexistent"), 0);
         assert!(result.is_err());
         let msg = result.unwrap_err();
-        assert!(msg.contains("pool_size must be at least 1"), "unexpected: {msg}");
+        assert!(
+            msg.contains("pool_size must be at least 1"),
+            "unexpected: {msg}"
+        );
     }
 
     #[test]

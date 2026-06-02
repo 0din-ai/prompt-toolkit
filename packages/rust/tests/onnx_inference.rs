@@ -22,7 +22,9 @@ use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 /// Returns the model path from `ODIN_ONNX_TEST_MODEL`, or `None` to skip.
 fn test_model() -> Option<String> {
-    std::env::var("ODIN_ONNX_TEST_MODEL").ok().filter(|s| !s.is_empty())
+    std::env::var("ODIN_ONNX_TEST_MODEL")
+        .ok()
+        .filter(|s| !s.is_empty())
 }
 
 #[tokio::test]

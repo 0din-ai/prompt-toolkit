@@ -40,8 +40,16 @@ impl ThreatFeedClient {
         let api_token = api_token
             .map(String::from)
             .filter(|s| !s.is_empty())
-            .or_else(|| std::env::var("ODIN_THREATFEED_API_TOKEN").ok().filter(|s| !s.is_empty()))
-            .or_else(|| std::env::var("ODIN_API_TOKEN").ok().filter(|s| !s.is_empty()))
+            .or_else(|| {
+                std::env::var("ODIN_THREATFEED_API_TOKEN")
+                    .ok()
+                    .filter(|s| !s.is_empty())
+            })
+            .or_else(|| {
+                std::env::var("ODIN_API_TOKEN")
+                    .ok()
+                    .filter(|s| !s.is_empty())
+            })
             .ok_or_else(|| {
                 SigError::ThreatFeedApi(
                     "API token required: pass api_token or set \
@@ -118,20 +126,17 @@ impl ThreatFeedClient {
             )));
         }
 
-        let entry: ThreatFeedEntry = response.json().await.map_err(|e| {
-            SigError::ThreatFeedApi(format!("Failed to parse response: {}", e))
-        })?;
+        let entry: ThreatFeedEntry = response
+            .json()
+            .await
+            .map_err(|e| SigError::ThreatFeedApi(format!("Failed to parse response: {}", e)))?;
 
         Ok(entry)
     }
 
     // --- Private methods ---
 
-    async fn fetch_page(
-        &self,
-        page: usize,
-        since: Option<&str>,
-    ) -> Result<ThreatFeedResponse> {
+    async fn fetch_page(&self, page: usize, since: Option<&str>) -> Result<ThreatFeedResponse> {
         let mut url = format!(
             "{}/api/v1/threatfeed?page={}&per_page={}",
             self.base_url, page, self.per_page
@@ -165,9 +170,10 @@ impl ThreatFeedClient {
             )));
         }
 
-        let data: ThreatFeedResponse = response.json().await.map_err(|e| {
-            SigError::ThreatFeedApi(format!("Failed to parse response: {}", e))
-        })?;
+        let data: ThreatFeedResponse = response
+            .json()
+            .await
+            .map_err(|e| SigError::ThreatFeedApi(format!("Failed to parse response: {}", e)))?;
 
         Ok(data)
     }

@@ -70,7 +70,10 @@ impl std::fmt::Display for ThreatMatch {
         write!(
             f,
             "{} ({}, {}) - cosine: {:.4}, hamming: {}",
-            self.title, self.severity, self.security_boundary, self.cosine_similarity,
+            self.title,
+            self.severity,
+            self.security_boundary,
+            self.cosine_similarity,
             self.hamming_distance
         )
     }
