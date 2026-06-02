@@ -105,7 +105,7 @@ pub use lsh::{
     compute_embedding_sha256, cosine_from_hamming, hamming_distance_hex, normalize_vector,
     simhash_lsh_multi,
 };
-pub use sign::sign_text;
+pub use sign::{compare_text, sign_text};
 pub use types::{
     parse_signature_string, signature_string, ComparisonResult, EmbeddingResult, HashAlgorithm,
     LshConfig, LshFamily, LshOutput, ParsedSignature, PromptInfo, QualityStats, SignatureResult,

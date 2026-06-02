@@ -1,9 +1,9 @@
 use std::time::Instant;
 
 use crate::error::{Result, SigError};
-use crate::lsh::simhash_lsh_multi;
+use crate::lsh::{cosine_from_hamming, hamming_distance_hex, simhash_lsh_multi};
 use crate::provider::EmbeddingProvider;
-use crate::types::{LshConfig, LshOutput, SignatureResult, SignatureVersion};
+use crate::types::{signature_string, ComparisonResult, LshConfig, LshOutput, PromptInfo, SignatureResult, SignatureVersion};
 
 /// Generate a signature from text.
 ///
@@ -143,6 +143,137 @@ pub async fn sign_text(
     .await;
 
     // Clean up owned provider if we created one
+    if let Some(owned) = owned_provider {
+        let _ = owned.close().await;
+    }
+
+    result
+}
+
+/// Compare two prompts and return their similarity.
+///
+/// Generates embeddings for both prompts concurrently, computes LSH signatures,
+/// then derives the Hamming distance and estimated cosine similarity. The
+/// `version` field on the returned result reflects the resolved signature version
+/// (always `V0` or `V1`, never `Latest`).
+///
+/// # Arguments
+///
+/// * `text_a` / `text_b` - The two prompts to compare
+/// * `version` - Requested signature version. When a provider is supplied the
+///   effective version is inferred from `provider.dimensions()` (1024 → V1,
+///   1536 → V0), identical to `sign_text`. Passing `Latest` with a V0 provider
+///   therefore yields `version = V0` in the result.
+/// * `provider` - Optional provider; auto-constructed if `None` (same semantics as `sign_text`)
+/// * `config` - Optional LSH config; defaults to 3 families, 256 bits, 16 bands
+///
+/// # Errors
+///
+/// Returns an error if embedding generation, LSH computation, or version
+/// resolution fails.
+pub async fn compare_text(
+    text_a: &str,
+    text_b: &str,
+    version: SignatureVersion,
+    provider: Option<&dyn EmbeddingProvider>,
+    config: Option<LshConfig>,
+) -> Result<ComparisonResult> {
+    let start = Instant::now();
+
+    let owned_provider = if provider.is_none() {
+        Some(create_provider_for_version(version).await?)
+    } else {
+        None
+    };
+
+    let provider_ref: &dyn EmbeddingProvider = match (&owned_provider, provider) {
+        (Some(owned), None) => owned.as_ref(),
+        (None, Some(provided)) => provided,
+        _ => unreachable!(),
+    };
+
+    let result = async {
+        let resolved_version = resolve_version(version, provider_ref)?;
+        let lsh_config = config.unwrap_or_default();
+
+        // Generate both embeddings concurrently.
+        let (emb_a, emb_b) = tokio::try_join!(
+            provider_ref.generate_embedding(text_a),
+            provider_ref.generate_embedding(text_b),
+        )?;
+
+        let expected_dims = resolved_version.embedding_dimensions();
+        for (dims, label) in [(emb_a.dimensions, "text_a"), (emb_b.dimensions, "text_b")] {
+            if dims != expected_dims {
+                return Err(SigError::InvalidInput(format!(
+                    "Embedding dimensions mismatch for {label}: expected {expected_dims} \
+                     for {resolved_version:?}, got {dims}"
+                )));
+            }
+        }
+
+        let sigs_a = simhash_lsh_multi(&emb_a.normalized_embedding, &lsh_config);
+        let sigs_b = simhash_lsh_multi(&emb_b.normalized_embedding, &lsh_config);
+
+        // Use family 0 (primary) signature for distance computation.
+        let hamming = hamming_distance_hex(&sigs_a[0].signature, &sigs_b[0].signature);
+        // sigs_a[0].bits holds the value after simhash_lsh_multi's internal
+        // clamping (min 64), so cosine_from_hamming is consistent with the
+        // bits actually used.
+        let cosine = cosine_from_hamming(hamming, sigs_a[0].bits);
+
+        // Build the effective config from the values actually used.
+        // families and bits come from simhash_lsh_multi's clamping; bands is
+        // taken from the actual band count in the output (the implementation
+        // may produce fewer bands than requested when bits is small).
+        let effective_config = LshConfig {
+            families: sigs_a.len(),
+            bits: sigs_a[0].bits,
+            bands: sigs_a[0].bands.len(),
+        };
+
+        let elapsed_ms = start.elapsed().as_millis() as f64;
+
+        // Truncate at a char boundary to avoid panicking on non-ASCII UTF-8.
+        // Single bounded scan: collect at most 51 char boundaries, decide
+        // inline — no O(n) chars().count() over the full string.
+        let prompt_preview = |text: &str| -> String {
+            let mut indices = text.char_indices().take(51);
+            match indices.nth(50) {
+                None => text.to_string(), // ≤ 50 chars, no truncation needed
+                Some(_) => {
+                    // Re-scan for the 47th boundary (cheap: ≤ 47 steps)
+                    let cut = text
+                        .char_indices()
+                        .nth(47)
+                        .map(|(i, _)| i)
+                        .unwrap_or(text.len());
+                    format!("{}...", &text[..cut])
+                }
+            }
+        };
+
+        Ok(ComparisonResult {
+            prompt_a: PromptInfo {
+                preview: prompt_preview(text_a),
+                length: text_a.len(), // byte length, consistent with sign_text's prompt_length
+                signature: signature_string(resolved_version, &sigs_a[0].signature),
+            },
+            prompt_b: PromptInfo {
+                preview: prompt_preview(text_b),
+                length: text_b.len(), // byte length, consistent with sign_text's prompt_length
+                signature: signature_string(resolved_version, &sigs_b[0].signature),
+            },
+            hamming_distance: hamming,
+            cosine_similarity: cosine,
+            lsh_config: effective_config,
+            version: resolved_version,
+            quality_stats: None,
+            timing_ms: Some(elapsed_ms),
+        })
+    }
+    .await;
+
     if let Some(owned) = owned_provider {
         let _ = owned.close().await;
     }
@@ -487,5 +618,101 @@ mod tests {
         assert_eq!(result.prompt_preview.len(), 50);
         assert!(result.prompt_preview.ends_with("..."));
         assert_eq!(result.prompt_length, 100);
+    }
+
+    // -----------------------------------------------------------------------
+    // compare_text tests
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn test_compare_text_same_prompt_is_identical() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("hello", "hello", SignatureVersion::V1, Some(&provider), None)
+            .await
+            .unwrap();
+
+        assert_eq!(result.hamming_distance, 0);
+        assert!((result.cosine_similarity - 1.0).abs() < 1e-6);
+        assert_eq!(result.version, SignatureVersion::V1);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_version_is_resolved() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("a", "b", SignatureVersion::Latest, Some(&provider), None)
+            .await
+            .unwrap();
+        // Latest should resolve to V1 (1024 dims)
+        assert_eq!(result.version, SignatureVersion::V1);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_version_never_latest_in_result() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("a", "b", SignatureVersion::Latest, Some(&provider), None)
+            .await
+            .unwrap();
+        assert_ne!(result.version, SignatureVersion::Latest);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_unicode_preview_does_not_panic() {
+        // "日" is 3 bytes; 51 of them = 153 bytes but only 51 chars.
+        // Slicing at byte 47 would land mid-codepoint and panic without the fix.
+        let long_unicode = "日".repeat(51);
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result =
+            compare_text(&long_unicode, "hello", SignatureVersion::V1, Some(&provider), None)
+                .await
+                .unwrap();
+        // Should not panic; preview is at most 47 chars + "..." = 50 chars total.
+        assert!(result.prompt_a.preview.chars().count() <= 50);
+    }
+
+    #[tokio::test]
+    async fn test_compare_text_result_fields() {
+        let embedding = vec![0.5f32; 1024];
+        let provider = MockProvider {
+            name: "mock".to_string(),
+            model: "test".to_string(),
+            dimensions: 1024,
+            embedding,
+        };
+        let result = compare_text("prompt a", "prompt b", SignatureVersion::V1, Some(&provider), None)
+            .await
+            .unwrap();
+
+        assert_eq!(result.prompt_a.preview, "prompt a");
+        assert_eq!(result.prompt_a.length, 8); // 8 bytes (ASCII, matches sign_text byte semantics)
+        assert!(result.prompt_a.signature.starts_with("0din-v1:"));
+        assert_eq!(result.prompt_b.preview, "prompt b");
+        assert_eq!(result.prompt_b.length, 8);
+        assert!(result.prompt_b.signature.starts_with("0din-v1:"));
+        assert!(result.timing_ms.is_some());
+        assert_eq!(result.lsh_config, LshConfig::default()); // default is within clamped range
     }
 }

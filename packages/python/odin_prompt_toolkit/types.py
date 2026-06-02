@@ -262,6 +262,7 @@ class ComparisonResult:
     hamming_distance: int
     cosine_similarity: float
     lsh_config: LshConfig
+    version: SignatureVersion = SignatureVersion.V1
     quality_stats: QualityStats | None = None
     timing_ms: float | None = None
 
