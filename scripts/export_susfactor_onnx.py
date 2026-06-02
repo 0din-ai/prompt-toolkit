@@ -139,11 +139,20 @@ def main() -> int:
 
     loaded = onnx.load(str(onnx_path))
     onnx.load_external_data_for_model(loaded, str(out_dir))
-    # Remove only the scattered external-data shards created by torch.onnx.export,
-    # not every file in out_dir (which may contain unrelated files if the caller
-    # points output_dir at an existing directory).
+    # Remove only the scattered external-data shard files produced by
+    # torch.onnx.export — identified via the model's external-data references
+    # so we don't touch unrelated files or crash on subdirectories.
+    from onnx.external_data_helper import ExternalDataInfo
+
+    shard_names = {
+        ExternalDataInfo(t).location
+        for t in loaded.graph.initializer
+        if t.HasField("data_location")
+        and t.data_location == onnx.TensorProto.EXTERNAL  # type: ignore[attr-defined]
+    }
+    # Also guard with is_file() to avoid IsADirectoryError on any subdirs.
     for stray in out_dir.iterdir():
-        if stray.name not in ("model.onnx", "model.onnx_data"):
+        if stray.is_file() and stray.name in shard_names:
             stray.unlink()
     convert_model_to_external_data(
         loaded,
