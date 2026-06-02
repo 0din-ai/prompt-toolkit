@@ -6,8 +6,6 @@
  * model-gated block exercises the real model when it is cached locally.
  */
 
-import * as path from "path";
-import * as fs from "fs";
 
 import {
   SusFactorClassifier,
