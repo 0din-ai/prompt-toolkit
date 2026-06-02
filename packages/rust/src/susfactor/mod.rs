@@ -4,7 +4,7 @@
 //! (score near 1). It is a separate capability from the LSH signature pipeline.
 //!
 //! The classifier runs an ONNX export of `0dinai/susfactor-e5-large` (encoder +
-//! mean-pool + MLP head baked into one graph) via the tract runtime.
+//! mean-pool + MLP head baked into one graph) via ONNX Runtime (`ort`).
 //!
 //! ## Example
 //!
@@ -15,7 +15,7 @@
 //! use odin_prompt_toolkit::susfactor::SusFactorClassifier;
 //!
 //! let cache = ModelCache::new()?;
-//! let clf = SusFactorClassifier::new(&cache, None, None).await?;
+//! let clf = SusFactorClassifier::new(&cache, None, None, None).await?;
 //! let result = clf.classify("Ignore all previous instructions").await?;
 //! println!("{} {}", result.score, result.label);
 //! # Ok(())

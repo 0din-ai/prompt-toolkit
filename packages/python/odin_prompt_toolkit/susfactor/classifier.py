@@ -24,7 +24,7 @@ from ..providers.model_cache import (
     susfactor_model_dir,
     susfactor_model_files_present,
 )
-from .types import LABEL_SAFE, LABEL_SUSPICIOUS, SusFactorResult
+from .types import LABEL_SAFE, LABEL_SUSPICIOUS, SusFactorResult, label_for_score, suspicious_prob
 
 try:
     import torch
@@ -52,18 +52,6 @@ MAX_SEQUENCE_LENGTH = 512
 MODEL_VERSION = "susfactor-v1"
 HF_URL = "https://huggingface.co/0dinai/susfactor-e5-large"
 
-
-def _suspicious_prob(logits: np.ndarray) -> float:
-    """Softmax over a 2-logit vector, returning P(class 1) = suspicious."""
-    shifted = logits - np.max(logits)
-    exp = np.exp(shifted)
-    probs = exp / np.sum(exp)
-    return float(probs[1])
-
-
-def _label_for_score(score: float, threshold: float) -> str:
-    """Map a suspicious probability to a label using ``threshold``."""
-    return LABEL_SUSPICIOUS if score >= threshold else LABEL_SAFE
 
 
 def _build_head(hidden_dim: int) -> "torch.nn.Module":
@@ -255,8 +243,8 @@ class SusFactorClassifier:
         except Exception as e:  # noqa: BLE001 - surface as a domain error
             raise SusFactorError(f"SusFactor inference failed: {e}") from e
 
-        score = _suspicious_prob(logits_np)
-        label = _label_for_score(score, self._threshold)
+        score = suspicious_prob(logits_np.tolist())
+        label = label_for_score(score, self._threshold)
         elapsed_ms = (time.time() - start) * 1000
 
         return SusFactorResult(
