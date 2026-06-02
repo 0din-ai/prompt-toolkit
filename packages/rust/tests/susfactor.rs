@@ -16,9 +16,11 @@ use odin_prompt_toolkit::susfactor::SusFactorClassifier;
 fn model_dir() -> Option<String> {
     let dir = std::env::var("SUSFACTOR_MODEL_DIR").ok()?;
     let base = std::path::Path::new(&dir);
-    // Require both the ONNX model and tokenizer so a partially-populated
-    // directory fails fast here rather than inside the classifier.
+    // Require the ONNX graph, its external weights, and the tokenizer so that
+    // a partially-populated directory skips cleanly rather than failing inside
+    // the classifier.
     if base.join("onnx").join("model.onnx").exists()
+        && base.join("onnx").join("model.onnx_data").exists()
         && base.join("tokenizer.json").exists()
     {
         Some(dir)

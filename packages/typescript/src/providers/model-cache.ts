@@ -108,11 +108,12 @@ export class ModelCache {
       return false;
     }
     // Accept either the optimized or unoptimized ONNX file (mirrors getModelPath).
-    const hasOnnx =
-      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx')) ||
-      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx'));
-    // The export script writes external weights to model.onnx_data alongside model.onnx.
-    const hasData = fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
+    const hasOptimized = fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx'));
+    const hasUnoptimized = fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx'));
+    const hasOnnx = hasOptimized || hasUnoptimized;
+    // External weights live alongside the .onnx file; check the matching .onnx_data.
+    const dataFile = hasOptimized ? 'model_O4.onnx_data' : 'model.onnx_data';
+    const hasData = fs.existsSync(path.join(modelDir, 'onnx', dataFile));
     const hasTokenizer = fs.existsSync(path.join(modelDir, 'tokenizer.json'));
     return hasOnnx && hasData && hasTokenizer;
   }

@@ -98,7 +98,7 @@ export class SusFactorClassifier {
         `SusFactor model not found in cache at ${cache.modelDirectory(
           MODEL_VERSION,
         )}. Download it from HuggingFace: ${HF_URL}\n` +
-          `Expected layout: <dir>/onnx/model.onnx + <dir>/onnx/model.onnx_data and <dir>/tokenizer.json`,
+          `Expected layout: <dir>/onnx/model.onnx (or model_O4.onnx) + matching .onnx_data and <dir>/tokenizer.json`,
       );
     }
 
@@ -178,7 +178,10 @@ export class SusFactorClassifier {
       attention_mask: attentionMaskTensor,
     });
 
-    const logits = results[Object.keys(results)[0]].data as Float32Array;
+    // Prefer the named "logits" output set by the export script; fall back to
+    // the first output so the classifier works with re-exported variants.
+    const logitsKey = "logits" in results ? "logits" : Object.keys(results)[0];
+    const logits = results[logitsKey].data as Float32Array;
     const score = softmaxSuspicious(logits);
     const label = labelForScore(score, this.decisionThreshold);
 

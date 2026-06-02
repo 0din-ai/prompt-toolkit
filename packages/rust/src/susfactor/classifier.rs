@@ -91,6 +91,13 @@ impl SusFactorClassifier {
         let threshold = threshold.unwrap_or(Self::DEFAULT_THRESHOLD);
 
         let model_path = cache.get_model(&source, Self::ONNX_MODEL_FILE).await?;
+        // The SusFactor ONNX export uses external weights stored alongside the
+        // graph file. Download model.onnx_data before loading the session so
+        // ORT can resolve the external data references.
+        let _data_path = cache
+            .get_model(&source, "onnx/model.onnx_data")
+            .await
+            .ok(); // Non-fatal: some exports may embed weights directly.
         let tokenizer_path = cache.get_tokenizer(&source).await?;
 
         // Build the ORT session and load the tokenizer inside spawn_blocking
