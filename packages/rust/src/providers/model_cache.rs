@@ -448,8 +448,9 @@ mod tests {
 
         let mut server = Server::new_async().await;
         let body = b"model-bytes";
-        // Two identical mocks so both concurrent requests succeed
-        server
+        // Keep the Mock alive for the duration of the test — dropping it
+        // de-registers it from mockito and would cause both requests to fail.
+        let _mock = server
             .mock("GET", "/org/repo/resolve/main/model.onnx")
             .with_status(200)
             .with_body(body)
