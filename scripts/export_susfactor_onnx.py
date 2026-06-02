@@ -117,10 +117,9 @@ def main() -> int:
         ref_logits = model(input_ids, attention_mask).numpy()
 
     onnx_path = out_dir / "model.onnx"
-    torch.onnx.export(
-        model,
-        (input_ids, attention_mask),
-        str(onnx_path),
+    # dynamo= was added in torch 2.1; omit it on older versions so the script
+    # stays compatible with the full torch>=2.0.0 range declared in pyproject.toml.
+    export_kwargs: dict = dict(
         input_names=["input_ids", "attention_mask"],
         output_names=["logits"],
         dynamic_axes={
@@ -129,8 +128,12 @@ def main() -> int:
             "logits": {0: "batch"},
         },
         opset_version=OPSET,
-        dynamo=False,
     )
+    import inspect
+
+    if "dynamo" in inspect.signature(torch.onnx.export).parameters:
+        export_kwargs["dynamo"] = False
+    torch.onnx.export(model, (input_ids, attention_mask), str(onnx_path), **export_kwargs)
 
     # Consolidate scattered external tensors into a single .onnx_data file,
     # matching the repo convention (model.onnx + model.onnx_data).

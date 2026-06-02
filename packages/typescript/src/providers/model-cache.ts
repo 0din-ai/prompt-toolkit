@@ -107,15 +107,16 @@ export class ModelCache {
     if (!fs.existsSync(modelDir)) {
       return false;
     }
-    // Accept either the optimized or unoptimized ONNX file (mirrors getModelPath).
-    const hasOptimized = fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx'));
-    const hasUnoptimized = fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx'));
-    const hasOnnx = hasOptimized || hasUnoptimized;
-    // External weights live alongside the .onnx file; check the matching .onnx_data.
-    const dataFile = hasOptimized ? 'model_O4.onnx_data' : 'model.onnx_data';
-    const hasData = fs.existsSync(path.join(modelDir, 'onnx', dataFile));
+    // Accept either the optimized or unoptimized pair independently — a usable
+    // cache only requires one complete pair (model + matching .onnx_data).
+    const hasOptimizedPair =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx_data'));
+    const hasUnoptimizedPair =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
     const hasTokenizer = fs.existsSync(path.join(modelDir, 'tokenizer.json'));
-    return hasOnnx && hasData && hasTokenizer;
+    return (hasOptimizedPair || hasUnoptimizedPair) && hasTokenizer;
   }
 
   /**
