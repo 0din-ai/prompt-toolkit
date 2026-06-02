@@ -94,6 +94,15 @@ class ThreatFeedCacheError(ThreatFeedError):
     """
 
 
+class SusFactorError(SigError):
+    """SusFactor classification error.
+
+    Raised when the SusFactor jailbreak classifier fails to load its model
+    files or run inference (e.g., missing model cache, tokenizer or head
+    weights not found, or inference failure).
+    """
+
+
 __all__ = [
     "SigError",
     "ConfigError",
@@ -103,4 +112,5 @@ __all__ = [
     "ThreatFeedError",
     "ThreatFeedApiError",
     "ThreatFeedCacheError",
+    "SusFactorError",
 ]

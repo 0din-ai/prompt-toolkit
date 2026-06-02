@@ -94,6 +94,34 @@ export class ModelCache {
   }
 
   /**
+   * Check if a SusFactor ONNX model version is cached locally.
+   *
+   * Requires a complete model pair — either the optimized pair
+   * (`onnx/model_O4.onnx` + `onnx/model_O4.onnx_data`) or the unoptimized
+   * pair (`onnx/model.onnx` + `onnx/model.onnx_data`) — plus `tokenizer.json`.
+   * The `.onnx_data` file holds the external weights and is required for ORT
+   * to load the graph.
+   *
+   * @param version - Model version (default: "susfactor-v1")
+   */
+  hasSusfactorModel(version: string = 'susfactor-v1'): boolean {
+    const modelDir = this.modelDirectory(version);
+    if (!fs.existsSync(modelDir)) {
+      return false;
+    }
+    // Accept either the optimized or unoptimized pair independently — a usable
+    // cache only requires one complete pair (model + matching .onnx_data).
+    const hasOptimizedPair =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model_O4.onnx_data'));
+    const hasUnoptimizedPair =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
+    const hasTokenizer = fs.existsSync(path.join(modelDir, 'tokenizer.json'));
+    return (hasOptimizedPair || hasUnoptimizedPair) && hasTokenizer;
+  }
+
+  /**
    * Get the path to the ONNX model file.
    *
    * Prefers the optimized model (model_O4.onnx) if available,

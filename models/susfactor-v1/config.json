@@ -1,0 +1,63 @@
+{
+  "model_id": "0dinai/susfactor-e5-large",
+  "variant": "susfactor-e5-large-v1",
+  "description": "Binary jailbreak/prompt-injection classifier: e5-large encoder + 2-layer MLP head. Classifies prompts as safe (score near 0) or suspicious (score near 1).",
+  "task": "classification",
+  "architecture": {
+    "type": "XLMRobertaModel",
+    "encoder": "intfloat/multilingual-e5-large",
+    "pretrained_checkpoint": "0dinai/jailbreak-embeddings-large",
+    "hidden_size": 1024,
+    "num_hidden_layers": 24,
+    "num_attention_heads": 16,
+    "intermediate_size": 4096,
+    "max_position_embeddings": 514,
+    "vocab_size": 250002,
+    "classification_head": "Dropout -> Linear(1024, 256) -> GELU -> Dropout -> Linear(256, 2); dropout disabled at inference"
+  },
+  "tokenizer": {
+    "type": "XLMRobertaTokenizer",
+    "model_type": "sentencepiece_bpe",
+    "max_sequence_length": 512,
+    "padding": true,
+    "truncation": true
+  },
+  "inference": {
+    "pooling": "mean",
+    "pooling_with_attention_mask": true,
+    "normalization": "none",
+    "input_prefix": "",
+    "head_dim": 256,
+    "num_classes": 2,
+    "suspicious_class_index": 1,
+    "output": "softmax",
+    "default_threshold": 0.5,
+    "note": "Score = softmax(logits)[1] = P(suspicious). label = 'suspicious' if score >= threshold else 'safe'."
+  },
+  "files": {
+    "encoder_config": "encoder/config.json",
+    "encoder_weights": "encoder/model.safetensors",
+    "encoder_tokenizer": "encoder/tokenizer.json",
+    "encoder_tokenizer_config": "encoder/tokenizer_config.json",
+    "head_weights": "head.pt",
+    "training_config": "training_config.json"
+  },
+  "download": {
+    "huggingface_repo": "0dinai/susfactor-e5-large",
+    "gated": true,
+    "cache_dir_default": "~/.cache/signature-sdk/models/susfactor-v1",
+    "cache_dir_env_var": "SIGNATURE_SDK_MODEL_CACHE",
+    "download_strategy": "pre_cache",
+    "note": "Model is gated on HuggingFace (requires an access token). It is not bundled in SDK packages and is not auto-downloaded by the Python SDK; download it manually into the cache directory before use."
+  },
+  "compatibility": {
+    "python": {
+      "runtime": "torch + transformers",
+      "min_torch_version": "2.0.0",
+      "min_transformers_version": "4.0.0"
+    }
+  },
+  "license": "MIT",
+  "version": "1.0.0",
+  "last_updated": "2026-06-01"
+}

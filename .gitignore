@@ -60,3 +60,5 @@ models/*/onnx/*.onnx
 models/*/onnx/*.onnx_data
 models/*/tokenizer.json
 models/*/*.json
+# ...but keep the small metadata config.json (tracked for every model version)
+!models/*/config.json
