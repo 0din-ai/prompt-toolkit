@@ -22,7 +22,7 @@ from ..providers.model_cache import (
     susfactor_model_dir,
     susfactor_model_files_present,
 )
-from .types import LABEL_SAFE, LABEL_SUSPICIOUS, SusFactorResult, label_for_score, suspicious_prob
+from .types import SusFactorResult, label_for_score, suspicious_prob
 
 _INSTALL_HINT = "pip install 'odin-prompt-toolkit[susfactor]'"
 
