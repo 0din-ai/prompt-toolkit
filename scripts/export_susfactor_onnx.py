@@ -97,9 +97,10 @@ def main() -> int:
     encoder = AutoModel.from_pretrained(str(encoder_dir), local_files_only=True)
     tokenizer = AutoTokenizer.from_pretrained(str(encoder_dir), local_files_only=True)
     head = ClassificationHead()
-    head.load_state_dict(
-        torch.load(model_dir / "head.pt", map_location="cpu", weights_only=True)
-    )
+    load_kwargs: dict = {"map_location": "cpu"}
+    if "weights_only" in inspect.signature(torch.load).parameters:
+        load_kwargs["weights_only"] = True
+    head.load_state_dict(torch.load(model_dir / "head.pt", **load_kwargs))
 
     model = SusFactorONNX(encoder, head).eval()
 

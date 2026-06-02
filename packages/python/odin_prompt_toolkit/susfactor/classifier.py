@@ -179,7 +179,12 @@ class SusFactorClassifier:
             encoder = AutoModel.from_pretrained(str(encoder_dir), local_files_only=True)
             tokenizer = AutoTokenizer.from_pretrained(str(encoder_dir), local_files_only=True)
             head = _build_head(hidden_dim)
-            state_dict = torch.load(head_path, map_location="cpu", weights_only=True)
+            import inspect
+
+            load_kwargs: dict = {"map_location": "cpu"}
+            if "weights_only" in inspect.signature(torch.load).parameters:
+                load_kwargs["weights_only"] = True
+            state_dict = torch.load(head_path, **load_kwargs)
             head.load_state_dict(state_dict)
         except SusFactorError:
             raise
