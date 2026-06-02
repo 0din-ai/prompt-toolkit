@@ -6,7 +6,6 @@ encoder / tokenizer / head objects, and by mocking the model cache.
 
 import importlib.util
 
-import numpy as np
 import pytest
 
 from odin_prompt_toolkit.error import SusFactorError

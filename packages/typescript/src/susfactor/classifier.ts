@@ -66,17 +66,21 @@ export class SusFactorClassifier {
   private tokenizer: any;
   private modelName: string;
   private decisionThreshold: number;
+  /** onnxruntime-node module, set by {@link create}. Null in test mode (fake session). */
+  private ort: any;
 
   constructor(
     session: any,
     tokenizer: any,
     modelName: string,
     threshold: number = DEFAULT_THRESHOLD,
+    ort: any = null,
   ) {
     this.session = session;
     this.tokenizer = tokenizer;
     this.modelName = modelName;
     this.decisionThreshold = threshold;
+    this.ort = ort;
   }
 
   /**
@@ -139,7 +143,7 @@ export class SusFactorClassifier {
       local_files_only: true,
     });
 
-    return new SusFactorClassifier(session, tokenizer, modelName, threshold);
+    return new SusFactorClassifier(session, tokenizer, modelName, threshold, ort);
   }
 
   model(): string {
@@ -166,12 +170,21 @@ export class SusFactorClassifier {
     const seqLen = inputIdsData.length;
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ort = require("onnxruntime-node");
-    const inputIdsTensor = new ort.Tensor("int64", inputIdsData, [1, seqLen]);
-    const attentionMaskTensor = new ort.Tensor("int64", attentionMaskData, [
-      1,
-      seqLen,
-    ]);
+    const ort = this.ort;
+    let inputIdsTensor: any;
+    let attentionMaskTensor: any;
+    if (ort) {
+      inputIdsTensor = new ort.Tensor("int64", inputIdsData, [1, seqLen]);
+      attentionMaskTensor = new ort.Tensor("int64", attentionMaskData, [
+        1,
+        seqLen,
+      ]);
+    } else {
+      // Test/fake-session mode: ort is not injected; pass raw data so the
+      // fake session (which ignores its inputs) still returns correct logits.
+      inputIdsTensor = { data: inputIdsData, dims: [1, seqLen] };
+      attentionMaskTensor = { data: attentionMaskData, dims: [1, seqLen] };
+    }
 
     const results = await this.session.run({
       input_ids: inputIdsTensor,
