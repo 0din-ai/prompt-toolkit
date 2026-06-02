@@ -45,8 +45,8 @@
   "download": {
     "huggingface_repo": "0dinai/susfactor-e5-large",
     "gated": true,
-    "cache_dir_default": "~/.cache/odin-prompt-toolkit/models/susfactor-v1",
-    "cache_dir_env_var": "ODIN_PROMPT_TOOLKIT_MODEL_CACHE",
+    "cache_dir_default": "~/.cache/signature-sdk/models/susfactor-v1",
+    "cache_dir_env_var": "SIGNATURE_SDK_MODEL_CACHE",
     "download_strategy": "pre_cache",
     "note": "Model is gated on HuggingFace (requires an access token). It is not bundled in SDK packages and is not auto-downloaded by the Python SDK; download it manually into the cache directory before use."
   },
