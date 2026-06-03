@@ -1,0 +1,112 @@
+name: Bump Version & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (e.g. 0.4.0)'
+        required: true
+        type: string
+
+jobs:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push commit + tag
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use a PAT or the default GITHUB_TOKEN.
+          # GITHUB_TOKEN pushes are blocked from triggering downstream
+          # tag-triggered workflows by default; a PAT avoids that restriction.
+          # If you have a PAT stored as RELEASE_TOKEN, it will be used;
+          # otherwise falls back to the default GITHUB_TOKEN (you may need
+          # to enable "Allow GitHub Actions to create and approve pull requests"
+          # under Settings > Actions > General).
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+          fetch-depth: 0
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected semantic version, e.g. 0.4.0 or 1.0.0-beta.1"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Check version is newer than latest tag
+        run: |
+          LATEST=$(git tag --list 'v*' --sort=-version:refname | head -1 || true)
+          echo "Latest tag: ${LATEST:-none}"
+          echo "New version: v$VERSION"
+          if [ -n "$LATEST" ]; then
+            # Use sort -V to compare; if new version sorts before or equal to latest, fail
+            LOWEST=$(printf '%s\n%s' "${LATEST#v}" "$VERSION" | sort -V | head -1)
+            if [ "$LOWEST" = "$VERSION" ] && [ "${LATEST#v}" != "$VERSION" ]; then
+              echo "❌ v$VERSION is not newer than $LATEST"
+              exit 1
+            fi
+            if [ "${LATEST#v}" = "$VERSION" ]; then
+              echo "❌ Tag $LATEST already exists"
+              exit 1
+            fi
+          fi
+
+      - name: Bump versions in all packages
+        run: |
+          # Rust
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" packages/rust/Cargo.toml
+
+          # Python
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" packages/python/pyproject.toml
+          sed -i "s/__version__ = \".*\"/__version__ = \"$VERSION\"/" \
+            packages/python/odin_prompt_toolkit/__init__.py
+
+          # Python-native
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" packages/python-native/pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" packages/python-native/Cargo.toml
+
+          # TypeScript
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/typescript/package.json
+
+      - name: Verify all versions match
+        run: |
+          RUST=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          PY=$(grep '^version = ' packages/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          PY_INIT=$(grep '__version__ = ' packages/python/odin_prompt_toolkit/__init__.py | sed 's/__version__ = "\(.*\)"/\1/')
+          PY_NATIVE=$(grep '^version = ' packages/python-native/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TS=$(grep '"version":' packages/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+
+          echo "Rust:           $RUST"
+          echo "Python:         $PY"
+          echo "Python __init__: $PY_INIT"
+          echo "Python-native:  $PY_NATIVE"
+          echo "TypeScript:     $TS"
+
+          FAIL=0
+          for V in "$RUST" "$PY" "$PY_INIT" "$PY_NATIVE" "$TS"; do
+            [ "$V" != "$VERSION" ] && echo "❌ Mismatch: $V" && FAIL=1
+          done
+          [ $FAIL -eq 1 ] && exit 1
+          echo "✅ All versions set to $VERSION"
+
+      - name: Commit and tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            packages/rust/Cargo.toml \
+            packages/python/pyproject.toml \
+            packages/python/odin_prompt_toolkit/__init__.py \
+            packages/python-native/pyproject.toml \
+            packages/python-native/Cargo.toml \
+            packages/typescript/package.json
+
+          git commit -m "chore: bump version to $VERSION"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+
+      - name: Push commit and tag
+        run: git push origin main --follow-tags
