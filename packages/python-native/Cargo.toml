@@ -13,7 +13,7 @@ name = "odin_prompt_toolkit_native"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.23", features = ["extension-module"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 odin-prompt-toolkit = { path = "../rust", default-features = false }
 
 [profile.release]
