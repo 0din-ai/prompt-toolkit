@@ -225,8 +225,9 @@ describe('ModelCache.downloadModel', () => {
     dir = makeTempDir();
     const cache = new ModelCache(dir);
 
-    // Pre-populate exactly the files hasModel('v1') expects
-    const modelDir = path.join(dir, 'v1');
+    // Pre-populate at the HF org/repo path that modelDirectory('v1') now resolves to.
+    // This mirrors the Rust SDK layout: <cacheDir>/intfloat/multilingual-e5-large/...
+    const modelDir = cache.modelDirectory('v1');
     const onnxDir = path.join(modelDir, 'onnx');
     fs.mkdirSync(onnxDir, { recursive: true });
     fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
