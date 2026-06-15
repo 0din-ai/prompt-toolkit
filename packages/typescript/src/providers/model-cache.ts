@@ -559,8 +559,11 @@ export class ModelCache {
       if (!body) {
         throw new ProviderError(`Empty response body downloading ${filename}`);
       }
-      // Node 18+ fetch body is a Web ReadableStream; convert to Node Readable.
-      const nodeReadable = Readable.fromWeb(body as any);
+      // Node 18+ fetch body is a Web ReadableStream<Uint8Array>. The TypeScript
+      // types for Readable.fromWeb and fetch's ReadableStream diverge slightly
+      // across @types/node versions; the cast to Parameters<typeof Readable.fromWeb>[0]
+      // is the narrowest safe bridge.
+      const nodeReadable = Readable.fromWeb(body as Parameters<typeof Readable.fromWeb>[0]);
       await pipeline(progressTransform(nodeReadable), writeStream);
     } catch (err) {
       // Clean up partial temp file before propagating.
@@ -571,16 +574,18 @@ export class ModelCache {
     // Atomic rename into final location.
     try {
       fs.renameSync(tempPath, destPath);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // On Windows rename throws EEXIST when the destination already exists —
       // another concurrent caller won the race. The file is already there
       // with identical bytes, so we clean up and return successfully.
-      if (err?.code === 'EEXIST') {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      const message = err instanceof Error ? err.message : String(err);
+      if (code === 'EEXIST') {
         try { fs.unlinkSync(tempPath); } catch { /* already gone */ }
         return;
       }
       try { fs.unlinkSync(tempPath); } catch { /* already gone */ }
-      throw new ProviderError(`Failed to finalise ${filename}: ${err.message}`);
+      throw new ProviderError(`Failed to finalise ${filename}: ${message}`);
     }
 
     // Final done event.
