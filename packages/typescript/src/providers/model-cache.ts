@@ -131,6 +131,21 @@ const SUSFACTOR_MODEL_FILES = [
 /** HuggingFace repo for the SusFactor ONNX model. */
 const SUSFACTOR_MODEL_REPO = '0dinai/susfactor-e5-large-onnx';
 
+/**
+ * Maps the human-readable version key used in the SDK API to the HuggingFace
+ * org/repo that owns those files. This is the single source of truth for path
+ * alignment between the TS and Rust SDKs.
+ *
+ * The Rust SDK stores files at `<cacheDir>/<org>/<repo>/...` (derived directly
+ * from the model_id passed to `get_model()`). The TS SDK uses short version
+ * keys in its public API ("v1", "susfactor-v1") for ergonomics; this map
+ * translates them to the same on-disk layout so both SDKs share the cache.
+ */
+const VERSION_TO_REPO: Record<string, string> = {
+  'v1': EMBEDDING_MODEL_REPO,
+  'susfactor-v1': SUSFACTOR_MODEL_REPO,
+};
+
 // ---------------------------------------------------------------------------
 // ModelCache
 // ---------------------------------------------------------------------------
@@ -191,12 +206,26 @@ export class ModelCache {
   }
 
   /**
-   * Get the directory for a specific model version.
+   * Get the on-disk directory for a model version.
    *
-   * @param version - Model version (default: "v1")
+   * For known versions the directory is derived from the HuggingFace repo path
+   * (`cacheDir/org/repo`), matching the layout the Rust SDK uses. This ensures
+   * that files downloaded by the Rust SDK and files downloaded here live in the
+   * same location.
+   *
+   * | version         | on-disk path                                          |
+   * |-----------------|-------------------------------------------------------|
+   * | `"v1"`          | `<cacheDir>/intfloat/multilingual-e5-large`           |
+   * | `"susfactor-v1"`| `<cacheDir>/0dinai/susfactor-e5-large-onnx`           |
+   * | anything else   | `<cacheDir>/<version>` (legacy / custom)              |
+   *
+   * @param version - Model version key (default: "v1")
    */
   modelDirectory(version: string = 'v1'): string {
-    return path.join(this.cacheDir, version);
+    const repo = VERSION_TO_REPO[version];
+    return repo
+      ? path.join(this.cacheDir, repo)
+      : path.join(this.cacheDir, version);
   }
 
   /**
