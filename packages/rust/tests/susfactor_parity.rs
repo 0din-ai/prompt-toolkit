@@ -126,7 +126,10 @@ async fn rust_scores_match_committed_goldens() {
         let score_ok = score_diff <= TOLERANCE;
 
         if label_ok && score_ok {
-            println!("  ✅  {}: score={:.6} (Δ={:.2e})", entry.name, result.score, score_diff);
+            println!(
+                "  ✅  {}: score={:.6} (Δ={:.2e})",
+                entry.name, result.score, score_diff
+            );
         } else {
             failures += 1;
             eprintln!(
@@ -143,8 +146,7 @@ async fn rust_scores_match_committed_goldens() {
     }
 
     assert_eq!(
-        failures,
-        0,
+        failures, 0,
         "{failures} golden vector(s) failed. If this is after a dep bump, re-validate \
         against Heimdall before running `make generate-susfactor-goldens`."
     );
