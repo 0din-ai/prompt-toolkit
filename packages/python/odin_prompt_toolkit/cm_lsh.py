@@ -14,13 +14,12 @@ The result is a DualHash with:
 Adapted from hybrid_cm_lsh/hybrid_cm_lsh.py to match signature_cli code style.
 """
 
-import math
 from dataclasses import dataclass, field
 
 import numpy as np
 
 # Re-use the existing LSH functions for consistency
-from odin_prompt_toolkit.lsh import _sign_for, _splitmix64
+from odin_prompt_toolkit.lsh import _sign_for
 
 
 @dataclass

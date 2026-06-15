@@ -1,7 +1,6 @@
 """Type definitions and utilities for signature generation."""
 
 import hashlib
-import json
 import re
 from dataclasses import dataclass
 from enum import Enum

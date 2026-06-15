@@ -1,9 +1,8 @@
 """Tests for sign_text() high-level API."""
 
-import os
 import pytest
 
-from odin_prompt_toolkit import sign_text, EmbeddingProvider, SignatureVersion
+from odin_prompt_toolkit import SignatureVersion, sign_text
 from odin_prompt_toolkit.types import EmbeddingResult, LshConfig
 
 

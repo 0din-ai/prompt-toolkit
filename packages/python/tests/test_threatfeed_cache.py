@@ -4,12 +4,9 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from odin_prompt_toolkit.threatfeed.cache import ThreatFeedCache, compute_bands
 from odin_prompt_toolkit.threatfeed.types import CachedSignature
 from odin_prompt_toolkit.types import SignatureVersion
-
 
 SIG_A = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
 SIG_B = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b3"

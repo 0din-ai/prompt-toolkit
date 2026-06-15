@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 from odin_prompt_toolkit.cm_lsh import create_default_cm_lsh
 

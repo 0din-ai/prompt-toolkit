@@ -6,7 +6,7 @@ across Rust, Python, and TypeScript implementations.
 
 import pytest
 
-from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit import SignatureVersion, sign_text
 from odin_prompt_toolkit.types import EmbeddingResult
 
 

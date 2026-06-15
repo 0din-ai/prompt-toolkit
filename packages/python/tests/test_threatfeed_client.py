@@ -1,14 +1,11 @@
 """Tests for the threat feed API client."""
 
-import json
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from aioresponses import aioresponses as mock_aiohttp
 
 from odin_prompt_toolkit.error import ThreatFeedApiError
 from odin_prompt_toolkit.threatfeed.client import ThreatFeedClient
-
 
 # ---------------------------------------------------------------------------
 # Fixture helpers
