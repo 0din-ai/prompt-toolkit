@@ -16,6 +16,7 @@
 import * as path from "path";
 
 import { ModelCache } from "../providers/model-cache";
+import type { GetModelOptions } from "../providers/model-cache";
 import { SusFactorError } from "../error";
 import {
   LABEL_SAFE,
@@ -88,19 +89,27 @@ export class SusFactorClassifier {
    */
   static async create(
     cache: ModelCache,
-    options: { model?: string; threshold?: number } = {},
+    options: {
+      model?: string;
+      threshold?: number;
+      /** HuggingFace token for downloading the gated susfactor model. */
+      hfToken?: string;
+      /** Base URL override for tests (e.g. local mock server). */
+      baseUrl?: string;
+      /** Progress callback forwarded to {@link ModelCache.downloadModel}. */
+      onProgress?: GetModelOptions['onProgress'];
+    } = {},
   ): Promise<SusFactorClassifier> {
     const modelName = options.model || DEFAULT_MODEL;
     const threshold = options.threshold ?? DEFAULT_THRESHOLD;
 
-    if (!cache.hasSusfactorModel(MODEL_VERSION)) {
-      throw new SusFactorError(
-        `SusFactor model not found in cache at ${cache.modelDirectory(
-          MODEL_VERSION,
-        )}. Download it from HuggingFace: ${HF_URL}\n` +
-          `Expected layout: <dir>/onnx/model.onnx (or model_O4.onnx) + matching .onnx_data and <dir>/tokenizer.json`,
-      );
-    }
+    // Auto-download model files if not already cached.
+    // The susfactor model is gated on HuggingFace — a token is required.
+    await cache.downloadModel(MODEL_VERSION, {
+      hfToken: options.hfToken,
+      baseUrl: options.baseUrl,
+      onProgress: options.onProgress,
+    });
 
     let ort: any;
     try {

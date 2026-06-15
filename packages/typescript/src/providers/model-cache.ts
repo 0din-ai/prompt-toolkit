@@ -5,12 +5,155 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { pipeline } from 'stream/promises';
+import { createWriteStream } from 'fs';
+import { Readable } from 'stream';
+import { ProviderError } from '../error';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/**
+ * Progress event emitted during a model file download.
+ *
+ * Suitable for both plain-text logging and structured progress UIs.
+ *
+ * @example Plain-text log
+ * ```typescript
+ * cache.getModel('org/repo', 'model.onnx', {
+ *   onProgress: (e) => {
+ *     if (e.done) console.log(`Downloaded ${e.file}`);
+ *     else if (e.percent !== null) process.stdout.write(`\r${e.file}: ${e.percent}%`);
+ *   },
+ * });
+ * ```
+ *
+ * @example Structured (progress bar library)
+ * ```typescript
+ * const bar = new ProgressBar(':file [:bar] :percent', { total: 100 });
+ * cache.getModel('org/repo', 'model.onnx', {
+ *   onProgress: (e) => bar.update((e.percent ?? 0) / 100, { file: e.file }),
+ * });
+ * ```
+ */
+export interface DownloadProgressEvent {
+  /** Filename being downloaded (e.g. "onnx/model.onnx"). */
+  file: string;
+  /** Bytes received so far. */
+  bytesDownloaded: number;
+  /**
+   * Total bytes expected, or `null` if the server did not send Content-Length.
+   */
+  totalBytes: number | null;
+  /**
+   * Integer 0-100 derived from bytesDownloaded / totalBytes, or `null` when
+   * totalBytes is unknown.
+   */
+  percent: number | null;
+  /**
+   * `true` on the final event emitted after the file has been fully written
+   * and renamed into place.
+   */
+  done: boolean;
+}
+
+/** Callback type for download progress. */
+export type DownloadProgressCallback = (event: DownloadProgressEvent) => void;
+
+/**
+ * Options for {@link ModelCache.getModel}.
+ */
+export interface GetModelOptions {
+  /**
+   * HuggingFace API token. Required for gated models (e.g. susfactor).
+   * Falls back to the `HF_TOKEN` environment variable if not provided.
+   */
+  hfToken?: string;
+  /**
+   * Override the HuggingFace base URL. Useful in tests to point at a local
+   * mock server without touching the network.
+   *
+   * @default "https://huggingface.co"
+   */
+  baseUrl?: string;
+  /**
+   * Called as bytes arrive from the network. See {@link DownloadProgressEvent}.
+   */
+  onProgress?: DownloadProgressCallback;
+}
+
+/**
+ * Options for {@link ModelCache.downloadModel}.
+ */
+export interface DownloadModelOptions extends GetModelOptions {
+  /**
+   * If `true`, skip the cache-presence check and force a fresh download even
+   * if the model directory already contains all required files.
+   *
+   * @default false
+   */
+  force?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// File manifests
+// ---------------------------------------------------------------------------
+
+/**
+ * Files required for the embedding model (v1 / intfloat/multilingual-e5-large).
+ *
+ * The HuggingFace repo that hosts these files is `intfloat/multilingual-e5-large`.
+ * We always download `model.onnx`; `model_O4.onnx` is an optional optimized
+ * variant that is not automatically fetched.
+ */
+const EMBEDDING_MODEL_FILES = [
+  'onnx/model.onnx',
+  'tokenizer.json',
+  'config.json',
+] as const;
+
+/** HuggingFace repo for the embedding ONNX model. */
+const EMBEDDING_MODEL_REPO = 'intfloat/multilingual-e5-large';
+
+/**
+ * Files required for the SusFactor classifier (susfactor-v1).
+ *
+ * These come from `0dinai/susfactor-e5-large-onnx` (gated — requires HF token).
+ * `model.onnx_data` holds the external weights required by ORT.
+ */
+const SUSFACTOR_MODEL_FILES = [
+  'onnx/model.onnx',
+  'onnx/model.onnx_data',
+  'tokenizer.json',
+] as const;
+
+/** HuggingFace repo for the SusFactor ONNX model. */
+const SUSFACTOR_MODEL_REPO = '0dinai/susfactor-e5-large-onnx';
+
+// ---------------------------------------------------------------------------
+// ModelCache
+// ---------------------------------------------------------------------------
 
 /**
  * Manages local caching of ONNX models.
  *
- * The cache directory defaults to ~/.cache/signature-sdk/models/v1/ but can be
- * overridden via the SIGNATURE_SDK_MODEL_CACHE environment variable.
+ * The cache directory defaults to `~/.cache/signature-sdk/models/` but can be
+ * overridden via the `SIGNATURE_SDK_MODEL_CACHE` environment variable.
+ *
+ * @example Auto-download on first use
+ * ```typescript
+ * const cache = new ModelCache();
+ * const provider = await OnnxProvider.create(cache); // downloads if needed
+ * ```
+ *
+ * @example Explicit pre-download with progress
+ * ```typescript
+ * const cache = new ModelCache();
+ * await cache.downloadModel('v1', {
+ *   onProgress: (e) => console.log(`${e.file}: ${e.percent ?? '?'}%`),
+ * });
+ * ```
  */
 export class ModelCache {
   private static readonly DEFAULT_CACHE_DIR = path.join(
@@ -20,6 +163,8 @@ export class ModelCache {
     'models'
   );
   private static readonly ENV_VAR = 'SIGNATURE_SDK_MODEL_CACHE';
+  private static readonly DEFAULT_HF_BASE_URL = 'https://huggingface.co';
+  private static readonly CONNECT_TIMEOUT_MS = 30_000;
 
   private cacheDir: string;
 
@@ -113,8 +258,6 @@ export class ModelCache {
       return false;
     }
     // Require the validated unoptimized pair (model.onnx + model.onnx_data).
-    // model_O4.onnx alone is not sufficient — it has not been validated against
-    // the Rust reference and may produce different scores.
     const hasValidatedPair =
       fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
       fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
@@ -171,5 +314,255 @@ export class ModelCache {
     const configPath = this.getConfigPath(version);
     const configData = fs.readFileSync(configPath, 'utf-8');
     return JSON.parse(configData);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Download API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get the local path to a model file, downloading it from HuggingFace if it
+   * is not already cached.
+   *
+   * This is the primary building block for auto-download on first use. It
+   * mirrors the Rust SDK's `ModelCache::get_model()` behaviour:
+   * - Cache-hit: returns the existing path immediately, no network access.
+   * - Cache-miss: streams the file from HuggingFace to a unique temp file,
+   *   then atomically renames it into place.
+   *
+   * @param modelId  - HuggingFace model repo (e.g. `"intfloat/multilingual-e5-large"`)
+   * @param filename - File path within the repo (e.g. `"onnx/model.onnx"`)
+   * @param options  - Token, base URL override, progress callback
+   * @returns Absolute path to the cached file
+   *
+   * @example
+   * ```typescript
+   * const cache = new ModelCache();
+   * const modelPath = await cache.getModel(
+   *   'intfloat/multilingual-e5-large',
+   *   'onnx/model.onnx',
+   *   { onProgress: (e) => console.log(`${e.file}: ${e.percent ?? '?'}%`) },
+   * );
+   * ```
+   */
+  async getModel(
+    modelId: string,
+    filename: string,
+    options: GetModelOptions = {},
+  ): Promise<string> {
+    const destPath = path.join(this.cacheDir, modelId, filename);
+
+    // Cache hit — no network access needed.
+    if (fs.existsSync(destPath)) {
+      return destPath;
+    }
+
+    await this._downloadFile(modelId, filename, destPath, options);
+    return destPath;
+  }
+
+  /**
+   * Download all required files for a model version.
+   *
+   * Known versions:
+   * - `"v1"` — embedding model (`intfloat/multilingual-e5-large`)
+   * - `"susfactor-v1"` — SusFactor classifier (`0dinai/susfactor-e5-large-onnx`, gated)
+   *
+   * A HuggingFace token is required for `"susfactor-v1"`. Pass it via
+   * `options.hfToken` or set the `HF_TOKEN` environment variable.
+   *
+   * Files are downloaded in parallel. Already-cached files are skipped
+   * unless `options.force` is `true`.
+   *
+   * @param version - Model version identifier
+   * @param options - Download options (token, baseUrl, progress, force)
+   *
+   * @example
+   * ```typescript
+   * const cache = new ModelCache();
+   * await cache.downloadModel('v1', {
+   *   onProgress: (e) => {
+   *     if (e.done) console.log(`✓ ${e.file}`);
+   *     else if (e.percent !== null) process.stdout.write(`\r${e.file} ${e.percent}%`);
+   *   },
+   * });
+   * ```
+   */
+  async downloadModel(
+    version: string,
+    options: DownloadModelOptions = {},
+  ): Promise<void> {
+    const { force = false, ...getOptions } = options;
+
+    // Skip if already fully cached (and not forced).
+    if (!force) {
+      const alreadyCached =
+        version === 'susfactor-v1'
+          ? this.hasSusfactorModel(version)
+          : this.hasModel(version);
+      if (alreadyCached) return;
+    }
+
+    const { repo, files } = this._manifestForVersion(version);
+
+    // Download all files in parallel.
+    await Promise.all(
+      files.map((filename) => this.getModel(repo, filename, getOptions)),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Return the HuggingFace repo and required file list for a known version.
+   */
+  private _manifestForVersion(version: string): {
+    repo: string;
+    files: readonly string[];
+  } {
+    if (version === 'susfactor-v1') {
+      return { repo: SUSFACTOR_MODEL_REPO, files: SUSFACTOR_MODEL_FILES };
+    }
+    if (version === 'v1') {
+      return { repo: EMBEDDING_MODEL_REPO, files: EMBEDDING_MODEL_FILES };
+    }
+    throw new ProviderError(
+      `Unknown model version "${version}". ` +
+        'Known versions: "v1" (embedding), "susfactor-v1" (SusFactor classifier).',
+    );
+  }
+
+  /**
+   * Stream a single file from HuggingFace into the cache with an atomic
+   * temp-file rename.
+   *
+   * Robustness properties (matching the Rust SDK):
+   * 1. **Streaming** — response body is piped chunk-by-chunk; never fully
+   *    buffered in memory.
+   * 2. **Connect timeout** — AbortController cancels the fetch after
+   *    {@link ModelCache.CONNECT_TIMEOUT_MS} ms if the server hasn't responded.
+   * 3. **Atomic rename** — written to `<dest>.tmp.<pid>.<counter>.<random>`
+   *    and renamed into place; concurrent callers racing to the same file are
+   *    handled gracefully.
+   * 4. **Partial cleanup** — temp file is removed on any error before
+   *    re-throwing.
+   */
+  private async _downloadFile(
+    modelId: string,
+    filename: string,
+    destPath: string,
+    options: GetModelOptions,
+  ): Promise<void> {
+    const baseUrl =
+      options.baseUrl ?? ModelCache.DEFAULT_HF_BASE_URL;
+    const token =
+      options.hfToken ?? process.env['HF_TOKEN'] ?? undefined;
+    const onProgress = options.onProgress;
+
+    const url = `${baseUrl}/${modelId}/resolve/main/${filename}`;
+
+    // Ensure parent directory exists.
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+
+    // Unique temp path — avoids concurrent-download collisions.
+    const tempPath = `${destPath}.tmp.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      ModelCache.CONNECT_TIMEOUT_MS,
+    );
+
+    let response: Response;
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      response = await fetch(url, {
+        signal: controller.signal,
+        headers,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      throw new ProviderError(
+        `Failed to download ${filename} from ${modelId}: HTTP ${response.status}`,
+      );
+    }
+
+    const totalBytes = response.headers.get('content-length')
+      ? parseInt(response.headers.get('content-length')!, 10)
+      : null;
+
+    let bytesDownloaded = 0;
+
+    // Progress tracking — wrapper around the raw response body stream.
+    const progressTransform = async function* (
+      source: AsyncIterable<Uint8Array>,
+    ) {
+      for await (const chunk of source) {
+        yield chunk;
+        bytesDownloaded += chunk.length;
+        if (onProgress) {
+          const percent =
+            totalBytes !== null
+              ? Math.round((bytesDownloaded / totalBytes) * 100)
+              : null;
+          onProgress({
+            file: filename,
+            bytesDownloaded,
+            totalBytes,
+            percent,
+            done: false,
+          });
+        }
+      }
+    };
+
+    // Write to temp file, then atomically rename.
+    const writeStream = createWriteStream(tempPath);
+    try {
+      const body = response.body;
+      if (!body) {
+        throw new ProviderError(`Empty response body downloading ${filename}`);
+      }
+      // Node 18+ fetch body is a Web ReadableStream; convert to Node Readable.
+      const nodeReadable = Readable.fromWeb(body as any);
+      await pipeline(progressTransform(nodeReadable), writeStream);
+    } catch (err) {
+      // Clean up partial temp file before propagating.
+      try { fs.unlinkSync(tempPath); } catch { /* already gone */ }
+      throw err;
+    }
+
+    // Atomic rename into final location.
+    try {
+      fs.renameSync(tempPath, destPath);
+    } catch (err: any) {
+      // On Windows rename throws EEXIST when the destination already exists —
+      // another concurrent caller won the race. The file is already there
+      // with identical bytes, so we clean up and return successfully.
+      if (err?.code === 'EEXIST') {
+        try { fs.unlinkSync(tempPath); } catch { /* already gone */ }
+        return;
+      }
+      try { fs.unlinkSync(tempPath); } catch { /* already gone */ }
+      throw new ProviderError(`Failed to finalise ${filename}: ${err.message}`);
+    }
+
+    // Final done event.
+    if (onProgress) {
+      onProgress({
+        file: filename,
+        bytesDownloaded,
+        totalBytes,
+        percent: totalBytes !== null ? 100 : null,
+        done: true,
+      });
+    }
   }
 }
