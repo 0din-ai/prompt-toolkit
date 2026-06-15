@@ -136,3 +136,22 @@ export {
   type ThreatFeedResponse,
   type ThreatMatch,
 } from './threatfeed';
+
+// SusFactor jailbreak/prompt-injection classifier
+// Constants are aliased with SUSFACTOR_ prefix to avoid collisions with the
+// generic model/version names already present at this scope.
+export {
+  susFactor,
+  SusFactorClassifier,
+  softmaxSuspicious,
+  labelForScore,
+  LABEL_SAFE,
+  LABEL_SUSPICIOUS,
+  DEFAULT_MODEL as SUSFACTOR_DEFAULT_MODEL,
+  DEFAULT_ONNX_REPO as SUSFACTOR_DEFAULT_ONNX_REPO,
+  DEFAULT_THRESHOLD as SUSFACTOR_DEFAULT_THRESHOLD,
+  MODEL_VERSION as SUSFACTOR_MODEL_VERSION,
+  type SusFactorOptions,
+  type SusFactorLabel,
+  type SusFactorResult,
+} from './susfactor';
