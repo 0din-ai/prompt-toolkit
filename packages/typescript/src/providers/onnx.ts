@@ -79,13 +79,8 @@ export class OnnxProvider implements EmbeddingProvider {
     const modelName = model || OnnxProvider.DEFAULT_MODEL;
     const providerName = name || 'onnx';
 
-    // Check if model is cached
-    if (!cache.hasModel('v1')) {
-      throw new Error(
-        `Model not found in cache at ${cache.modelDirectory('v1')}. ` +
-          'Please ensure the model files are present.'
-      );
-    }
+    // Auto-download model files if not already cached.
+    await cache.downloadModel('v1');
 
     // Dynamically import onnxruntime-node
     let ort: any;

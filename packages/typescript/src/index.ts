@@ -142,6 +142,10 @@ export {
   ModelCache,
   OnnxProvider,
   OpenAIProvider,
+  type DownloadProgressEvent,
+  type DownloadProgressCallback,
+  type GetModelOptions,
+  type DownloadModelOptions,
 } from './providers';
 
 // SusFactor jailbreak/prompt-injection classifier

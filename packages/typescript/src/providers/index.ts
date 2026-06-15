@@ -8,6 +8,12 @@
  * All providers are optional and require their respective dependencies to be installed.
  */
 
-export { ModelCache } from './model-cache';
+export {
+  ModelCache,
+  type DownloadProgressEvent,
+  type DownloadProgressCallback,
+  type GetModelOptions,
+  type DownloadModelOptions,
+} from './model-cache';
 export { OpenAIProvider } from './openai';
 export { OnnxProvider } from './onnx';
