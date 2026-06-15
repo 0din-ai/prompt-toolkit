@@ -137,6 +137,13 @@ export {
   type ThreatMatch,
 } from './threatfeed';
 
+// Embedding providers
+export {
+  ModelCache,
+  OnnxProvider,
+  OpenAIProvider,
+} from './providers';
+
 // SusFactor jailbreak/prompt-injection classifier
 // Constants are aliased with SUSFACTOR_ prefix to avoid collisions with the
 // generic model/version names already present at this scope.
