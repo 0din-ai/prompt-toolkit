@@ -5,7 +5,6 @@ These token vectors also serve as the reference for the TypeScript parity test
 in packages/typescript/test/tokenizer-parity.test.ts.
 """
 
-import os
 from pathlib import Path
 
 import pytest

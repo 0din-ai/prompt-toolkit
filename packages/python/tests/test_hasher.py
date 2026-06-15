@@ -1,6 +1,6 @@
 """Tests for hasher abstraction."""
 
-from odin_prompt_toolkit import Hasher, HashAlgorithm, LshConfig, SimHashLsh, get_hasher
+from odin_prompt_toolkit import HashAlgorithm, Hasher, LshConfig, SimHashLsh, get_hasher
 from odin_prompt_toolkit.lsh import normalize_vector
 
 

@@ -8,7 +8,6 @@ import pytest
 from odin_prompt_toolkit import (
     cosine_from_hamming,
     hamming_distance_hex,
-    normalize_vector,
     simhash_lsh_multi,
 )
 from odin_prompt_toolkit.lsh import _sign_for, _splitmix64

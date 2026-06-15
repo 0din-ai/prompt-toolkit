@@ -1,7 +1,7 @@
 """Hash algorithm implementations."""
 
-from odin_prompt_toolkit.hashers.lsh import SimHashLsh
 from odin_prompt_toolkit.hasher import Hasher
+from odin_prompt_toolkit.hashers.lsh import SimHashLsh
 from odin_prompt_toolkit.types import HashAlgorithm
 
 
