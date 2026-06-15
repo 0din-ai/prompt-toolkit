@@ -140,9 +140,11 @@ jobs:
   susfactor-parity:
     name: SusFactor cross-SDK parity
     runs-on: ubuntu-latest
-    # Run on nightly schedule, or when susfactor code / the fixture changes.
-    # The `secrets.HF_TOKEN != ''` guard prevents the job from failing on forks.
-    if: "secrets.HF_TOKEN != '' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request')"
+    # Run on nightly schedule only. The secrets context is unavailable in
+    # job-level if: conditions; forks without HF_TOKEN will have the download
+    # steps fail with 401 — acceptable since this job is nightly-only and
+    # only runs on the upstream repo where the secret is configured.
+    if: github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
 
