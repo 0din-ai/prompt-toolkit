@@ -40,10 +40,20 @@ else:
     try:
         from odin_prompt_toolkit_native import (
             LshFamily as _NativeLshFamily,
+        )
+        from odin_prompt_toolkit_native import (
             compute_embedding_sha256 as _native_compute_embedding_sha256,
+        )
+        from odin_prompt_toolkit_native import (
             cosine_from_hamming as _native_cosine_from_hamming,
+        )
+        from odin_prompt_toolkit_native import (
             hamming_distance_hex as _native_hamming_distance_hex,
+        )
+        from odin_prompt_toolkit_native import (
             normalize_vector as _native_normalize_vector,
+        )
+        from odin_prompt_toolkit_native import (
             simhash_lsh_multi as _native_simhash_lsh_multi,
         )
 
