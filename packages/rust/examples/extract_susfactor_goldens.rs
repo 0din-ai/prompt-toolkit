@@ -78,9 +78,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cache = ModelCache::new()?;
     let clf = SusFactorClassifier::new(
         &cache,
-        None,           // model name: default
+        None,                    // model name: default
         Some(model_dir.clone()), // source: local dir
-        None,           // threshold: default 0.5
+        None,                    // threshold: default 0.5
     )
     .await?;
 
@@ -120,8 +120,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             let expected = entry["expected_label"].as_str().unwrap_or("?");
             let actual_label = &result.label;
-            let ok = if actual_label == expected { "✅" } else { "❌ MISMATCH" };
-            println!("  {name}: score={:.6}  {ok}  (expected={expected}, got={actual_label})", result.score);
+            let ok = if actual_label == expected {
+                "✅"
+            } else {
+                "❌ MISMATCH"
+            };
+            println!(
+                "  {name}: score={:.6}  {ok}  (expected={expected}, got={actual_label})",
+                result.score
+            );
         }
     }
 
