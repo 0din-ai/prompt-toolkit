@@ -142,12 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     # Run on nightly schedule, or when susfactor code / the fixture changes.
     # The `secrets.HF_TOKEN != ''` guard prevents the job from failing on forks.
-    if: >
-      secrets.HF_TOKEN != '' && (
-        github.event_name == 'schedule' ||
-        github.event_name == 'push' ||
-        github.event_name == 'pull_request'
-      )
+    if: "secrets.HF_TOKEN != '' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request')"
     steps:
       - uses: actions/checkout@v4
 
