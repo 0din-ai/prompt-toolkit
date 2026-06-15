@@ -124,8 +124,8 @@ describe("SusFactorError", () => {
 
 const MODEL_CACHE_DIR = process.env.SUSFACTOR_MODEL_DIR;
 // Use hasSusfactorModel as the gate so it mirrors the exact check the
-// classifier does — accepts model_O4.onnx or model.onnx, requires
-// the matching .onnx_data and tokenizer.json.
+// classifier does — requires onnx/model.onnx + onnx/model.onnx_data +
+// tokenizer.json (the validated graph; model_O4.onnx is not accepted).
 const { ModelCache: _GateModelCache } = (() => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires

@@ -170,11 +170,29 @@ generate-vectors: ## Generate test vectors from canonical Rust implementation
 	@echo "$(CYAN)Generated files:$(RESET)"
 	@ls -lh spec/test-vectors/*.json
 
+generate-susfactor-goldens: ## Regenerate SusFactor golden vectors from validated Rust (requires SUSFACTOR_MODEL_DIR)
+	@echo "$(CYAN)Regenerating SusFactor golden vectors...$(RESET)"
+	@if [ -z "$(SUSFACTOR_MODEL_DIR)" ]; then \
+		echo "$(RED)Error: SUSFACTOR_MODEL_DIR is not set$(RESET)"; \
+		echo "Usage: make generate-susfactor-goldens SUSFACTOR_MODEL_DIR=/path/to/cache/susfactor-v1"; \
+		exit 1; \
+	fi
+	@SUSFACTOR_MODEL_DIR=$(SUSFACTOR_MODEL_DIR) bash scripts/regenerate_susfactor_goldens.sh
+
 validate-vectors: test ## Validate all implementations against test vectors (alias for test)
 
 cross-validate: ## Run cross-language validation script (for CI)
 	@echo "$(CYAN)Running cross-language validation...$(RESET)"
 	@python scripts/cross_validate.py
+
+cross-validate-parity: ## Run cross-language validation + SusFactor parity (requires SUSFACTOR_MODEL_DIR)
+	@echo "$(CYAN)Running cross-language validation with SusFactor parity...$(RESET)"
+	@if [ -z "$(SUSFACTOR_MODEL_DIR)" ]; then \
+		echo "$(RED)Error: SUSFACTOR_MODEL_DIR is not set$(RESET)"; \
+		echo "Usage: make cross-validate-parity SUSFACTOR_MODEL_DIR=/path/to/cache/susfactor-v1"; \
+		exit 1; \
+	fi
+	@SUSFACTOR_MODEL_DIR=$(SUSFACTOR_MODEL_DIR) python scripts/cross_validate.py --susfactor-parity
 
 ##@ Examples
 

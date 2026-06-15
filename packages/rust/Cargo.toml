@@ -91,3 +91,8 @@ required-features = ["onnx"]
 name = "benchmark_signatures"
 path = "examples/benchmark_signatures.rs"
 required-features = []
+
+[[example]]
+name = "extract_susfactor_goldens"
+path = "examples/extract_susfactor_goldens.rs"
+required-features = ["susfactor"]

@@ -127,19 +127,14 @@ export class SusFactorClassifier {
       );
     }
 
-    // Pick whichever complete pair (graph + external weights) is available.
-    // getModelPath() always prefers model_O4.onnx regardless of whether its
-    // .onnx_data is present, so we select explicitly here.
+    // Always load model.onnx — the graph validated in production (Heimdall via
+    // the Rust SDK). model_O4.onnx is a pre-optimized variant that has never
+    // been validated against the reference; using it here would produce a
+    // different inference path from what Rust runs, making cross-SDK score
+    // comparison undefined. If model_O4.onnx is ever separately validated, this
+    // can be revisited and the golden vectors must be regenerated from that path.
     const modelDir = cache.modelDirectory(MODEL_VERSION);
-    const optimizedOnnx = path.join(modelDir, "onnx", "model_O4.onnx");
-    const optimizedData = path.join(modelDir, "onnx", "model_O4.onnx_data");
-    const unoptimizedOnnx = path.join(modelDir, "onnx", "model.onnx");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fsSync = require("fs");
-    const modelPath =
-      fsSync.existsSync(optimizedOnnx) && fsSync.existsSync(optimizedData)
-        ? optimizedOnnx
-        : unoptimizedOnnx;
+    const modelPath = path.join(modelDir, "onnx", "model.onnx");
     const session = await ort.InferenceSession.create(modelPath);
 
     const parentDir = path.dirname(modelDir);
