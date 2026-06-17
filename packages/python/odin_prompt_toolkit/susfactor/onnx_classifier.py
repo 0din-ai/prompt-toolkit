@@ -44,10 +44,16 @@ from .types import SusFactorResult, label_for_score, suspicious_prob
 
 _INSTALL_HINT = "pip install 'odin-prompt-toolkit[onnx]'"
 
-DEFAULT_MODEL = "0dinai/susfactor-e5-large"
+# The ONNX model is published separately from the torch weights.
+# Reporting this repo in result.model lets callers distinguish the backend.
+DEFAULT_MODEL = "0dinai/susfactor-e5-large-onnx"
 DEFAULT_THRESHOLD = 0.5
-MAX_SEQUENCE_LENGTH = 512
-MODEL_VERSION = "susfactor-v1"
+
+# Shared with classifier.py — keep in sync.
+from .classifier import (  # noqa: E402
+    MAX_SEQUENCE_LENGTH,
+    MODEL_VERSION,
+)
 
 
 def _require_onnxruntime() -> Any:
@@ -122,9 +128,13 @@ class SusFactorOnnxClassifier:
         Args:
             cache: A ``ModelCache`` instance for locating model files.
             model: Model identifier reported in results (default
-                ``0dinai/susfactor-e5-large``).
+                ``0dinai/susfactor-e5-large-onnx``).
             threshold: Decision threshold for the suspicious label.
-            device: Ignored (ONNX Runtime manages execution providers).
+            device: Accepted for API parity with :class:`SusFactorClassifier`
+                but not used — ONNX Runtime selects execution providers
+                automatically based on what is installed.  GPU acceleration
+                requires ``onnxruntime-gpu``; pass ``device`` to a future
+                ``providers`` parameter if you need explicit control.
 
         Returns:
             An initialized ``SusFactorOnnxClassifier``.
@@ -153,10 +163,13 @@ class SusFactorOnnxClassifier:
 
             # Always use model.onnx (validated production path, not O4 variant).
             # This matches the TypeScript and Rust runtimes.
-            session = ort.InferenceSession(
-                str(model_path),
-                providers=["CPUExecutionProvider"],
-            )
+            # Let ONNX Runtime auto-select providers from what is installed
+            # (CPUExecutionProvider always available; CUDAExecutionProvider /
+            # CoreMLExecutionProvider picked up automatically with onnxruntime-gpu
+            # or onnxruntime on macOS).  Do not hard-code CPUExecutionProvider
+            # as that would silently disable GPU even when onnxruntime-gpu is
+            # installed.
+            session = ort.InferenceSession(str(model_path))
 
             # Suppress false-positive Mistral regex warning for XLMRoberta tokenizer.
             with warnings.catch_warnings():
@@ -195,8 +208,12 @@ class SusFactorOnnxClassifier:
             A ``SusFactorResult`` with the suspicious probability and label.
 
         Raises:
-            SusFactorError: If inference fails.
+            SusFactorError: If the classifier has been closed or inference fails.
         """
+        if self._session is None:
+            raise SusFactorError(
+                "classify() called on a closed SusFactorOnnxClassifier"
+            )
         start = time.time()
         try:
             # Tokenize. Use padding=True (dynamic length) rather than
@@ -216,7 +233,7 @@ class SusFactorOnnxClassifier:
             # Determine which inputs the ONNX graph actually requires.
             # The SusFactor export only declares input_ids + attention_mask, but
             # guard against re-exported variants that add token_type_ids.
-            onnx_inputs: dict = {
+            onnx_inputs: dict[str, np.ndarray] = {
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
             }

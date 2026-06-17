@@ -107,31 +107,45 @@ class FakeOnnxSession:
     Returns fixed logits so tests don't need the real model.
     """
 
-    def __init__(self, *, suspicious: bool = True) -> None:
+    def __init__(self, *, suspicious: bool = True, require_token_type_ids: bool = False) -> None:
         # Logits: class-0 score, class-1 (suspicious) score.
-        self._logits = np.array([[[-2.0, 2.0]]], dtype=np.float32) if suspicious \
-            else np.array([[[2.0, -2.0]]], dtype=np.float32)
-        self._logits = self._logits[0]  # shape [1, 2]
+        self._logits = (
+            np.array([[-2.0, 2.0]], dtype=np.float32)
+            if suspicious
+            else np.array([[2.0, -2.0]], dtype=np.float32)
+        )
+        self._require_token_type_ids = require_token_type_ids
+        self._last_inputs: dict[str, Any] = {}
 
     def get_inputs(self) -> list[_FakeOnnxInput]:
-        return [_FakeOnnxInput("input_ids"), _FakeOnnxInput("attention_mask")]
+        inputs = [_FakeOnnxInput("input_ids"), _FakeOnnxInput("attention_mask")]
+        if self._require_token_type_ids:
+            inputs.append(_FakeOnnxInput("token_type_ids"))
+        return inputs
 
     def get_outputs(self) -> list[_FakeOnnxOutput]:
         return [_FakeOnnxOutput("logits")]
 
     def run(self, output_names: Any, inputs: dict) -> list[np.ndarray]:
+        self._last_inputs = inputs
         return [self._logits]
 
 
 class FakeTokenizer:
     """Returns fixed token arrays regardless of input text."""
 
+    def __init__(self, *, include_token_type_ids: bool = False) -> None:
+        self._include_token_type_ids = include_token_type_ids
+
     def __call__(self, text: Any, **kwargs: Any) -> dict:
         seq = 4
-        return {
+        result: dict[str, np.ndarray] = {
             "input_ids": np.ones((1, seq), dtype=np.int64),
             "attention_mask": np.ones((1, seq), dtype=np.int64),
         }
+        if self._include_token_type_ids:
+            result["token_type_ids"] = np.zeros((1, seq), dtype=np.int64)
+        return result
 
 
 # ── Unit tests (no real model required) ─────────────────────────────────────
@@ -193,6 +207,13 @@ class TestOnnxClassifierUnit:
         await clf.close()
         await clf.close()  # second call must not raise
 
+    async def test_classify_raises_on_use_after_close(self) -> None:
+        """classify() after close() must raise SusFactorError, not AttributeError."""
+        clf = self._make()
+        await clf.close()
+        with pytest.raises(SusFactorError, match="closed"):
+            await clf.classify("test")
+
     async def test_classify_raises_susfactor_error_on_session_failure(self) -> None:
         from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 
@@ -217,6 +238,33 @@ class TestOnnxClassifierUnit:
             await SusFactorOnnxClassifier.new(cache)
         assert "huggingface.co" in str(exc.value)
 
+    async def test_token_type_ids_forwarded_when_session_requires_it(self) -> None:
+        """token_type_ids branch: forwarded from tokenizer when session declares it."""
+        from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
+
+        session = FakeOnnxSession(suspicious=True, require_token_type_ids=True)
+        clf = SusFactorOnnxClassifier(
+            session=session,
+            tokenizer=FakeTokenizer(include_token_type_ids=True),
+            model_name="fake",
+        )
+        await clf.classify("test")
+        assert "token_type_ids" in session._last_inputs
+
+    async def test_token_type_ids_zeros_when_tokenizer_omits_it(self) -> None:
+        """token_type_ids branch: zero tensor synthesised when tokenizer doesn't emit it."""
+        from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
+
+        session = FakeOnnxSession(suspicious=True, require_token_type_ids=True)
+        clf = SusFactorOnnxClassifier(
+            session=session,
+            tokenizer=FakeTokenizer(include_token_type_ids=False),
+            model_name="fake",
+        )
+        await clf.classify("test")
+        assert "token_type_ids" in session._last_inputs
+        assert np.all(session._last_inputs["token_type_ids"] == 0)
+
 
 # ── ONNX vs torch parity on real model ──────────────────────────────────────
 
@@ -232,30 +280,20 @@ class TestOnnxTorchParity:
     """Assert ONNX classifier scores match torch classifier within tolerance."""
 
     @pytest.fixture(scope="class")
-    def torch_clf(self):
-        import asyncio
-
+    async def torch_clf(self):
         from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
 
-        async def _load():
-            return await SusFactorClassifier.new(ModelCache())
-
-        clf = asyncio.get_event_loop().run_until_complete(_load())
+        clf = await SusFactorClassifier.new(ModelCache())
         yield clf
-        asyncio.get_event_loop().run_until_complete(clf.close())
+        await clf.close()
 
     @pytest.fixture(scope="class")
-    def onnx_clf(self):
-        import asyncio
-
+    async def onnx_clf(self):
         from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 
-        async def _load():
-            return await SusFactorOnnxClassifier.new(ModelCache())
-
-        clf = asyncio.get_event_loop().run_until_complete(_load())
+        clf = await SusFactorOnnxClassifier.new(ModelCache())
         yield clf
-        asyncio.get_event_loop().run_until_complete(clf.close())
+        await clf.close()
 
     @pytest.mark.parametrize(
         "vec",
@@ -311,17 +349,12 @@ class TestOnnxIntegration:
     """Smoke tests against the real ONNX model only (no torch dependency)."""
 
     @pytest.fixture(scope="class")
-    def clf(self):
-        import asyncio
-
+    async def clf(self):
         from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 
-        async def _load():
-            return await SusFactorOnnxClassifier.new(ModelCache())
-
-        c = asyncio.get_event_loop().run_until_complete(_load())
+        c = await SusFactorOnnxClassifier.new(ModelCache())
         yield c
-        asyncio.get_event_loop().run_until_complete(c.close())
+        await c.close()
 
     async def test_flags_jailbreak(self, clf: Any) -> None:
         result = await clf.classify(
@@ -329,7 +362,7 @@ class TestOnnxIntegration:
         )
         assert result.label == "suspicious"
         assert result.score >= 0.5
-        assert result.model == "0dinai/susfactor-e5-large"
+        assert result.model == "0dinai/susfactor-e5-large-onnx"
         assert result.timing_ms is not None
 
     async def test_passes_benign(self, clf: Any) -> None:

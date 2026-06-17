@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: stephengolub/code-reviewer@v1
+      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # v1
         with:
           model: anthropic/claude-sonnet-4-6
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

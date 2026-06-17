@@ -200,14 +200,17 @@ def susfactor_onnx_files_present(cache: ModelCache, version: str = "susfactor-v1
         <version>/
             onnx/
                 model.onnx       # full graph: encoder + mean-pool + MLP head
-                model.onnx_data  # external weight data (may be absent for small exports)
+                model.onnx_data  # companion weight file (present for large exports;
+                                 # ONNX Runtime loads it automatically alongside
+                                 # model.onnx — not checked here separately)
             tokenizer.json
             tokenizer_config.json
             special_tokens_map.json
             sentencepiece.bpe.model  # XLM-RoBERTa tokenizer
 
-    Only ``onnx/model.onnx`` and ``tokenizer.json`` are checked — the rest are
-    optional auxiliary files loaded on demand by the HuggingFace tokenizer.
+    Only ``onnx/model.onnx`` and ``tokenizer.json`` are required; everything
+    else is optional auxiliary data loaded on demand by the HuggingFace
+    tokenizer or ONNX Runtime.
     """
     model_dir = susfactor_model_dir(cache, version)
     if not model_dir.exists():
