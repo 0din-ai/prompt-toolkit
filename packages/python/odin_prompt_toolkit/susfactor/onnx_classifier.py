@@ -38,7 +38,6 @@ from ..providers.model_cache import (
     HF_URL_SUSFACTOR_ONNX,
     susfactor_model_dir,
     susfactor_onnx_files_present,
-    susfactor_onnx_model_path,
 )
 from .types import (
     MAX_SEQUENCE_LENGTH,
@@ -152,17 +151,18 @@ class SusFactorOnnxClassifier:
         ort = _require_onnxruntime()
         AutoTokenizer = _require_tokenizer()
 
+        # Resolve the model directory once and reuse it throughout new() so
+        # that susfactor_model_dir() is not called redundantly.
+        model_dir = susfactor_model_dir(cache, MODEL_VERSION)
+        model_path = model_dir / "onnx" / "model.onnx"
+
         if not susfactor_onnx_files_present(cache, MODEL_VERSION):
-            model_dir = susfactor_model_dir(cache, MODEL_VERSION)
             raise SusFactorError(
                 f"SusFactor ONNX model not found in cache at {model_dir}. "
                 f"Download it from HuggingFace: {HF_URL_SUSFACTOR_ONNX}\n"
                 "Expected layout: <dir>/onnx/model.onnx and <dir>/tokenizer.json\n"
                 "Export script: scripts/export_susfactor_onnx.py"
             )
-
-        model_path = susfactor_onnx_model_path(cache, MODEL_VERSION)
-        model_dir = susfactor_model_dir(cache, MODEL_VERSION)
 
         try:
             # Always use model.onnx (validated production path, not O4 variant).
