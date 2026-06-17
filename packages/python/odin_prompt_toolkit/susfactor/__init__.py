@@ -16,9 +16,16 @@ Example:
     >>> print(result.score, result.label)
     0.97 suspicious
 
-``SusFactorResult`` is always importable. ``SusFactorClassifier`` and
-``sus_factor`` are imported lazily because they require the optional
-``torch`` / ``transformers`` dependencies (install ``[susfactor]``).
+``SusFactorResult`` is always importable.
+
+``SusFactorClassifier`` and ``sus_factor`` are imported lazily because they
+require the optional ``torch`` / ``transformers`` dependencies
+(install ``[susfactor]``).
+
+``SusFactorOnnxClassifier`` is imported lazily because it requires the optional
+``onnxruntime`` + ``transformers`` dependencies (install ``[onnx]``).
+It is a drop-in replacement for ``SusFactorClassifier`` that runs inference on
+ONNX Runtime — no ``torch`` dependency needed at inference time.
 """
 
 from typing import TYPE_CHECKING, Any
@@ -28,20 +35,26 @@ from odin_prompt_toolkit.susfactor.types import SusFactorResult
 if TYPE_CHECKING:
     from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
     from odin_prompt_toolkit.susfactor.compare import sus_factor
+    from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 
 __all__ = [
     "SusFactorClassifier",
+    "SusFactorOnnxClassifier",
     "SusFactorResult",
     "sus_factor",
 ]
 
 
 def __getattr__(name: str) -> Any:
-    """Lazily import optional-dependency members (torch/transformers)."""
+    """Lazily import optional-dependency members (torch/transformers/onnxruntime)."""
     if name == "SusFactorClassifier":
         from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
 
         return SusFactorClassifier
+    if name == "SusFactorOnnxClassifier":
+        from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
+
+        return SusFactorOnnxClassifier
     if name == "sus_factor":
         from odin_prompt_toolkit.susfactor.compare import sus_factor
 

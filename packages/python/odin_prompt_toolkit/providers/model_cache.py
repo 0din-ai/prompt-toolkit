@@ -167,6 +167,17 @@ SUSFACTOR_REQUIRED_FILES = (
     "head.pt",
 )
 
+# Files required for a usable SusFactor ONNX model, relative to the version dir.
+# The ONNX graph bakes encoder + mean-pool + head into a single model.onnx file.
+# Tokenizer files live at the version root (same layout as the ONNX embedding models).
+# The model is published to 0dinai/susfactor-e5-large-onnx on HuggingFace.
+SUSFACTOR_ONNX_REQUIRED_FILES = (
+    "onnx/model.onnx",
+    "tokenizer.json",
+)
+
+HF_URL_SUSFACTOR_ONNX = "https://huggingface.co/0dinai/susfactor-e5-large-onnx"
+
 
 def susfactor_model_dir(cache: ModelCache, version: str = "susfactor-v1") -> Path:
     """Return the cache directory for a SusFactor model version."""
@@ -179,3 +190,31 @@ def susfactor_model_files_present(cache: ModelCache, version: str = "susfactor-v
     if not model_dir.exists():
         return False
     return all((model_dir / rel).exists() for rel in SUSFACTOR_REQUIRED_FILES)
+
+
+def susfactor_onnx_files_present(cache: ModelCache, version: str = "susfactor-v1") -> bool:
+    """Check whether the SusFactor ONNX model files are cached locally.
+
+    The ONNX layout mirrors the embedding model cache convention::
+
+        <version>/
+            onnx/
+                model.onnx       # full graph: encoder + mean-pool + MLP head
+                model.onnx_data  # external weight data (may be absent for small exports)
+            tokenizer.json
+            tokenizer_config.json
+            special_tokens_map.json
+            sentencepiece.bpe.model  # XLM-RoBERTa tokenizer
+
+    Only ``onnx/model.onnx`` and ``tokenizer.json`` are checked — the rest are
+    optional auxiliary files loaded on demand by the HuggingFace tokenizer.
+    """
+    model_dir = susfactor_model_dir(cache, version)
+    if not model_dir.exists():
+        return False
+    return all((model_dir / rel).exists() for rel in SUSFACTOR_ONNX_REQUIRED_FILES)
+
+
+def susfactor_onnx_model_path(cache: ModelCache, version: str = "susfactor-v1") -> Path:
+    """Return the path to the SusFactor ONNX model file."""
+    return susfactor_model_dir(cache, version) / "onnx" / "model.onnx"
