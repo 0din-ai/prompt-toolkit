@@ -36,6 +36,7 @@ openai = [
 onnx = [
     "onnxruntime>=1.16.0",
     "sentence-transformers>=2.2.0",
+    "transformers>=4.0.0",
 ]
 cm-lsh = [
     "numpy>=1.24.0",
@@ -154,6 +155,7 @@ module = [
     "odin_prompt_toolkit.threatfeed.client",
     "odin_prompt_toolkit.susfactor.classifier",
     "odin_prompt_toolkit.susfactor.compare",
+    "odin_prompt_toolkit.susfactor.onnx_classifier",
 ]
 disable_error_code = ["misc", "no-any-return", "name-defined"]
 
