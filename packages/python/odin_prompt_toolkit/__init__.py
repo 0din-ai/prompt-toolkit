@@ -80,7 +80,7 @@ from odin_prompt_toolkit.types import (
     signature_string,
 )
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     # Native acceleration
