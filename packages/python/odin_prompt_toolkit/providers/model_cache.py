@@ -174,6 +174,7 @@ SUSFACTOR_REQUIRED_FILES = (
 SUSFACTOR_ONNX_REQUIRED_FILES = (
     "onnx/model.onnx",
     "tokenizer.json",
+    "tokenizer_config.json",
 )
 
 HF_URL_SUSFACTOR_ONNX = "https://huggingface.co/0dinai/susfactor-e5-large-onnx"
@@ -195,18 +196,17 @@ def susfactor_model_files_present(cache: ModelCache, version: str = "susfactor-v
 def susfactor_onnx_files_present(cache: ModelCache, version: str = "susfactor-v1") -> bool:
     """Check whether the SusFactor ONNX model files are cached locally.
 
-    Only ``onnx/model.onnx`` and ``tokenizer.json`` are required::
+    Required files (see ``SUSFACTOR_ONNX_REQUIRED_FILES``)::
 
         <version>/
             onnx/
-                model.onnx        # required: full graph (encoder + mean-pool + MLP head)
-                model.onnx_data   # optional: companion weights for large exports;
-                                  #           ONNX Runtime loads it automatically
-            tokenizer.json        # required
+                model.onnx          # full graph: encoder + mean-pool + MLP head
+                model.onnx_data     # optional companion weights; loaded automatically by ORT
+            tokenizer.json          # HuggingFace fast tokenizer
+            tokenizer_config.json   # tokenizer class metadata read by AutoTokenizer
 
-    Additional tokenizer files (``tokenizer_config.json``,
-    ``special_tokens_map.json``, ``sentencepiece.bpe.model``) are loaded on
-    demand by the HuggingFace tokenizer but are not checked here.
+    Additional files (``special_tokens_map.json``, ``sentencepiece.bpe.model``,
+    etc.) are loaded on demand at runtime but are not checked here.
     """
     model_dir = susfactor_model_dir(cache, version)
     if not model_dir.exists():

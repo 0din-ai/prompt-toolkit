@@ -12,6 +12,7 @@ LABEL_SAFE = "safe"
 # so neither depends on the other at import time.
 MAX_SEQUENCE_LENGTH: int = 512
 MODEL_VERSION: str = "susfactor-v1"
+DEFAULT_THRESHOLD: float = 0.5
 
 
 @dataclass

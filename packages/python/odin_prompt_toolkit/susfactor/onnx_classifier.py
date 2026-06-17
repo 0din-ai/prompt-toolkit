@@ -40,6 +40,7 @@ from ..providers.model_cache import (
     susfactor_onnx_files_present,
 )
 from .types import (
+    DEFAULT_THRESHOLD,
     MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
@@ -51,8 +52,8 @@ _INSTALL_HINT = "pip install 'odin-prompt-toolkit[onnx]'"
 
 # The ONNX model is published separately from the torch weights.
 # Reporting this repo in result.model lets callers distinguish the backend.
+# DEFAULT_THRESHOLD, MAX_SEQUENCE_LENGTH, and MODEL_VERSION live in types.py.
 DEFAULT_MODEL = "0dinai/susfactor-e5-large-onnx"
-DEFAULT_THRESHOLD = 0.5
 
 
 def _require_onnxruntime() -> Any:

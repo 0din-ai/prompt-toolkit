@@ -23,6 +23,7 @@ from ..providers.model_cache import (
     susfactor_model_files_present,
 )
 from .types import (
+    DEFAULT_THRESHOLD,
     MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
@@ -56,14 +57,13 @@ def _require_transformers() -> tuple:
 
 
 DEFAULT_MODEL = "0dinai/susfactor-e5-large"
-DEFAULT_THRESHOLD = 0.5
 DEFAULT_HIDDEN_DIM = 256
 EMBEDDING_DIM = 1024
 NUM_CLASSES = 2
-# MAX_SEQUENCE_LENGTH and MODEL_VERSION live in types.py so both the torch
-# and ONNX classifiers can import them without depending on each other.
+# DEFAULT_THRESHOLD, MAX_SEQUENCE_LENGTH, and MODEL_VERSION live in types.py
+# so both the torch and ONNX classifiers can import them without depending on
+# each other.
 HF_URL = "https://huggingface.co/0dinai/susfactor-e5-large"
-
 
 
 def _build_head(hidden_dim: int) -> Any:
@@ -165,9 +165,9 @@ class SusFactorClassifier:
         """
         model_name = model or DEFAULT_MODEL
         resolved_device = _resolve_device(device)
+        model_dir = susfactor_model_dir(cache, MODEL_VERSION)
 
         if not susfactor_model_files_present(cache, MODEL_VERSION):
-            model_dir = susfactor_model_dir(cache, MODEL_VERSION)
             raise SusFactorError(
                 f"SusFactor model not found in cache at {model_dir}. "
                 f"Download it from HuggingFace (gated -- requires a token): "
@@ -175,7 +175,6 @@ class SusFactorClassifier:
                 "model.safetensors, tokenizer.json) and <dir>/head.pt"
             )
 
-        model_dir = susfactor_model_dir(cache, MODEL_VERSION)
         encoder_dir = model_dir / "encoder"
         head_path = model_dir / "head.pt"
 
