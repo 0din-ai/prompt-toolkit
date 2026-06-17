@@ -22,7 +22,13 @@ from ..providers.model_cache import (
     susfactor_model_dir,
     susfactor_model_files_present,
 )
-from .types import SusFactorResult, label_for_score, suspicious_prob
+from .types import (
+    MAX_SEQUENCE_LENGTH,
+    MODEL_VERSION,
+    SusFactorResult,
+    label_for_score,
+    suspicious_prob,
+)
 
 _INSTALL_HINT = "pip install 'odin-prompt-toolkit[susfactor]'"
 
@@ -54,8 +60,8 @@ DEFAULT_THRESHOLD = 0.5
 DEFAULT_HIDDEN_DIM = 256
 EMBEDDING_DIM = 1024
 NUM_CLASSES = 2
-MAX_SEQUENCE_LENGTH = 512
-MODEL_VERSION = "susfactor-v1"
+# MAX_SEQUENCE_LENGTH and MODEL_VERSION live in types.py so both the torch
+# and ONNX classifiers can import them without depending on each other.
 HF_URL = "https://huggingface.co/0dinai/susfactor-e5-large"
 
 

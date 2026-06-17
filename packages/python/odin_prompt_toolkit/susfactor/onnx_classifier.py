@@ -40,7 +40,13 @@ from ..providers.model_cache import (
     susfactor_onnx_files_present,
     susfactor_onnx_model_path,
 )
-from .types import SusFactorResult, label_for_score, suspicious_prob
+from .types import (
+    MAX_SEQUENCE_LENGTH,
+    MODEL_VERSION,
+    SusFactorResult,
+    label_for_score,
+    suspicious_prob,
+)
 
 _INSTALL_HINT = "pip install 'odin-prompt-toolkit[onnx]'"
 
@@ -48,12 +54,6 @@ _INSTALL_HINT = "pip install 'odin-prompt-toolkit[onnx]'"
 # Reporting this repo in result.model lets callers distinguish the backend.
 DEFAULT_MODEL = "0dinai/susfactor-e5-large-onnx"
 DEFAULT_THRESHOLD = 0.5
-
-# Shared with classifier.py — keep in sync.
-from .classifier import (  # noqa: E402
-    MAX_SEQUENCE_LENGTH,
-    MODEL_VERSION,
-)
 
 
 def _require_onnxruntime() -> Any:
@@ -185,7 +185,9 @@ class SusFactorOnnxClassifier:
         except SusFactorError:
             raise
         except Exception as e:  # noqa: BLE001 - surface as a domain error
-            raise SusFactorError(f"Failed to load SusFactor ONNX model: {e}") from e
+            raise SusFactorError(
+                f"Failed to load SusFactor ONNX model from {model_path}: {e}"
+            ) from e
 
         return cls(
             session=session,
