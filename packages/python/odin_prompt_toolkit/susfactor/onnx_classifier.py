@@ -145,6 +145,13 @@ class SusFactorOnnxClassifier:
         """
         model_name = model or DEFAULT_MODEL
 
+        # Validate optional dependencies before touching the filesystem.
+        # Keeping these outside the try/except ensures ImportError propagates
+        # with its own install-hint message rather than being swallowed into a
+        # generic SusFactorError("Failed to load ... No module named ...").
+        ort = _require_onnxruntime()
+        AutoTokenizer = _require_tokenizer()
+
         if not susfactor_onnx_files_present(cache, MODEL_VERSION):
             model_dir = susfactor_model_dir(cache, MODEL_VERSION)
             raise SusFactorError(
@@ -158,9 +165,6 @@ class SusFactorOnnxClassifier:
         model_dir = susfactor_model_dir(cache, MODEL_VERSION)
 
         try:
-            ort = _require_onnxruntime()
-            AutoTokenizer = _require_tokenizer()
-
             # Always use model.onnx (validated production path, not O4 variant).
             # This matches the TypeScript and Rust runtimes.
             # Let ONNX Runtime auto-select providers from what is installed
@@ -246,10 +250,20 @@ class SusFactorOnnxClassifier:
 
             outputs = self._session.run(None, onnx_inputs)
 
-            # Prefer the named "logits" output set by the export script; fall
-            # back to the first output for re-exported variants.
+            # Use the named "logits" output set by the export script.  Fall back
+            # to the first output for re-exported variants, but warn so
+            # unexpected model variants are visible rather than silently wrong.
             output_names = [o.name for o in self._session.get_outputs()]
-            logits_idx = output_names.index("logits") if "logits" in output_names else 0
+            if "logits" in output_names:
+                logits_idx = output_names.index("logits")
+            else:
+                warnings.warn(
+                    f"SusFactorOnnxClassifier: 'logits' output not found in "
+                    f"model outputs {output_names}; falling back to index 0. "
+                    "Re-export with scripts/export_susfactor_onnx.py to fix.",
+                    stacklevel=2,
+                )
+                logits_idx = 0
             logits = outputs[logits_idx][0]  # shape: [2]
         except SusFactorError:
             raise

@@ -265,6 +265,33 @@ class TestOnnxClassifierUnit:
         assert "token_type_ids" in session._last_inputs
         assert np.all(session._last_inputs["token_type_ids"] == 0)
 
+    async def test_logits_fallback_warns_when_output_not_named_logits(self) -> None:
+        """Fallback to index 0 when 'logits' output absent should emit a warning."""
+        import warnings as _warnings
+
+        from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
+
+        # A session whose single output is named "output_0", not "logits".
+        class _UnnamedOutputSession(FakeOnnxSession):
+            def get_outputs(self) -> list[_FakeOnnxOutput]:
+                return [_FakeOnnxOutput("output_0")]
+
+        clf = SusFactorOnnxClassifier(
+            session=_UnnamedOutputSession(suspicious=True),
+            tokenizer=FakeTokenizer(),
+            model_name="fake",
+        )
+        with _warnings.catch_warnings(record=True) as caught:
+            _warnings.simplefilter("always")
+            result = await clf.classify("test")
+
+        assert any("logits" in str(w.message) for w in caught), (
+            "Expected a warning about missing 'logits' output, got: "
+            + str([str(w.message) for w in caught])
+        )
+        # Despite the warning, inference still completes and returns a valid result.
+        assert 0.0 <= result.score <= 1.0
+
 
 # ── ONNX vs torch parity on real model ──────────────────────────────────────
 
