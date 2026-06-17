@@ -1,4 +1,4 @@
-"""Type definitions for SusFactor classification."""
+"""Type definitions and shared constants for SusFactor classification."""
 
 from __future__ import annotations
 
@@ -7,6 +7,12 @@ from dataclasses import dataclass
 # Label strings used by the SusFactor classifier.
 LABEL_SUSPICIOUS = "suspicious"
 LABEL_SAFE = "safe"
+
+# Shared inference constants — imported by both the torch and ONNX classifiers
+# so neither depends on the other at import time.
+MAX_SEQUENCE_LENGTH: int = 512
+MODEL_VERSION: str = "susfactor-v1"
+DEFAULT_THRESHOLD: float = 0.5
 
 
 @dataclass
