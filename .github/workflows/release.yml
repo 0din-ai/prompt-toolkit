@@ -291,7 +291,7 @@ jobs:
 
       - name: Download model from HuggingFace
         env:
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           mkdir -p /tmp/model-cache/onnx
 
