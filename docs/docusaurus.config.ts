@@ -8,7 +8,7 @@ import rehypeKatex from 'rehype-katex';
 
 const config: Config = {
   title: '0DIN Prompt Toolkit',
-  tagline: 'Multi-language toolkit for LSH signature generation and AI prompt similarity detection',
+  tagline: 'Jailbreak detection, similarity signatures, and threat intelligence for AI prompts',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future

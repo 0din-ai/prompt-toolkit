@@ -61,11 +61,10 @@ Incoming prompt
 
 ## Full Implementation
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+:::note Python only
+The full three-layer implementation is shown in Python. Rust and TypeScript provide all the same building blocks (`SusFactorClassifier`, `sign_text`, `ThreatFeedCache`) — the architecture is identical; only the async runtime and class names differ.
+:::
 
-<Tabs groupId="language">
-  <TabItem value="python" label="Python">
 
 ```python
 import asyncio
@@ -121,6 +120,11 @@ class PromptSecurityLayer:
         # --- Layer 1: SusFactor ---
         sf_result = await self._clf.classify(prompt)
         if sf_result.is_suspicious:
+            # Generate signature so we can record it for Layer 3 dedup
+            sig_result = await sign_text(prompt, self._provider)
+            sig = sig_result.lsh.signatures[0].signature
+            bands = sig_result.lsh.signatures[0].bands
+            self.record_blocked(sig, bands)
             return {
                 "allowed": False,
                 "layer": "susfactor",
@@ -140,6 +144,7 @@ class PromptSecurityLayer:
             )
             if matches:
                 top = matches[0]
+                self.record_blocked(sig, bands)
                 return {
                     "allowed": False,
                     "layer": "threatfeed",
@@ -157,6 +162,7 @@ class PromptSecurityLayer:
                 dist = hamming_distance_hex(sig, blocked_sig)
                 cosine = cosine_from_hamming(dist, 256)
                 if cosine >= self._dedup_threshold:
+                    self.record_blocked(sig, bands)
                     return {
                         "allowed": False,
                         "layer": "dedup",
@@ -198,9 +204,6 @@ async def main():
 
 asyncio.run(main())
 ```
-
-  </TabItem>
-</Tabs>
 
 ---
 

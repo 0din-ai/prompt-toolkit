@@ -161,10 +161,14 @@ asyncio.run(main())
 import { signText, getSignatureString } from '@0din/odin-prompt-toolkit';
 import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
-const provider = await OnnxProvider.create(new ModelCache());
-const result = await signText('How do I reset my password?', provider);
-console.log(getSignatureString(result)); // 0din-v1:8d000000ac854dae...
-await provider.close();
+async function main() {
+  const provider = await OnnxProvider.create(new ModelCache());
+  const result = await signText('How do I reset my password?', provider);
+  console.log(getSignatureString(result)); // 0din-v1:8d000000ac854dae...
+  await provider.close();
+}
+
+main();
 ```
 
   </TabItem>
@@ -176,7 +180,7 @@ await provider.close();
 
 | | SusFactor | LSH Signatures |
 |---|---|---|
-| **Input** | Raw text | Embedding vector |
+| **Input** | Raw text | Raw text (embedding generated internally) |
 | **Output** | Score 0–1 + label | 256-bit hex signature |
 | **Detects** | Novel jailbreaks, prompt injection | Duplicate / paraphrased known attacks |
 | **Speed** | ~50–200ms per prompt (ONNX) | &lt;1ms per lookup after indexing |
@@ -222,7 +226,7 @@ See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/
 ## Next Steps
 
 - **[Installation](./getting-started/installation)** — Install for Rust, Python, or TypeScript
-- **[Quick Start](./getting-started/quick-start)** — Generate your first signature
+- **[Quick Start](./getting-started/quick-start)** — Your first jailbreak check or LSH signature
 - **[SusFactor](./concepts/susfactor)** — Jailbreak classification deep dive
 - **[Threat Feed](./guides/threatfeed)** — Match prompts against 0DIN threat intelligence
 - **[LSH Overview](./concepts/lsh-overview)** — How similarity signatures work
