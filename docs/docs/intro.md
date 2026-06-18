@@ -188,17 +188,9 @@ For defense-in-depth, run both: SusFactor catches novel attacks the threat feed 
 
 ## How Signatures Work
 
-odin-prompt-toolkit converts text into a 256-bit binary fingerprint using **SimHash via Random Hyperplane LSH** ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)). The key property: prompts that are semantically similar produce signatures with a small Hamming distance, enabling similarity queries without ever comparing raw embeddings.
+Signatures are generated using **SimHash via Random Hyperplane LSH** — a deterministic algorithm that converts any prompt embedding into a compact 256-bit hex fingerprint. Semantically similar prompts produce signatures with small Hamming distance, enabling fast similarity queries without storing or comparing raw vectors.
 
-The pipeline:
-1. **Embed** — generate a high-dimensional vector (1024 dims via local ONNX, or 1536 via OpenAI)
-2. **Normalize** — L2-normalize to unit length
-3. **Project** — dot-product with 256 deterministic random hyperplanes (seeded via SplitMix64 PRNG)
-4. **Quantize** — each projection becomes a bit: `1` if `dot > 0`, else `0`
-5. **Pack** — 256 bits → 64-character hex string
-6. **Band** — split into 16 bands for O(1) LSH index lookups
-
-The same seed produces the same hyperplanes in all three languages, which is why Rust, Python, and TypeScript signatures are identical for the same input.
+**[Deep dive: LSH Overview →](./concepts/lsh-overview)**
 
 ---
 
