@@ -87,7 +87,7 @@ Located in `spec/test-vectors/`, 8 JSON files with 124 test cases:
 | `signature_format.json` | 7 | String parsing |
 | `cm_lsh.json` | 8 | CM-LSH dual hashing |
 
-**Total:** 109 passing tests across 3 languages (50 Rust + 32 Python + 27 TypeScript)
+**Total:** 384 passing tests across 3 languages (69 Rust + 183 Python + 132 TypeScript)
 
 ---
 
@@ -190,8 +190,8 @@ cd packages/rust
 cargo test
 
 # Expected output:
-# running 50 tests
-# test result: ok. 50 passed; 0 failed
+# running 69 tests
+# test result: ok. 69 passed; 0 failed
 ```
 
 </TabItem>
@@ -202,7 +202,7 @@ cd packages/python
 python -m pytest tests/
 
 # Expected output:
-# ====== 32 passed in 1.23s ======
+# ====== 183 passed in 14.24s ======
 ```
 
 </TabItem>
@@ -213,8 +213,8 @@ cd packages/typescript
 npm test
 
 # Expected output:
-# Test Suites: 7 passed, 7 total
-# Tests:       27 passed, 27 total
+# Test Suites: 18 passed, 18 total
+# Tests:       132 passed, 134 total
 ```
 
 </TabItem>
@@ -232,7 +232,7 @@ GitHub Actions runs all test suites on every commit:
 - Cross-validation check (all vectors match)
 ```
 
-**Badge Status:** ![Tests](https://github.com/0din-ai/odin-prompt-toolkit/workflows/test/badge.svg)
+**Badge Status:** ![Tests](https://github.com/0din-ai/prompt-toolkit/workflows/CI/badge.svg)
 
 ---
 
@@ -413,7 +413,7 @@ confident = (abs(proj) > threshold)
 
 ## See Also
 
-- [VALIDATION.md](https://github.com/0din-ai/odin-prompt-toolkit/blob/main/VALIDATION.md) - Full validation report
+- [VALIDATION.md](https://github.com/0din-ai/prompt-toolkit/blob/main/VALIDATION.md) - Full validation report
 - [LSH Overview](./lsh-overview) - Algorithm details
 - [CM-LSH](./cm-lsh) - CM-LSH precision notes
-- [Test Vectors](https://github.com/0din-ai/odin-prompt-toolkit/tree/main/spec/test-vectors) - Canonical test data
+- [Test Vectors](https://github.com/0din-ai/prompt-toolkit/tree/main/spec/test-vectors) - Canonical test data

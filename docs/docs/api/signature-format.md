@@ -415,4 +415,4 @@ Migrating from V0 to V1 requires **regenerating signatures** from original text.
 - [Core Functions](./core-functions) - `signature_string()` and `parse_signature_string()`
 - [Errors](./errors) - `InvalidInputError` details
 - [Signature Versions](../concepts/signature-versions) - V0 vs V1 compatibility
-- [VERSIONING.md](https://github.com/0din-ai/odin-prompt-toolkit/blob/main/spec/VERSIONING.md) - Complete specification
+- [VERSIONING.md](https://github.com/0din-ai/prompt-toolkit/blob/main/spec/VERSIONING.md) - Complete specification

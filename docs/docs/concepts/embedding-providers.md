@@ -123,7 +123,7 @@ npm install @0din/odin-prompt-toolkit openai
 **Best for:** Local development, API-free deployment, cost-sensitive applications
 
 - **Model**: 0dinai/0din-jailbreak-embeddings-small (custom fine-tuned variant)
-- **Dimensions**: 384
+- **Dimensions**: 1024
 - **Cost**: Free (local inference)
 - **Setup**: Model auto-downloads to `~/.cache/odin-prompt-toolkit/models/v1/`
 - **Latency**: ~50-100ms (CPU inference on M1 Mac)
@@ -213,7 +213,7 @@ npm install @0din/odin-prompt-toolkit onnxruntime-node
 | **API Key** | Required | Not required |
 | **Network** | Required | Not required |
 | **Quality** | Highest | Good |
-| **Storage** | ~1.5KB per signature | ~384 bytes per signature |
+| **Storage** | ~1.5KB per signature | ~1KB per signature |
 | **Use Case** | Production apps | Local dev, cost-sensitive |
 
 ## Custom Providers

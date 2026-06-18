@@ -1,17 +1,5 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
-/**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'intro',
@@ -29,11 +17,23 @@ const sidebars: SidebarsConfig = {
       label: 'Concepts',
       items: [
         'concepts/lsh-overview',
+        'concepts/susfactor',
+        'concepts/defense-in-depth',
         'concepts/signature-versions',
         'concepts/embedding-providers',
-        'concepts/cm-lsh',
-        'concepts/cross-language',
-        'concepts/susfactor',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Guides',
+      items: [
+        'guides/jailbreak-detection',
+        'guides/threatfeed',
+        'guides/duplicate-detection',
+        'guides/similarity-search',
+        'guides/native-acceleration',
+        'guides/performance',
+        'guides/migration',
       ],
     },
     {
@@ -41,24 +41,20 @@ const sidebars: SidebarsConfig = {
       label: 'API Reference',
       items: [
         'api/core-functions',
+        'api/susfactor-api',
         'api/types',
         'api/providers',
         'api/signature-format',
         'api/errors',
         'api/cm-lsh-api',
-        'api/susfactor-api',
       ],
     },
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Advanced',
       items: [
-        'guides/duplicate-detection',
-        'guides/similarity-search',
-        'guides/threatfeed',
-        'guides/native-acceleration',
-        'guides/performance',
-        'guides/migration',
+        'concepts/cm-lsh',
+        'concepts/cross-language',
       ],
     },
     {
