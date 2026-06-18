@@ -93,18 +93,13 @@ pytestmark = pytest.mark.skipif(_skip_reason is not None, reason=_skip_reason or
 
 
 @pytest.fixture(scope="module")
-def classifier():
+async def classifier():
     """Load the real SusFactor model once for the whole module."""
-    import asyncio
-
     from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
 
-    async def _load():
-        return await SusFactorClassifier.new(ModelCache())
-
-    clf = asyncio.get_event_loop().run_until_complete(_load())
+    clf = await SusFactorClassifier.new(ModelCache())
     yield clf
-    asyncio.get_event_loop().run_until_complete(clf.close())
+    await clf.close()
 
 
 # ── Parity tests ─────────────────────────────────────────────────────────────
