@@ -147,6 +147,17 @@ jobs:
     # the upstream repo where the secret is configured.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
+      - name: Free disk space
+        # The susfactor ONNX model is ~2.1 GB. Ubuntu runners ship with ~14 GB
+        # free; Android SDK, .NET, and Haskell toolchains consume ~10 GB of that.
+        # Remove them to avoid "No space left on device" during model download.
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          df -h /
+
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
