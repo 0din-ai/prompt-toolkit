@@ -234,5 +234,8 @@ jobs:
       - name: Run cross-SDK parity checks
         env:
           SUSFACTOR_MODEL_DIR: /tmp/susfactor-v1
-          SIGNATURE_SDK_MODEL_CACHE: /tmp/py-model-cache
-        run: python scripts/cross_validate.py --susfactor-parity
+          # SIGNATURE_SDK_MODEL_CACHE is NOT set at the step level — it would
+          # leak into the Rust unit tests and break cache-path assertions that
+          # expect the default ~/.cache/signature-sdk path. cross_validate.py
+          # passes it only to the Python parity subprocess internally.
+        run: python scripts/cross_validate.py --susfactor-parity --py-model-cache /tmp/py-model-cache
