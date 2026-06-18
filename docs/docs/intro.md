@@ -18,7 +18,7 @@ odin-prompt-toolkit implements **SimHash** via random hyperplane LSH ([Charikar 
 - 🌍 **Cross-language** — Identical signatures from Rust, Python, and TypeScript
 - 📦 **No API required** — Local ONNX embeddings (V1) or OpenAI API (V0)
 - 🎯 **Accurate** — Preserves cosine similarity via random hyperplane projections
-- 🧪 **Battle-tested** — 61 tests validating 124 test cases across 3 languages
+- 🧪 **Battle-tested** — 384 tests across 3 languages
 
 ## Why Use LSH Signatures?
 
@@ -165,12 +165,12 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 
 ## Project Status
 
-✅ **Production Ready** — All three language implementations validated with 109 passing tests
+✅ **Production Ready** — All three language implementations validated with 384 passing tests
 
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
-| Rust | `odin-prompt-toolkit` | ✅ Ready | 50 passing |
-| Python | `odin-prompt-toolkit` | ✅ Ready | 32 passing |
-| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 27 passing |
+| Rust | `odin-prompt-toolkit` v0.5.0 | ✅ Ready | 69 passing |
+| Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
+| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 132 passing |
 
 See the [Validation Report](https://github.com/0din-ai/odin-prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language validation results.

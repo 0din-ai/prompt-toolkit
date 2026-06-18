@@ -12,7 +12,7 @@ Add `odin-prompt-toolkit` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit" }
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/prompt-toolkit" }
 ```
 
 ### Feature Flags
@@ -20,8 +20,8 @@ odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit" }
 ```toml
 [dependencies]
 odin-prompt-toolkit = { 
-  git = "https://github.com/0din-ai/odin-prompt-toolkit",
-  features = ["openai", "onnx", "cm-lsh"]
+  git = "https://github.com/0din-ai/prompt-toolkit",
+  features = ["openai", "onnx", "cm-lsh", "susfactor", "threatfeed"]
 }
 ```
 
@@ -29,7 +29,9 @@ odin-prompt-toolkit = {
 |---------|---------|-------------|
 | `openai` | ✅ Yes | OpenAI API embedding provider (V0 signatures) |
 | `onnx` | ✅ Yes | Local ONNX embedding provider (V1 signatures) |
-| `cm-lsh` | ❌ No | Confidence Matrix LSH (experimental) |
+| `cm-lsh` | ❌ No | Confidence Matrix LSH (experimental, higher accuracy) |
+| `susfactor` | ❌ No | Jailbreak/prompt-injection classifier ([SusFactor](../concepts/susfactor)) |
+| `threatfeed` | ❌ No | Threat feed sync and similarity lookup |
 
 :::note ONNX Runtime build requirement
 
@@ -53,26 +55,32 @@ cargo build
 Install via pip with git dependency:
 
 ```bash
-pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Optional Dependencies
 
 ```bash
 # Core LSH only (no embeddings)
-pip install "odin-prompt-toolkit[dev] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With OpenAI support
-pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
-# With ONNX support
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+# With ONNX support (V1 embeddings + SusFactor ONNX backend)
+pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With CM-LSH support
-pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+
+# With SusFactor (PyTorch backend)
+pip install "odin-prompt-toolkit[susfactor] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+
+# With Threat Feed integration
+pip install "odin-prompt-toolkit[threatfeed] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # All features
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Requirements
@@ -120,7 +128,7 @@ If you're contributing to the SDK or need the latest unreleased changes:
 ### Clone Repository
 
 ```bash
-git clone https://github.com/0din-ai/odin-prompt-toolkit.git
+git clone https://github.com/0din-ai/prompt-toolkit.git
 cd prompt-toolkit
 ```
 
@@ -141,13 +149,13 @@ This installs dependencies for all three languages:
 make test
 ```
 
-Runs all 61 tests across the three implementations.
+Runs all 384 tests across the three implementations.
 
 ## Next Steps
 
 - **[Quick Start](./quick-start)** — Generate your first signature
 - **[Configuration](./configuration)** — Configure embedding providers and LSH parameters
-- **[Examples](https://github.com/0din-ai/odin-prompt-toolkit/tree/main/packages/rust/examples)** — See runnable examples
+- **[Examples](https://github.com/0din-ai/prompt-toolkit/tree/main/packages/rust/examples)** — See runnable examples
 
 ## Troubleshooting
 
@@ -188,4 +196,4 @@ The SDK is currently available via git dependencies only. Publication to officia
 - 🔲 **PyPI** (Python)
 - 🔲 **npm** (TypeScript)
 
-Follow the [GitHub repository](https://github.com/0din-ai/odin-prompt-toolkit) for updates.
+Follow the [GitHub repository](https://github.com/0din-ai/prompt-toolkit) for updates.

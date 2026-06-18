@@ -1,382 +1,138 @@
 # odin-prompt-toolkit
 
-Multi-language SDK for LSH (Locality-Sensitive Hashing) signature generation for AI prompt similarity detection.
+Multi-language SDK for AI prompt similarity detection — LSH signatures, jailbreak classification, and threat feed integration.
 
-## Overview
+📖 **[Full Documentation →](https://0din-ai.github.io/prompt-toolkit/)**
 
-This SDK provides a unified implementation of the LSH signature algorithm across three languages (Rust, Python, TypeScript), extracted and consolidated from:
+## What's Inside
 
-- **Heimdall** (Rust) — canonical/authoritative implementation
-- **Thor** (TypeScript) — frontend/Node.js implementation  
-- **Research/signature_cli** (Python) — research/CLI implementation
-
-## Project Status
-
-✅ **Phases 1-6 Complete** — Production-ready SDK with comprehensive documentation!
-
-- ✅ Phase 1-5: All three SDKs implemented and validated (61 tests passing)
-- ✅ Phase 6: Docusaurus documentation site
-- ✅ Phase 7: CI/CD pipeline and packaging
-
-See [VALIDATION.md](VALIDATION.md) for the complete cross-language validation report.
-
-## Quick Links
-
-- **[Validation Report](VALIDATION.md)** — Cross-language validation (61 tests passing)
-- **[Algorithm Specification](spec/SPEC.md)** — Formal algorithm definition
-- **[Versioning Specification](spec/VERSIONING.md)** — Signature version registry and compatibility
-- **[Test Vectors](spec/test-vectors/)** — Canonical test vectors (8 files, 124 cases)
-- **[Implementation Plans](.opencode/plans/)** — Detailed implementation phases
+| Capability | Description |
+|---|---|
+| **LSH Signatures** | SimHash locality-sensitive hashing — 256-bit signatures for fast prompt similarity |
+| **SusFactor Classifier** | ONNX-backed jailbreak/prompt-injection classifier (score 0–1) |
+| **Threat Feed** | Compare signatures against live 0DIN threat intelligence feeds |
+| **Native Acceleration** | PyO3 Rust extension for Python — 627× faster LSH computation |
 
 ## Packages
 
-| Language   | Package      | Status      | Tests      | Path           |
-|------------|--------------|-------------|------------|----------------|
-| Rust       | `odin-prompt-toolkit`   | ✅ Ready    | 43 passing | [packages/rust/](packages/rust/) |
-| Python     | `odin-prompt-toolkit`   | ✅ Ready    | 11 passing | [packages/python/](packages/python/) |
-| TypeScript | `@0din/odin-prompt-toolkit`  | ✅ Ready    | 7 passing  | [packages/typescript/](packages/typescript/) |
-
-**Total**: 61 tests passing across all languages
-
-## Signature Versions
-
-| Version | Provider | Model                        | Dimensions | Status |
-|---------|----------|------------------------------|------------|--------|
-| V0      | OpenAI   | text-embedding-3-large       | 1536       | ✅ Stable |
-| V1      | ONNX     | 0din-jailbreak-embeddings-small| 1024       | ✅ Stable |
-| Latest  | →V1      | —                            | —          | Alias  |
-
-**⚠️ Important:** V0 and V1 signatures use different embedding spaces and are **not comparable**.
-
-## Features
-
-- ✅ **SimHash LSH** — Random hyperplane LSH (Charikar 2002)
-- ✅ **Deterministic** — Same input always produces same signature (via SplitMix64 PRNG)
-- ✅ **Multi-family hashing** — 3 independent hash families for robustness
-- ✅ **Band splitting** — 16 bands for LSH indexing and ANN search
-- ✅ **Canonical SHA256** — Deterministic embedding deduplication
-- ✅ **CM-LSH** — Confidence Matrix LSH (Rust, Python; optional, higher accuracy)
-- ✅ **ONNX embeddings** — Local, API-free embedding generation (Rust, Python)
-- ✅ **OpenAI embeddings** — API-based embedding generation (all languages)
-- ✅ **Cross-language parity** — Identical signatures across all three languages
-- ✅ **Comprehensive testing** — 61 tests validating 124 test cases
+| Language | Package | Tests | Path |
+|---|---|---|---|
+| Rust | `odin-prompt-toolkit` v0.5.0 | 69 passing | [packages/rust/](packages/rust/) |
+| Python | `odin-prompt-toolkit` | 183 passing | [packages/python/](packages/python/) |
+| TypeScript | `@0din/odin-prompt-toolkit` | 132 passing | [packages/typescript/](packages/typescript/) |
+| Python Native | `odin-prompt-toolkit-native` | — | [packages/python-native/](packages/python-native/) |
 
 ## Installation
 
-> **Note:** These packages are currently for internal use only and are not published to public registries (crates.io, PyPI, npm). Use git dependencies as shown below.
+> These packages are not published to public registries. Install via git dependency.
 
 ### Rust
 
-Add to your `Cargo.toml`:
-
 ```toml
 [dependencies]
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main" }
+# Core (no API key required)
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/prompt-toolkit", branch = "main" }
 
-# With CM-LSH feature (optional, higher accuracy)
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["cm-lsh"] }
-
-# With ONNX embeddings (local, API-free)
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["onnx"] }
-
-# With OpenAI embeddings
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["openai"] }
-
-# All features
-odin-prompt-toolkit = { git = "https://github.com/0din-ai/odin-prompt-toolkit", branch = "main", features = ["cm-lsh", "onnx", "openai"] }
+# With optional features
+odin-prompt-toolkit = { git = "https://github.com/0din-ai/prompt-toolkit", branch = "main", features = ["onnx", "openai", "cm-lsh", "susfactor"] }
 ```
 
-Or via command line:
-
-```bash
-cargo add odin-prompt-toolkit --git https://github.com/0din-ai/odin-prompt-toolkit --branch main
-```
+**Feature flags:** `onnx` (local embeddings), `openai` (API embeddings), `cm-lsh` (higher accuracy), `susfactor` (jailbreak classifier), `threatfeed`
 
 ### Python
 
 ```bash
-# Install from git (core features only)
-pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
+pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
-# With all optional features (CM-LSH, ONNX, OpenAI)
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
-
-# With specific features
-pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
-pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python"
-```
-
-Add to `requirements.txt`:
-
-```txt
-odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit#subdirectory=packages/python
+# With all optional features
+pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### TypeScript
 
-Add to your `package.json`:
-
-```json
-{
-  "dependencies": {
-    "@0din/odin-prompt-toolkit": "github:0din-ai/odin-prompt-toolkit#main"
-  }
-}
-```
-
-Or via command line:
-
 ```bash
-npm install github:0din-ai/odin-prompt-toolkit#main
-
-# With yarn
-yarn add github:0din-ai/odin-prompt-toolkit#main
-
-# With pnpm
-pnpm add github:0din-ai/odin-prompt-toolkit#main
-```
-
-**Note:** For monorepos using npm workspaces, you may need to adjust the path:
-
-```bash
-npm install "github:0din-ai/odin-prompt-toolkit#main" --workspace=typescript
+npm install github:0din-ai/prompt-toolkit#main
+# yarn add github:0din-ai/prompt-toolkit#main
+# pnpm add github:0din-ai/prompt-toolkit#main
 ```
 
 ## Quick Start
 
-### Rust
-
 ```rust
-use odin_prompt_toolkit::{simhash_lsh_multi, normalize_vector, LshConfig};
+// Rust
+use odin_prompt_toolkit::{sign_text, SignatureVersion};
+use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
-let vector = vec![0.5, 0.5, 0.5, 0.5]; // Your embedding
-let normalized = normalize_vector(&vector);
-let families = simhash_lsh_multi(&normalized, &LshConfig::default());
-
-println!("Signature: {}", families[0].signature);
+let cache = ModelCache::new()?;
+let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
+let result = sign_text("How do I reset my password?", &provider, SignatureVersion::V1, None).await?;
+println!("{}", result.to_signature_string()); // 0din-v1:8d000000ac854dae...
 ```
-
-See [packages/rust/README.md](packages/rust/README.md) for full documentation.
-
-### Python
 
 ```python
-from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
+# Python
+from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
-vector = [0.5, 0.5, 0.5, 0.5]  # Your embedding
-normalized = normalize_vector(vector)
-families = simhash_lsh_multi(normalized)
-
-print(f"Signature: {families[0].signature}")
+cache = ModelCache()
+provider = await OnnxProvider.new(cache)
+result = await sign_text("How do I reset my password?", provider)
+print(result.signature_string)  # 0din-v1:8d000000ac854dae...
 ```
-
-See [packages/python/README.md](packages/python/README.md) for full documentation.
-
-### TypeScript
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
+// TypeScript
+import { signText, getSignatureString } from '@0din/odin-prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
-const vector = [0.5, 0.5, 0.5, 0.5]; // Your embedding
-const normalized = normalizeVector(vector);
-const families = simhashLshMulti(normalized);
-
-console.log(`Signature: ${families[0].signature}`);
+const provider = await OnnxProvider.create(new ModelCache());
+const result = await signText("How do I reset my password?", provider);
+console.log(getSignatureString(result)); // 0din-v1:8d000000ac854dae...
 ```
 
-See [packages/typescript/README.md](packages/typescript/README.md) for full documentation.
+## Signature Versions
 
-## Examples
+| Version | Provider | Model | Dimensions |
+|---|---|---|---|
+| V0 | OpenAI | text-embedding-3-large | 1536 |
+| V1 | ONNX | 0din-jailbreak-embeddings-small | 1024 |
+| Latest | → V1 | — | — |
 
-Each language includes runnable example files demonstrating common use cases:
+**V0 and V1 signatures are not comparable** — different embedding spaces.
 
-### Rust Examples
-
-```bash
-# Basic signature generation
-cargo run --example basic_signature
-
-# Similarity comparison
-cargo run --example similarity_comparison
-
-# Duplicate detection with bands
-cargo run --example duplicate_detection
-
-# CM-LSH (requires feature flag)
-cargo run --example cm_lsh_example --features cm-lsh
-```
-
-See [packages/rust/examples/](packages/rust/examples/) for source code.
-
-### Python Examples
-
-```bash
-# Basic signature generation
-python packages/python/examples/basic_signature.py
-
-# Similarity comparison
-python packages/python/examples/similarity_comparison.py
-
-# Duplicate detection with bands
-python packages/python/examples/duplicate_detection.py
-
-# CM-LSH
-python packages/python/examples/cm_lsh_example.py
-```
-
-See [packages/python/examples/](packages/python/examples/) for source code.
-
-### TypeScript Examples
-
-```bash
-# Basic signature generation
-npx ts-node packages/typescript/examples/basic_signature.ts
-
-# Similarity comparison
-npx ts-node packages/typescript/examples/similarity_comparison.ts
-
-# Duplicate detection with bands
-npx ts-node packages/typescript/examples/duplicate_detection.ts
-```
-
-See [packages/typescript/examples/](packages/typescript/examples/) for source code.
-
-## Algorithm Overview
-
-**SimHash via Random Hyperplane LSH:**
-
-1. Embed text using OpenAI or ONNX provider
-2. L2-normalize embedding to unit length
-3. For each of 256 bits:
-   - Generate deterministic random hyperplane via SplitMix64
-   - Compute dot product with normalized embedding
-   - Bit = 1 if dot > 0, else 0
-4. Pack bits into 64-character hex string
-5. Split into 16 bands for LSH indexing
-
-**Default configuration:**
-- 3 independent hash families (improves recall)
-- 256 bits per signature (64 hex chars)
-- 16 bands (4 hex chars each)
-
-## Signature Format
-
-```
-0din-v{N}:<hex_signature>
-```
-
-Examples:
-- `0din-v0:a3f9c2e1b8d4f7a2...` (V0: OpenAI)
-- `0din-v1:7f2c8a9d3e1b5f4c...` (V1: ONNX)
-
-## Documentation
-
-- **[spec/SPEC.md](spec/SPEC.md)** — Complete algorithm specification with pseudocode
-- **[spec/VERSIONING.md](spec/VERSIONING.md)** — Version registry, compatibility, migration guide
-- **[models/v1/config.json](models/v1/config.json)** — ONNX model metadata
-- **[.opencode/plans/](.opencode/plans/)** — Implementation plans for all phases
+Signature format: `0din-v{N}:<64-char hex>`
 
 ## Development
+
+```bash
+make install    # Install all dependencies
+make test       # Run all tests (384 total)
+make lint       # Run linters
+make fmt        # Format code
+make ci         # Full pipeline: clean → install → lint → test
+```
 
 ### Project Structure
 
 ```
-sig-sdk/
-├── spec/                  # Formal specifications
-│   ├── SPEC.md           # Algorithm spec
-│   ├── VERSIONING.md     # Version registry
-│   └── test-vectors/     # Cross-language test vectors
-├── models/               # Model metadata
-│   └── v1/
-│       └── config.json
-├── packages/             # Language implementations
-│   ├── rust/            # Rust SDK (canonical)
-│   ├── python/          # Python SDK
-│   └── typescript/      # TypeScript SDK
-├── docs/                 # Docusaurus documentation
-└── .opencode/plans/      # Implementation plans
+prompt-toolkit/
+├── spec/                  # Algorithm specification and test vectors
+├── packages/
+│   ├── rust/              # Rust SDK (canonical implementation)
+│   ├── python/            # Python SDK
+│   ├── python-native/     # PyO3 native acceleration for Python
+│   └── typescript/        # TypeScript SDK
+└── docs/                  # Docusaurus documentation site
 ```
 
-### Running Tests
+## Documentation
 
-```bash
-# Test all languages (runs all 61 tests)
-make test
-
-# Test individual languages
-make test-rust      # 43 tests
-make test-python    # 11 tests
-make test-typescript # 7 tests
-
-# Generate test vectors from canonical Rust implementation
-make generate-vectors
-
-# Install dependencies for all packages
-make install
-
-# Run linters
-make lint
-
-# Format code
-make fmt
-
-# Full CI pipeline (clean, install, lint, test)
-make ci
-
-# Display all available commands
-make help
-```
-
-### Building Documentation
-
-```bash
-cd docs && npm run build
-```
-
-## Roadmap
-
-- [x] **Phase 1:** Specification & test vectors ✅
-- [x] **Phase 2:** Rust SDK (canonical) ✅
-- [x] **Phase 3:** Python SDK ✅
-- [x] **Phase 4:** TypeScript SDK ✅
-- [x] **Phase 5:** Cross-language validation ✅
-- [x] **Phase 6:** Docusaurus documentation ✅
-- [x] **Phase 7:** CI/CD & packaging ✅
-
-## Contributing
-
-See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for development setup, coding standards, and pull request guidelines.
-
-**Quick start:**
-
-```bash
-# Clone and install
-git clone https://github.com/0din-ai/odin-prompt-toolkit.git
-cd prompt-toolkit
-make install
-
-# Install pre-commit hooks
-pip install pre-commit
-pre-commit install
-
-# Run tests
-make test
-
-# Run linters
-make lint
-```
+- **[Full Docs](https://0din-ai.github.io/prompt-toolkit/)** — Getting started, guides, API reference
+- **[Algorithm Spec](spec/SPEC.md)** — Formal specification with pseudocode
+- **[Versioning](spec/VERSIONING.md)** — Version registry and compatibility
+- **[Validation Report](VALIDATION.md)** — Cross-language parity results
+- **[Contributing](.github/CONTRIBUTING.md)** — Development setup and standards
 
 ## License
 
 MIT
-
-## References
-
-- Charikar, M. (2002). "Similarity estimation techniques from rounding algorithms." STOC.
-- Gong, Y., Lazebnik, S. (2011). "Iterative Quantization: A Procrustean Approach to Learning Binary Codes." CVPR.
-- SplitMix64: https://prng.di.unimi.it/splitmix64.c
-
-## Support
-
-For issues or questions, please contact the 0DIN team.

@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'concepts/embedding-providers',
         'concepts/cm-lsh',
         'concepts/cross-language',
+        'concepts/susfactor',
       ],
     },
     {
@@ -45,6 +46,7 @@ const sidebars: SidebarsConfig = {
         'api/signature-format',
         'api/errors',
         'api/cm-lsh-api',
+        'api/susfactor-api',
       ],
     },
     {
@@ -53,6 +55,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/duplicate-detection',
         'guides/similarity-search',
+        'guides/threatfeed',
         'guides/native-acceleration',
         'guides/performance',
         'guides/migration',

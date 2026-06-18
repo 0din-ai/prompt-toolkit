@@ -72,7 +72,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          to: '/docs/api/core-functions',
+          to: '/api/core-functions',
           label: 'API',
           position: 'left',
         },
@@ -91,15 +91,15 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started/installation',
+              to: '/getting-started/installation',
             },
             {
               label: 'Concepts',
-              to: '/docs/concepts/lsh-overview',
+              to: '/concepts/lsh-overview',
             },
             {
               label: 'Guides',
-              to: '/docs/guides/duplicate-detection',
+              to: '/guides/duplicate-detection',
             },
           ],
         },
@@ -129,7 +129,7 @@ const config: Config = {
             },
             {
               label: 'Specification',
-              to: '/docs/reference/spec',
+              to: '/reference/spec',
             },
           ],
         },
