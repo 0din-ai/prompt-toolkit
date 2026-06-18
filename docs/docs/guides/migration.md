@@ -24,7 +24,7 @@ The odin-prompt-toolkit SDK consolidates three legacy implementations into a uni
 - ✅ Versioned signature format (`0din-v1:...`)
 - ✅ Native Rust acceleration for Python (592× faster)
 - ✅ Comprehensive documentation and test coverage
-- ✅ Cross-language validation (109 tests)
+- ✅ Cross-language validation (384 tests)
 
 ---
 

@@ -1,12 +1,14 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
   title: '0DIN Prompt Toolkit',
-  tagline: 'Multi-language toolkit for LSH signature generation and AI prompt similarity detection',
+  tagline: 'Jailbreak detection, similarity signatures, and threat intelligence for AI prompts',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -25,7 +27,7 @@ const config: Config = {
   organizationName: '0din-ai', // Usually your GitHub org/user name.
   projectName: 'prompt-toolkit', // Usually your repo name.
 
-  onBrokenLinks: 'warn', // Changed from 'throw' to allow build with broken links
+  onBrokenLinks: 'throw',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -35,6 +37,15 @@ const config: Config = {
     locales: ['en'],
   },
 
+  stylesheets: [
+    {
+      href: 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
+      type: 'text/css',
+      integrity: 'sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5',
+      crossorigin: 'anonymous',
+    },
+  ],
+
   presets: [
     [
       'classic',
@@ -43,6 +54,8 @@ const config: Config = {
           routeBasePath: '/', // Serve docs at the root
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/0din-ai/prompt-toolkit/tree/main/docs/',
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
         },
         blog: false, // Disable blog for now
         theme: {
@@ -99,7 +112,7 @@ const config: Config = {
             },
             {
               label: 'Guides',
-              to: '/guides/duplicate-detection',
+              to: '/guides/jailbreak-detection',
             },
           ],
         },
