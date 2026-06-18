@@ -22,7 +22,7 @@ LSH maps similar items to the same "buckets" with high probability:
 2. **Index** by hash buckets
 3. **Query** only items in matching buckets
 
-Result: **O(n) instead of O(n²)**
+Result: $O(n)$ instead of $O(n^2)$
 
 ## SimHash Algorithm
 

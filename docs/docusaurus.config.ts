@@ -27,7 +27,7 @@ const config: Config = {
   organizationName: '0din-ai', // Usually your GitHub org/user name.
   projectName: 'prompt-toolkit', // Usually your repo name.
 
-  onBrokenLinks: 'warn', // Changed from 'throw' to allow build with broken links
+  onBrokenLinks: 'throw',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -112,7 +112,7 @@ const config: Config = {
             },
             {
               label: 'Guides',
-              to: '/guides/duplicate-detection',
+              to: '/guides/jailbreak-detection',
             },
           ],
         },

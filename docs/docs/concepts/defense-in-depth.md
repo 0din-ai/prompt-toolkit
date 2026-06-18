@@ -116,6 +116,8 @@ class PromptSecurityLayer:
             await self._provider.close()
 
     async def check(self, prompt: str) -> dict:
+        if self._clf is None or self._provider is None:
+            raise RuntimeError("Call startup() before check()")
         # --- Layer 1: SusFactor ---
         sf_result = await self._clf.classify(prompt)
         if sf_result.is_suspicious:

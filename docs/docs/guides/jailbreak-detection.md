@@ -128,21 +128,26 @@ import asyncio
 from odin_prompt_toolkit.providers import ModelCache
 from odin_prompt_toolkit.susfactor import SusFactorOnnxClassifier
 
-# Load once at startup
-cache = ModelCache()
-clf = await SusFactorOnnxClassifier.new(cache)
+async def main():
+    # Load once at startup — model loading is expensive, inference is fast
+    cache = ModelCache()
+    clf = await SusFactorOnnxClassifier.new(cache)
 
-# Reuse for every request
-async def check_prompt(text: str) -> bool:
-    result = await clf.classify(text)
-    return result.is_suspicious
+    # Reuse for every request
+    async def check_prompt(text: str) -> bool:
+        result = await clf.classify(text)
+        return result.is_suspicious
 
-# Concurrent batch
-prompts = ["prompt 1", "prompt 2", "prompt 3", ...]
-results = await asyncio.gather(*[clf.classify(p) for p in prompts])
-for prompt, result in zip(prompts, results):
-    if result.is_suspicious:
-        print(f"Blocked: {prompt[:60]} (score={result.score:.3f})")
+    # Concurrent batch
+    prompts = ["prompt 1", "prompt 2", "prompt 3"]
+    results = await asyncio.gather(*[clf.classify(p) for p in prompts])
+    for prompt, result in zip(prompts, results):
+        if result.is_suspicious:
+            print(f"Blocked: {prompt[:60]} (score={result.score:.3f})")
+
+    await clf.close()
+
+asyncio.run(main())
 ```
 
 **Typical latency** (ONNX backend, CPU):
