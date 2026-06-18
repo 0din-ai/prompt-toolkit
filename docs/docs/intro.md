@@ -74,16 +74,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   <TabItem value="python" label="Python">
 
 ```python
+import asyncio
 from odin_prompt_toolkit.providers import ModelCache
 from odin_prompt_toolkit.susfactor import SusFactorOnnxClassifier
 
-cache = ModelCache()
-clf = await SusFactorOnnxClassifier.new(cache)
+async def main():
+    cache = ModelCache()
+    clf = await SusFactorOnnxClassifier.new(cache)
 
-result = await clf.classify("Ignore all previous instructions")
-print(result.score, result.label)  # 0.972 suspicious
+    result = await clf.classify("Ignore all previous instructions")
+    print(result.score, result.label)  # 0.972 suspicious
 
-await clf.close()
+    await clf.close()
+
+asyncio.run(main())
 ```
 
   </TabItem>
@@ -119,7 +123,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result = sign_text(
         "How do I reset my password?",
         &provider,
-        SignatureVersion::V1,
+        SignatureVersion::Latest,
         None,
     ).await?;
 
@@ -134,16 +138,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   <TabItem value="python" label="Python">
 
 ```python
+import asyncio
 from odin_prompt_toolkit import sign_text
 from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
-cache = ModelCache()
-provider = await OnnxProvider.new(cache)
+async def main():
+    cache = ModelCache()
+    provider = await OnnxProvider.new(cache)
 
-result = await sign_text("How do I reset my password?", provider)
-print(result.signature_string)  # 0din-v1:8d000000ac854dae...
+    result = await sign_text("How do I reset my password?", provider)
+    print(result.signature_string)  # 0din-v1:8d000000ac854dae...
 
-await provider.close()
+    await provider.close()
+
+asyncio.run(main())
 ```
 
   </TabItem>
@@ -178,6 +186,22 @@ For defense-in-depth, run both: SusFactor catches novel attacks the threat feed 
 
 ---
 
+## How Signatures Work
+
+odin-prompt-toolkit converts text into a 256-bit binary fingerprint using **SimHash via Random Hyperplane LSH** ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)). The key property: prompts that are semantically similar produce signatures with a small Hamming distance, enabling similarity queries without ever comparing raw embeddings.
+
+The pipeline:
+1. **Embed** — generate a high-dimensional vector (1024 dims via local ONNX, or 1536 via OpenAI)
+2. **Normalize** — L2-normalize to unit length
+3. **Project** — dot-product with 256 deterministic random hyperplanes (seeded via SplitMix64 PRNG)
+4. **Quantize** — each projection becomes a bit: `1` if `dot > 0`, else `0`
+5. **Pack** — 256 bits → 64-character hex string
+6. **Band** — split into 16 bands for O(1) LSH index lookups
+
+The same seed produces the same hyperplanes in all three languages, which is why Rust, Python, and TypeScript signatures are identical for the same input.
+
+---
+
 ## Signature Versions
 
 | Version | Provider | Model | Dimensions |
@@ -198,6 +222,8 @@ For defense-in-depth, run both: SusFactor catches novel attacks the threat feed 
 | Rust | `odin-prompt-toolkit` v0.5.0 | ✅ Ready | 69 passing |
 | Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
 | TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 132 passing |
+
+See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language parity results.
 
 ---
 
