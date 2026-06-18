@@ -116,13 +116,14 @@ def check_susfactor_goldens_present(root_dir: Path) -> tuple[bool, int]:
         return False, 0
 
 
-def run_susfactor_parity(root_dir: Path, model_dir: str) -> dict[str, tuple[bool, int]]:
+def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "") -> dict[str, tuple[bool, int]]:
     """Run SusFactor parity checks for all three SDKs.
 
     Returns a dict of lang -> (passed, vector_count).
     """
     results: dict[str, tuple[bool, int]] = {}
     env = {"SUSFACTOR_MODEL_DIR": model_dir}
+    py_env = {**env, "SIGNATURE_SDK_MODEL_CACHE": py_model_cache} if py_model_cache else env
 
     # ── Rust parity (self-check) ─────────────────────────────────────────────
     success, _ = run_command(
@@ -147,7 +148,7 @@ def run_susfactor_parity(root_dir: Path, model_dir: str) -> dict[str, tuple[bool
         ],
         root_dir / "packages" / "python",
         "Python SusFactor parity",
-        env={**env, "SIGNATURE_SDK_MODEL_CACHE": str(Path(model_dir).parent)},
+        env=py_env,
     )
     count = extract_test_count(output, "python")
     results["python"] = (success, count)
@@ -175,6 +176,15 @@ def main() -> int:
         "--susfactor-parity",
         action="store_true",
         help="Also run SusFactor cross-SDK parity checks (requires SUSFACTOR_MODEL_DIR)",
+    )
+    parser.add_argument(
+        "--py-model-cache",
+        default=None,
+        help=(
+            "Path to pass as SIGNATURE_SDK_MODEL_CACHE for the Python parity test. "
+            "Kept separate from the step-level env so it does not leak into Rust unit "
+            "tests that assert on the default ~/.cache/signature-sdk path."
+        ),
     )
     args = parser.parse_args()
 
@@ -221,6 +231,7 @@ def main() -> int:
 
     if args.susfactor_parity:
         model_dir = os.environ.get("SUSFACTOR_MODEL_DIR", "")
+        py_model_cache = args.py_model_cache or os.environ.get("SIGNATURE_SDK_MODEL_CACHE", "")
         if not model_dir:
             parity_skipped_reason = "SUSFACTOR_MODEL_DIR not set"
         else:
@@ -233,7 +244,7 @@ def main() -> int:
                 print(f"{CYAN}{'=' * 60}{RESET}")
                 print(f"{CYAN}SusFactor Parity Checks ({golden_count} golden vectors){RESET}")
                 print(f"{CYAN}{'=' * 60}{RESET}\n")
-                parity_results = run_susfactor_parity(root_dir, model_dir)
+                parity_results = run_susfactor_parity(root_dir, model_dir, py_model_cache)
 
     # ── Summary ──────────────────────────────────────────────────────────────
 
