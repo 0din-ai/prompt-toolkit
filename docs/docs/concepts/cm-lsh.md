@@ -352,7 +352,7 @@ for i, h1 in enumerate(hashes):
 
 **Related Documentation:**
 - [CM-LSH API Reference](../api/cm-lsh-api) - Full API documentation
-- [LSH Overview](./lsh-overview) - Standard LSH algorithm
+- [LSH Overview](../concepts/lsh-overview) - Standard LSH algorithm
 - [Performance Guide](../guides/performance) - Benchmarks and optimization
 
 ---
@@ -360,6 +360,6 @@ for i, h1 in enumerate(hashes):
 ## See Also
 
 - [CM-LSH API](../api/cm-lsh-api) - Complete API reference
-- [LSH Overview](./lsh-overview) - Standard LSH concepts
-- [Cross-Language Validation](./cross-language) - Test vector consistency
+- [LSH Overview](../concepts/lsh-overview) - Standard LSH concepts
+- [Cross-Language Validation](../concepts/cross-language) - Test vector consistency
 - [Performance Guide](../guides/performance) - Benchmark results

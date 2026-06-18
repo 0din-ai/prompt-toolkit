@@ -100,13 +100,13 @@ print(odin_prompt_toolkit.__version__)
 Install via npm with git dependency:
 
 ```bash
-npm install "github:0din-ai/odin-prompt-toolkit#main" --workspace=typescript
+npm install "github:0din-ai/prompt-toolkit#main" --workspace=typescript
 ```
 
 Or with Yarn:
 
 ```bash
-yarn add "github:0din-ai/odin-prompt-toolkit#main"
+yarn add "github:0din-ai/prompt-toolkit#main"
 ```
 
 ### Requirements

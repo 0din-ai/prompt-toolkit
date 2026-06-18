@@ -4,11 +4,11 @@ sidebar_position: 3
 
 # Native Rust Acceleration
 
-The Python SDK includes optional native Rust acceleration that provides **~592× faster signature generation** with zero code changes.
+The Python SDK includes optional native Rust acceleration that provides **~627× faster signature generation** with zero code changes.
 
 ## Overview
 
-Starting with version `0.1.1`, the Python package supports native Rust acceleration through the `odin-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
+The Python package supports native Rust acceleration through the `odin-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
 
 - **Same API**: No code changes required
 - **Transparent fallback**: If native extension unavailable, falls back to pure Python
@@ -19,7 +19,7 @@ Starting with version `0.1.1`, the Python package supports native Rust accelerat
 
 | Implementation | Throughput | Latency | Speedup | Use Case |
 |---------------|-----------|---------|---------|----------|
-| **Native (Rust)** | ~5,332 sigs/sec | 0.19 ms/sig | **592×** | Production (recommended) |
+| **Native (Rust)** | ~5,332 sigs/sec | 0.19 ms/sig | **627×** | Production (recommended) |
 | Pure Python | ~9 sigs/sec | 115 ms/sig | 1× | Development fallback |
 
 **Real-world impact** (from `demos/showcase.py` benchmark with 3,714 prompts):
@@ -42,7 +42,7 @@ With native acceleration, signature generation adds only **0.6% overhead** on to
 pip install 'odin-prompt-toolkit[native]'
 
 # From Git
-pip install 'git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=packages/python&egg=odin-prompt-toolkit[native]'
+pip install 'git+https://github.com/0din-ai/prompt-toolkit.git#subdirectory=packages/python&egg=odin-prompt-toolkit[native]'
 
 # Local development
 cd packages/python

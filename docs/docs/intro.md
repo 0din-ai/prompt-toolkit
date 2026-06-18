@@ -5,45 +5,108 @@ slug: /
 
 # Introduction to odin-prompt-toolkit
 
-**odin-prompt-toolkit** is a multi-language SDK for generating LSH (Locality-Sensitive Hashing) signatures from AI prompt embeddings. It provides fast, deterministic similarity detection across three languages: Rust, Python, and TypeScript.
+**odin-prompt-toolkit** is a multi-language SDK for AI prompt safety and security. It gives you the tools to detect jailbreaks, find similar or duplicate prompts, and match incoming prompts against known threat intelligence — across Rust, Python, and TypeScript.
 
-## What is odin-prompt-toolkit?
+## What It Does
 
-odin-prompt-toolkit implements **SimHash** via random hyperplane LSH ([Charikar 2002](https://dl.acm.org/doi/10.1145/509907.509965)), a proven algorithm for approximate nearest neighbor search. It converts high-dimensional embedding vectors (384-1536 dimensions) into compact 256-bit binary signatures that preserve cosine similarity.
+The toolkit provides two complementary capabilities:
 
-### Key Features
+### 🔍 LSH Signatures — Prompt Similarity & Deduplication
 
-- 🚀 **Fast** — 256-bit signatures enable O(1) similarity lookups in hash tables
-- 🔒 **Deterministic** — Same input always produces the same signature
-- 🌍 **Cross-language** — Identical signatures from Rust, Python, and TypeScript
-- 📦 **No API required** — Local ONNX embeddings (V1) or OpenAI API (V0)
-- 🎯 **Accurate** — Preserves cosine similarity via random hyperplane projections
+Converts any prompt into a compact 256-bit signature that preserves semantic similarity. Identical or near-identical prompts produce signatures with small Hamming distance, enabling fast similarity search without storing or comparing raw embeddings.
+
+Use it to:
+- Detect duplicate or paraphrased prompts at scale
+- Build approximate nearest-neighbor (ANN) indexes over large prompt corpora
+- Match incoming prompts against a cache of known threats ([Threat Feed](./guides/threatfeed))
+
+### 🚨 SusFactor — Jailbreak & Prompt Injection Classification
+
+Scores a prompt from 0 (safe) to 1 (suspicious) using a fine-tuned e5-large model. No embedding pipeline needed — feed it a prompt, get back a score and a label.
+
+Use it to:
+- Flag jailbreak attempts and prompt injection attacks in real time
+- Gate LLM requests based on risk score
+- Combine with signatures for defense-in-depth: detect *known* attacks via threat feed and *novel* attacks via classifier
+
+---
+
+## Key Features
+
+- 🔒 **Jailbreak detection** — SusFactor classifier scores prompts 0–1 for suspicious intent
+- 🔍 **Similarity signatures** — 256-bit SimHash LSH signatures for fast deduplication and ANN search
+- 🛡️ **Threat intelligence** — Sync and query the 0DIN threat feed of known adversarial prompts
+- 🌍 **Cross-language** — Identical signatures and parity scores across Rust, Python, and TypeScript
+- 📦 **No API required** — Local ONNX models for both embeddings (V1) and classification
+- 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (627× speedup)
 - 🧪 **Battle-tested** — 384 tests across 3 languages
 
-## Why Use LSH Signatures?
+---
 
-Traditional approaches to finding similar prompts require comparing each query against every indexed embedding — scaling linearly with index size per query. For large-scale systems with many queries, this becomes prohibitively expensive.
-
-LSH signatures enable **O(n) duplicate detection** through band-based candidate generation:
-
-1. **Hash** each embedding into a 256-bit signature
-2. **Split** signatures into 16 bands (16 hex chars each)
-3. **Index** documents by band values in hash tables
-4. **Query** candidates from matching bands (not all documents!)
-5. **Verify** candidates with full Hamming distance
-
-This reduces comparisons from **millions → hundreds** while maintaining high recall.
-
-## Use Cases
-
-- **Duplicate Detection** — Find near-duplicate AI prompts in large datasets
-- **Similarity Search** — Build approximate nearest neighbor (ANN) systems
-- **Prompt Clustering** — Group similar prompts without expensive pairwise comparisons
-
-## Quick Example
+## Quick Examples
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+
+### Jailbreak Detection (SusFactor)
+
+<Tabs groupId="language">
+  <TabItem value="rust" label="Rust">
+
+```rust
+use odin_prompt_toolkit::providers::ModelCache;
+use odin_prompt_toolkit::susfactor::SusFactorClassifier;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cache = ModelCache::new()?;
+    let clf = SusFactorClassifier::new(&cache, None, None, None).await?;
+
+    let result = clf.classify("Ignore all previous instructions").await?;
+    println!("{:.3} — {}", result.score, result.label);
+    // 0.972 — suspicious
+
+    Ok(())
+}
+```
+
+  </TabItem>
+  <TabItem value="python" label="Python">
+
+```python
+import asyncio
+from odin_prompt_toolkit.providers import ModelCache
+from odin_prompt_toolkit.susfactor import SusFactorOnnxClassifier
+
+async def main():
+    cache = ModelCache()
+    clf = await SusFactorOnnxClassifier.new(cache)
+
+    result = await clf.classify("Ignore all previous instructions")
+    print(result.score, result.label)  # 0.972 suspicious
+
+    await clf.close()
+
+asyncio.run(main())
+```
+
+  </TabItem>
+  <TabItem value="typescript" label="TypeScript">
+
+```typescript
+import { SusFactorClassifier } from '@0din/odin-prompt-toolkit/susfactor';
+import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
+
+const clf = await SusFactorClassifier.create(new ModelCache());
+const result = await clf.classify('Ignore all previous instructions');
+console.log(result.score, result.label); // 0.972 suspicious
+await clf.close();
+```
+
+  </TabItem>
+</Tabs>
+
+### Signature Generation
 
 <Tabs groupId="language">
   <TabItem value="rust" label="Rust">
@@ -54,21 +117,19 @@ use odin_prompt_toolkit::providers::{ModelCache, OnnxProvider};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize local ONNX provider (no API key needed)
     let cache = ModelCache::new()?;
     let provider = OnnxProvider::new(&cache, None, None, 0, 0).await?;
-    
-    // Generate signature from text in one call (uses latest model: V1)
+
     let result = sign_text(
         "How do I reset my password?",
         &provider,
         SignatureVersion::Latest,
         None,
     ).await?;
-    
+
     println!("{}", result.to_signature_string());
-    // Output: 0din-v1:8d000000ac854dae...
-    
+    // 0din-v1:8d000000ac854dae...
+
     Ok(())
 }
 ```
@@ -78,23 +139,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```python
 import asyncio
-from odin_prompt_toolkit import sign_text, SignatureVersion
+from odin_prompt_toolkit import sign_text
 from odin_prompt_toolkit.providers import ModelCache, OnnxProvider
 
 async def main():
-    # Initialize local ONNX provider (no API key needed)
     cache = ModelCache()
     provider = await OnnxProvider.new(cache)
-    
-    # Generate signature from text in one call (uses latest model: V1)
-    result = await sign_text(
-        "How do I reset my password?",
-        provider,
-    )
-    
-    print(result.signature_string)
-    # Output: 0din-v1:8d000000ac854dae...
-    
+
+    result = await sign_text("How do I reset my password?", provider)
+    print(result.signature_string)  # 0din-v1:8d000000ac854dae...
+
     await provider.close()
 
 asyncio.run(main())
@@ -104,23 +158,13 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
+import { signText, getSignatureString } from '@0din/odin-prompt-toolkit';
 import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
 
 async function main() {
-  // Initialize local ONNX provider (no API key needed)
-  const cache = new ModelCache();
-  const provider = await OnnxProvider.create(cache);
-  
-  // Generate signature from text in one call (uses latest model: V1)
-  const result = await signText(
-    "How do I reset my password?",
-    provider,
-  );
-  
-  console.log(getSignatureString(result));
-  // Output: 0din-v1:8d000000ac854dae...
-  
+  const provider = await OnnxProvider.create(new ModelCache());
+  const result = await signText('How do I reset my password?', provider);
+  console.log(getSignatureString(result)); // 0din-v1:8d000000ac854dae...
   await provider.close();
 }
 
@@ -130,38 +174,40 @@ main();
   </TabItem>
 </Tabs>
 
-The `sign_text()` / `signText()` function is the **recommended high-level API** that handles the entire pipeline: embedding generation → normalization → LSH hashing → signature formatting.
+---
 
-For advanced use cases requiring manual embedding management, see the [Core Functions API](./api/core-functions).
+## How the Two Capabilities Fit Together
 
-## How It Works
+| | SusFactor | LSH Signatures |
+|---|---|---|
+| **Input** | Raw text | Raw text (embedding generated internally) |
+| **Output** | Score 0–1 + label | 256-bit hex signature |
+| **Detects** | Novel jailbreaks, prompt injection | Duplicate / paraphrased known attacks |
+| **Speed** | ~50–200ms per prompt (ONNX) | &lt;1ms per lookup after indexing |
+| **Best for** | Real-time request gating | Large-scale deduplication, threat matching |
 
-odin-prompt-toolkit uses a deterministic LSH algorithm:
+For defense-in-depth, run both: SusFactor catches novel attacks the threat feed hasn't seen; signatures catch known variants that may score below the classifier threshold.
 
-1. **Normalize** embedding to unit length (L2 norm)
-2. **Generate** 256 random hyperplanes (deterministic via SplitMix64 PRNG)
-3. **Project** normalized embedding onto each hyperplane (dot product)
-4. **Quantize** projections to bits: `bit = 1 if dot > 0 else 0`
-5. **Pack** 256 bits into a 64-character hex string
-6. **Split** into 16 bands for LSH indexing
+---
 
-The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuring the same hyperplanes are generated across all languages.
+## How Signatures Work
+
+Signatures are generated using **SimHash via Random Hyperplane LSH** — a deterministic algorithm that converts any prompt embedding into a compact 256-bit hex fingerprint. Semantically similar prompts produce signatures with small Hamming distance, enabling fast similarity queries without storing or comparing raw vectors.
+
+**[Deep dive: LSH Overview →](./concepts/lsh-overview)**
+
+---
 
 ## Signature Versions
 
-| Version | Provider | Model | Dimensions | Use Case |
-|---------|----------|-------|------------|----------|
-| **V0** | OpenAI | text-embedding-3-large | 1536 | API-based, production embeddings |
-| **V1** | ONNX | 0din-jailbreak-embeddings-small | 1024 | Local, API-free, lower latency |
+| Version | Provider | Model | Dimensions |
+|---------|----------|-------|------------|
+| **V0** | OpenAI | text-embedding-3-large | 1536 |
+| **V1** | ONNX | 0din-jailbreak-embeddings-small | 1024 |
 
-**Important:** V0 and V1 signatures use different embedding spaces and are **not comparable**.
+**V0 and V1 signatures are not comparable** — different embedding spaces.
 
-## Next Steps
-
-- **[Installation](./getting-started/installation)** — Install for Rust, Python, or TypeScript
-- **[Quick Start](./getting-started/quick-start)** — Generate your first signature
-- **[LSH Overview](./concepts/lsh-overview)** — Deep dive into the algorithm
-- **[Guides](./guides/duplicate-detection)** — Build real-world applications
+---
 
 ## Project Status
 
@@ -173,4 +219,14 @@ The hyperplanes are seeded by `(family << 48) ^ (bit << 24) ^ dimension`, ensuri
 | Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
 | TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 132 passing |
 
-See the [Validation Report](https://github.com/0din-ai/odin-prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language validation results.
+See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language parity results.
+
+---
+
+## Next Steps
+
+- **[Installation](./getting-started/installation)** — Install for Rust, Python, or TypeScript
+- **[Quick Start](./getting-started/quick-start)** — Your first jailbreak check or LSH signature
+- **[SusFactor](./concepts/susfactor)** — Jailbreak classification deep dive
+- **[Threat Feed](./guides/threatfeed)** — Match prompts against 0DIN threat intelligence
+- **[LSH Overview](./concepts/lsh-overview)** — How similarity signatures work
