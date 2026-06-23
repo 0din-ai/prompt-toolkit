@@ -40,12 +40,10 @@ from ..providers.model_cache import (
     susfactor_onnx_files_present,
 )
 from .types import (
-    CHUNK_OVERLAP,
     CHUNK_STRIDE,
     ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
     MAX_CONTENT_TOKENS,
-    MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
     label_for_score,

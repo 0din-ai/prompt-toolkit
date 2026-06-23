@@ -14,7 +14,6 @@ requires a token) and cache it locally before use.
 
 from __future__ import annotations
 
-import time
 from typing import Any, Optional
 
 from ..error import SusFactorError
@@ -27,7 +26,6 @@ from .types import (
     ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
     MAX_CONTENT_TOKENS,
-    MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
     label_for_score,
