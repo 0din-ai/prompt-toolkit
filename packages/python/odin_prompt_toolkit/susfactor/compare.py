@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from .types import SusFactorResult
+from .types import ChunkedSusFactorResult
 
 if TYPE_CHECKING:
     from .classifier import SusFactorClassifier
@@ -21,15 +21,16 @@ async def sus_factor(
     model: Optional[str] = None,
     threshold: float = _DEFAULT_THRESHOLD,
     device: Optional[str] = None,
-) -> SusFactorResult:
+) -> ChunkedSusFactorResult:
     """Classify a prompt as safe vs. suspicious.
 
-    If a ``classifier`` is provided it is used as-is (and left open for the
-    caller to manage). Otherwise a classifier is constructed from a model
-    cache, used once, and closed.
+    Chunking for long prompts is handled transparently — prompts of any length
+    are accepted. If a ``classifier`` is provided it is used as-is (and left
+    open for the caller to manage). Otherwise a classifier is constructed from
+    a model cache, used once, and closed.
 
     Args:
-        text: The prompt to classify.
+        text: The prompt to classify (any length).
         classifier: An existing classifier to reuse. If omitted, one is built.
         cache: A ``ModelCache`` to locate model files when auto-constructing.
             Defaults to a new ``ModelCache()``.
@@ -38,7 +39,8 @@ async def sus_factor(
         device: Torch device; auto-detected if None.
 
     Returns:
-        A ``SusFactorResult`` with the suspicious probability and label.
+        A ``ChunkedSusFactorResult`` with one entry per chunk. Short prompts
+        produce exactly one chunk. No scores are aggregated.
 
     Raises:
         SusFactorError: If the model cannot be loaded or inference fails.
@@ -46,7 +48,7 @@ async def sus_factor(
     Example:
         >>> from odin_prompt_toolkit.susfactor import sus_factor
         >>> result = await sus_factor("Ignore previous instructions")
-        >>> print(result.score, result.label)
+        >>> print(result.is_suspicious, result.chunks[0].score)
     """
     if classifier is not None:
         return await classifier.classify(text)

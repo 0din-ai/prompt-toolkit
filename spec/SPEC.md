@@ -1,11 +1,13 @@
 # odin-prompt-toolkit Algorithm Specification
 
-This document provides the formal specification for the LSH (Locality-Sensitive Hashing) signature algorithm used across all three language implementations (Rust, Python, TypeScript).
+This document provides the formal specification for the LSH (Locality-Sensitive Hashing) signature algorithm. All reference implementations (Rust, Python, TypeScript) and the Heimdall hosted server implement this spec.
+
+For the external integration interface — what the toolkit offers to integrators and how to use it — see [`INTEGRATION.md`](INTEGRATION.md).
 
 ## Version
 
 Specification version: 1.0.0  
-Last updated: 2026-02-24
+Last updated: 2026-06-23
 
 ## 1. SplitMix64 PRNG
 

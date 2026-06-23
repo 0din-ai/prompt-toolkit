@@ -40,7 +40,11 @@ from ..providers.model_cache import (
     susfactor_onnx_files_present,
 )
 from .types import (
+    CHUNK_OVERLAP,
+    CHUNK_STRIDE,
+    ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
+    MAX_CONTENT_TOKENS,
     MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
@@ -205,84 +209,127 @@ class SusFactorOnnxClassifier:
         """Return the decision threshold."""
         return self._threshold
 
-    async def classify(self, text: str) -> SusFactorResult:
-        """Classify a single prompt.
+    @staticmethod
+    def chunk_token_ids(ids: list[int]) -> list[list[int]]:
+        """Split a token-ID sequence into overlapping chunks of at most
+        ``MAX_CONTENT_TOKENS`` tokens each.
+
+        - Sequences at or below ``MAX_CONTENT_TOKENS`` produce exactly one chunk
+          (identical to the input).
+        - Adjacent chunks share ``CHUNK_OVERLAP`` tokens of context so that
+          sentence boundaries near a chunk edge are still scored in full context.
+        - An empty input produces one empty chunk.
 
         Args:
-            text: The prompt to classify.
+            ids: Raw token IDs (not including special tokens added by the
+                tokenizer — the caller is responsible for providing the payload
+                tokens only).
 
         Returns:
-            A ``SusFactorResult`` with the suspicious probability and label.
+            A list of token-ID lists, each of length ≤ ``MAX_CONTENT_TOKENS``.
+        """
+        if len(ids) <= MAX_CONTENT_TOKENS:
+            return [list(ids)]
+        chunks = []
+        start = 0
+        while True:
+            end = min(start + MAX_CONTENT_TOKENS, len(ids))
+            chunks.append(ids[start:end])
+            if end == len(ids):
+                break
+            start += CHUNK_STRIDE
+        return chunks
+
+    async def classify(self, text: str) -> ChunkedSusFactorResult:
+        """Classify a prompt of any length.
+
+        Prompts within ``MAX_CONTENT_TOKENS`` (510 tokens) are scored in a
+        single inference call. Longer prompts are automatically split into
+        overlapping chunks scored in parallel — callers do not need to check
+        length or call a separate method.
+
+        Each chunk is scored independently; no scores are aggregated.
+        A prompt is suspicious if **any** chunk is suspicious.
+
+        Args:
+            text: The prompt to classify (any length).
+
+        Returns:
+            A :class:`ChunkedSusFactorResult` with one entry per chunk.
+            Short prompts produce exactly one chunk.
 
         Raises:
             SusFactorError: If the classifier has been closed or inference fails.
         """
+        import asyncio
+        import time as _time
+
         if self._session is None:
+            from ..error import SusFactorError
             raise SusFactorError(
                 "classify() called on a closed SusFactorOnnxClassifier"
             )
-        start = time.time()
-        try:
-            # Tokenize. Use padding=True (dynamic length) rather than
-            # padding='max_length' so short prompts don't run 512-token
-            # inference. The ONNX graph was exported with a dynamic seq axis.
-            inputs = self._tokenizer(
-                text,
-                padding=True,
-                truncation=True,
-                max_length=MAX_SEQUENCE_LENGTH,
-                return_tensors="np",
-            )
 
-            input_ids = inputs["input_ids"].astype(np.int64)
-            attention_mask = inputs["attention_mask"].astype(np.int64)
+        wall_start = _time.time()
 
-            # Determine which inputs the ONNX graph actually requires.
-            # The SusFactor export only declares input_ids + attention_mask, but
-            # guard against re-exported variants that add token_type_ids.
-            onnx_inputs: dict[str, np.ndarray] = {
-                "input_ids": input_ids,
-                "attention_mask": attention_mask,
+        # Tokenize the full text without truncation — we handle chunking ourselves.
+        inputs = self._tokenizer(
+            text,
+            padding=False,
+            truncation=False,
+            return_tensors="np",
+        )
+        all_ids: list[int] = inputs["input_ids"][0].tolist()
+        all_mask: list[int] = inputs["attention_mask"][0].tolist()
+
+        # Chunk on token IDs.
+        id_chunks = self.chunk_token_ids(all_ids)
+
+        # Build a coroutine per chunk that runs the ONNX session directly
+        # (no extra tokenization — we pass pre-built token arrays).
+        async def _score_chunk(chunk_ids: list[int]) -> SusFactorResult:
+            chunk_start = _time.time()
+            chunk_len = len(chunk_ids)
+            chunk_mask = all_mask[:chunk_len]
+
+            import numpy as np
+            ids_arr = np.array([chunk_ids], dtype=np.int64)
+            mask_arr = np.array([chunk_mask], dtype=np.int64)
+
+            onnx_inputs: dict = {
+                "input_ids": ids_arr,
+                "attention_mask": mask_arr,
             }
             required_names = {inp.name for inp in self._session.get_inputs()}
             if "token_type_ids" in required_names:
-                if "token_type_ids" in inputs:
-                    onnx_inputs["token_type_ids"] = inputs["token_type_ids"].astype(np.int64)
-                else:
-                    onnx_inputs["token_type_ids"] = np.zeros_like(input_ids)
+                onnx_inputs["token_type_ids"] = np.zeros_like(ids_arr)
 
             outputs = self._session.run(None, onnx_inputs)
-
-            # Use the named "logits" output set by the export script.  Fall back
-            # to the first output for re-exported variants, but warn so
-            # unexpected model variants are visible rather than silently wrong.
             output_names = [o.name for o in self._session.get_outputs()]
-            if "logits" in output_names:
-                logits_idx = output_names.index("logits")
-            else:
-                warnings.warn(
-                    f"SusFactorOnnxClassifier: 'logits' output not found in "
-                    f"model outputs {output_names}; falling back to index 0. "
-                    "Re-export with scripts/export_susfactor_onnx.py to fix.",
-                    stacklevel=2,
-                )
-                logits_idx = 0
-            logits = outputs[logits_idx][0]  # shape: [2]
-        except SusFactorError:
-            raise
-        except Exception as e:  # noqa: BLE001 - surface as a domain error
-            raise SusFactorError(f"SusFactor ONNX inference failed: {e}") from e
+            logits_idx = output_names.index("logits") if "logits" in output_names else 0
+            logits = outputs[logits_idx][0]
 
-        score = suspicious_prob(logits.tolist())
-        label = label_for_score(score, self._threshold)
-        elapsed_ms = (time.time() - start) * 1000
+            score = suspicious_prob(logits.tolist())
+            label = label_for_score(score, self._threshold)
+            return SusFactorResult(
+                score=score,
+                label=label,
+                model=self._model_name,
+                threshold=self._threshold,
+                timing_ms=(_time.time() - chunk_start) * 1000,
+            )
 
-        return SusFactorResult(
-            score=score,
-            label=label,
-            model=self._model_name,
-            threshold=self._threshold,
-            timing_ms=elapsed_ms,
+        chunk_results: list[SusFactorResult] = await asyncio.gather(
+            *[_score_chunk(chunk) for chunk in id_chunks]
+        )
+
+        is_suspicious = any(r.is_suspicious for r in chunk_results)
+        total_timing_ms = (_time.time() - wall_start) * 1000
+
+        return ChunkedSusFactorResult(
+            chunks=list(chunk_results),
+            is_suspicious=is_suspicious,
+            total_timing_ms=total_timing_ms,
         )
 
     async def close(self) -> None:

@@ -23,7 +23,10 @@ from ..providers.model_cache import (
     susfactor_model_files_present,
 )
 from .types import (
+    CHUNK_STRIDE,
+    ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
+    MAX_CONTENT_TOKENS,
     MAX_SEQUENCE_LENGTH,
     MODEL_VERSION,
     SusFactorResult,
@@ -218,52 +221,85 @@ class SusFactorClassifier:
         """Return the decision threshold."""
         return self._threshold
 
-    async def classify(self, text: str) -> SusFactorResult:
-        """Classify a single prompt.
+    @staticmethod
+    def chunk_token_ids(ids: list[int]) -> list[list[int]]:
+        """Split a token-ID sequence into overlapping chunks of at most
+        ``MAX_CONTENT_TOKENS`` each. See ``SusFactorOnnxClassifier.chunk_token_ids``
+        for full documentation."""
+        if len(ids) <= MAX_CONTENT_TOKENS:
+            return [list(ids)]
+        chunks = []
+        start = 0
+        while True:
+            end = min(start + MAX_CONTENT_TOKENS, len(ids))
+            chunks.append(ids[start:end])
+            if end == len(ids):
+                break
+            start += CHUNK_STRIDE
+        return chunks
 
-        Args:
-            text: The prompt to classify.
+    async def classify(self, text: str) -> ChunkedSusFactorResult:
+        """Classify a prompt of any length.
 
-        Returns:
-            A ``SusFactorResult`` with the suspicious probability and label.
+        Prompts within ``MAX_CONTENT_TOKENS`` (510 tokens) are scored in a
+        single inference call. Longer prompts are automatically split into
+        overlapping chunks scored in parallel — callers do not need to check
+        length or call a separate method.
 
-        Raises:
-            SusFactorError: If inference fails.
+        Each chunk is scored independently; no scores are aggregated.
+        A prompt is suspicious if **any** chunk is suspicious.
         """
-        start = time.time()
-        try:
-            inputs = self._tokenizer(
-                [text],
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=MAX_SEQUENCE_LENGTH,
-            ).to(self._device)
+        import asyncio
+        import time as _time
 
-            torch = _require_torch()
-            with torch.no_grad():
-                outputs = self._encoder(
-                    input_ids=inputs["input_ids"],
-                    attention_mask=inputs["attention_mask"],
-                )
-                pooled = _mean_pool(outputs.last_hidden_state, inputs["attention_mask"])
+        wall_start = _time.time()
+
+        torch = _require_torch()
+        inputs_full = self._tokenizer(
+            [text],
+            return_tensors="pt",
+            padding=False,
+            truncation=False,
+        )
+        all_ids: list[int] = inputs_full["input_ids"][0].tolist()
+        all_mask: list[int] = inputs_full["attention_mask"][0].tolist()
+
+        id_chunks = self.chunk_token_ids(all_ids)
+
+        async def _score_chunk(chunk_ids: list[int]) -> SusFactorResult:
+            chunk_start = _time.time()
+            chunk_len = len(chunk_ids)
+            chunk_mask = all_mask[:chunk_len]
+
+            import torch as _torch
+            ids_t = _torch.tensor([chunk_ids], dtype=_torch.long).to(self._device)
+            mask_t = _torch.tensor([chunk_mask], dtype=_torch.long).to(self._device)
+
+            with _torch.no_grad():
+                outputs = self._encoder(input_ids=ids_t, attention_mask=mask_t)
+                pooled = _mean_pool(outputs.last_hidden_state, mask_t)
                 logits = self._head(pooled)
                 logits_np = logits[0].detach().cpu().numpy()
-        except SusFactorError:
-            raise
-        except Exception as e:  # noqa: BLE001 - surface as a domain error
-            raise SusFactorError(f"SusFactor inference failed: {e}") from e
 
-        score = suspicious_prob(logits_np.tolist())
-        label = label_for_score(score, self._threshold)
-        elapsed_ms = (time.time() - start) * 1000
+            score = suspicious_prob(logits_np.tolist())
+            label = label_for_score(score, self._threshold)
+            return SusFactorResult(
+                score=score,
+                label=label,
+                model=self._model_name,
+                threshold=self._threshold,
+                timing_ms=(_time.time() - chunk_start) * 1000,
+            )
 
-        return SusFactorResult(
-            score=score,
-            label=label,
-            model=self._model_name,
-            threshold=self._threshold,
-            timing_ms=elapsed_ms,
+        chunk_results: list[SusFactorResult] = await asyncio.gather(
+            *[_score_chunk(chunk) for chunk in id_chunks]
+        )
+
+        is_suspicious = any(r.is_suspicious for r in chunk_results)
+        return ChunkedSusFactorResult(
+            chunks=list(chunk_results),
+            is_suspicious=is_suspicious,
+            total_timing_ms=(_time.time() - wall_start) * 1000,
         )
 
     async def close(self) -> None:

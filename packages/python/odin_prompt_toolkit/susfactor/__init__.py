@@ -30,7 +30,13 @@ ONNX Runtime — no ``torch`` dependency needed at inference time.
 
 from typing import TYPE_CHECKING, Any
 
-from odin_prompt_toolkit.susfactor.types import SusFactorResult
+from odin_prompt_toolkit.susfactor.types import (
+    CHUNK_OVERLAP,
+    CHUNK_STRIDE,
+    MAX_CONTENT_TOKENS,
+    ChunkedSusFactorResult,
+    SusFactorResult,
+)
 
 if TYPE_CHECKING:
     from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
@@ -38,6 +44,10 @@ if TYPE_CHECKING:
     from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 
 __all__ = [
+    "CHUNK_OVERLAP",
+    "CHUNK_STRIDE",
+    "ChunkedSusFactorResult",
+    "MAX_CONTENT_TOKENS",
     "SusFactorClassifier",
     "SusFactorOnnxClassifier",
     "SusFactorResult",
