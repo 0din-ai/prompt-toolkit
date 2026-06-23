@@ -46,7 +46,11 @@ async fn classifies_real_prompts() {
         .expect("classify suspicious");
     assert_eq!(suspicious.chunks.len(), 1);
     assert_eq!(suspicious.chunks[0].label, "suspicious");
-    assert!(suspicious.chunks[0].score >= 0.5, "score={}", suspicious.chunks[0].score);
+    assert!(
+        suspicious.chunks[0].score >= 0.5,
+        "score={}",
+        suspicious.chunks[0].score
+    );
     assert!(suspicious.is_suspicious);
 
     let safe = clf
@@ -75,17 +79,31 @@ async fn classify_long_prompt_produces_multiple_chunks() {
     let long_safe = "The weather today is quite pleasant. ".repeat(200);
     let result = clf.classify(&long_safe).await.expect("classify");
 
-    assert!(result.chunks.len() > 1,
-        "expected multiple chunks for long prompt, got {}", result.chunks.len());
+    assert!(
+        result.chunks.len() > 1,
+        "expected multiple chunks for long prompt, got {}",
+        result.chunks.len()
+    );
 
     for (i, chunk) in result.chunks.iter().enumerate() {
-        assert!(chunk.score >= 0.0 && chunk.score <= 1.0,
-            "chunk {} score {} out of range", i, chunk.score);
-        assert!(chunk.label == "safe" || chunk.label == "suspicious",
-            "chunk {} has invalid label '{}'", i, chunk.label);
+        assert!(
+            chunk.score >= 0.0 && chunk.score <= 1.0,
+            "chunk {} score {} out of range",
+            i,
+            chunk.score
+        );
+        assert!(
+            chunk.label == "safe" || chunk.label == "suspicious",
+            "chunk {} has invalid label '{}'",
+            i,
+            chunk.label
+        );
     }
 
-    assert!(!result.is_suspicious, "long benign prompt incorrectly flagged suspicious");
+    assert!(
+        !result.is_suspicious,
+        "long benign prompt incorrectly flagged suspicious"
+    );
 }
 
 #[tokio::test]
@@ -106,14 +124,21 @@ async fn classify_suspicious_tail_flags_overall() {
 
     let result = clf.classify(&mixed).await.expect("classify");
 
-    assert!(result.chunks.len() > 1,
-        "expected multiple chunks, got {}", result.chunks.len());
-    assert!(result.is_suspicious,
+    assert!(
+        result.chunks.len() > 1,
+        "expected multiple chunks, got {}",
+        result.chunks.len()
+    );
+    assert!(
+        result.is_suspicious,
         "mixed prompt with suspicious tail not flagged; scores: {:?}",
-        result.chunks.iter().map(|c| c.score).collect::<Vec<_>>());
-    assert!(result.chunks.iter().any(|c| c.is_suspicious()),
+        result.chunks.iter().map(|c| c.score).collect::<Vec<_>>()
+    );
+    assert!(
+        result.chunks.iter().any(|c| c.is_suspicious()),
         "no individual chunk was suspicious; scores: {:?}",
-        result.chunks.iter().map(|c| c.score).collect::<Vec<_>>());
+        result.chunks.iter().map(|c| c.score).collect::<Vec<_>>()
+    );
 }
 
 #[tokio::test]

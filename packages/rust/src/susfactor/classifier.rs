@@ -280,19 +280,21 @@ impl SusFactorClassifier {
             let model_name = self.model_name.clone();
             let threshold = self.threshold;
 
-            handles.push(tokio::task::spawn_blocking(move || -> Result<SusFactorResult> {
-                let chunk_start = Instant::now();
-                let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
-                let score = suspicious_prob(&logits);
-                let label = label_for_score(score, threshold).to_string();
-                Ok(SusFactorResult {
-                    score,
-                    label,
-                    model: model_name,
-                    threshold,
-                    timing_ms: chunk_start.elapsed().as_secs_f64() * 1000.0,
-                })
-            }));
+            handles.push(tokio::task::spawn_blocking(
+                move || -> Result<SusFactorResult> {
+                    let chunk_start = Instant::now();
+                    let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
+                    let score = suspicious_prob(&logits);
+                    let label = label_for_score(score, threshold).to_string();
+                    Ok(SusFactorResult {
+                        score,
+                        label,
+                        model: model_name,
+                        threshold,
+                        timing_ms: chunk_start.elapsed().as_secs_f64() * 1000.0,
+                    })
+                },
+            ));
         }
 
         let mut chunk_results = Vec::with_capacity(handles.len());
