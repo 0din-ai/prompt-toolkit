@@ -146,7 +146,7 @@ jobs:
     # unavailable in job-level if: conditions; forks without HF_TOKEN will have
     # the download steps fail with 401 — acceptable since this job only runs on
     # the upstream repo where the secret is configured.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule'
     steps:
       - name: Free disk space
         # The susfactor ONNX model is ~2.1 GB. Ubuntu runners ship with ~14 GB
