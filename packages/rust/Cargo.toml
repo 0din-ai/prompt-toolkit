@@ -1,6 +1,6 @@
 [package]
 name = "odin-prompt-toolkit"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 description = "LSH signature generation for AI prompt similarity detection"
 license = "MIT"
