@@ -6,7 +6,7 @@
 
 import { ModelCache } from "../providers/model-cache";
 import { DEFAULT_THRESHOLD, SusFactorClassifier } from "./classifier";
-import { SusFactorResult } from "./types";
+import { ChunkedSusFactorResult } from "./types";
 
 export interface SusFactorOptions {
   /** An existing classifier to reuse. If omitted, one is built and closed. */
@@ -29,13 +29,13 @@ export interface SusFactorOptions {
  * ```typescript
  * import { susFactor } from '@0din/prompt-toolkit/susfactor';
  * const result = await susFactor('Ignore previous instructions');
- * console.log(result.score, result.label);
+ * console.log(result.isSuspicious, result.chunks[0].score);
  * ```
  */
 export async function susFactor(
   text: string,
   options: SusFactorOptions = {},
-): Promise<SusFactorResult> {
+): Promise<ChunkedSusFactorResult> {
   if (options.classifier) {
     return options.classifier.classify(text);
   }

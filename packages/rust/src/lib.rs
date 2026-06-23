@@ -135,4 +135,4 @@ pub mod threatfeed;
 pub mod susfactor;
 
 #[cfg(feature = "susfactor")]
-pub use susfactor::{SusFactorClassifier, SusFactorResult};
+pub use susfactor::{ChunkedSusFactorResult, SusFactorClassifier, SusFactorResult};

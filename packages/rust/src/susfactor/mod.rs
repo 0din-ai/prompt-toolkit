@@ -26,4 +26,7 @@ pub mod classifier;
 pub mod types;
 
 pub use classifier::{label_for_score, suspicious_prob, SusFactorClassifier};
-pub use types::{SusFactorResult, LABEL_SAFE, LABEL_SUSPICIOUS};
+pub use types::{
+    ChunkedSusFactorResult, SusFactorResult, CHUNK_OVERLAP, CHUNK_STRIDE, LABEL_SAFE,
+    LABEL_SUSPICIOUS, MAX_CONTENT_TOKENS,
+};
