@@ -9,6 +9,7 @@ on:
     # Nightly at 02:00 UTC — runs the model-present parity job
     - cron: "0 2 * * *"
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
