@@ -43,7 +43,7 @@ export function chunkTokenIds(ids: ArrayLike<bigint>): bigint[][] {
   }
   const chunks: bigint[][] = [];
   let start = 0;
-  while (true) {
+  while (start < arr.length) {
     const end = Math.min(start + MAX_CONTENT_TOKENS, arr.length);
     chunks.push(arr.slice(start, end));
     if (end === arr.length) break;
