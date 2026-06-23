@@ -23,10 +23,10 @@ from ..providers.model_cache import (
 )
 from .types import (
     CHUNK_STRIDE,
-    ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
     MAX_CONTENT_TOKENS,
     MODEL_VERSION,
+    ChunkedSusFactorResult,
     SusFactorResult,
     label_for_score,
     suspicious_prob,

@@ -8,20 +8,20 @@ run when SUSFACTOR_MODEL_DIR is set.
 from __future__ import annotations
 
 import os
+
 import pytest
 
+from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
 from odin_prompt_toolkit.susfactor.types import (
     CHUNK_OVERLAP,
     CHUNK_STRIDE,
+    LABEL_SAFE,
+    LABEL_SUSPICIOUS,
     MAX_CONTENT_TOKENS,
     MAX_SEQUENCE_LENGTH,
     ChunkedSusFactorResult,
     SusFactorResult,
-    LABEL_SAFE,
-    LABEL_SUSPICIOUS,
 )
-from odin_prompt_toolkit.susfactor.onnx_classifier import SusFactorOnnxClassifier
-
 
 # ---------------------------------------------------------------------------
 # Helpers

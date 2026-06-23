@@ -27,7 +27,6 @@ Install with: ``pip install 'odin-prompt-toolkit[onnx]'``
 
 from __future__ import annotations
 
-import time
 import warnings
 from typing import Any, Optional
 
@@ -41,10 +40,10 @@ from ..providers.model_cache import (
 )
 from .types import (
     CHUNK_STRIDE,
-    ChunkedSusFactorResult,
     DEFAULT_THRESHOLD,
     MAX_CONTENT_TOKENS,
     MODEL_VERSION,
+    ChunkedSusFactorResult,
     SusFactorResult,
     label_for_score,
     suspicious_prob,
@@ -295,7 +294,6 @@ class SusFactorOnnxClassifier:
             chunk_len = len(chunk_ids)
             chunk_mask = all_mask[:chunk_len]
 
-            import numpy as np
             ids_arr = np.array([chunk_ids], dtype=np.int64)
             mask_arr = np.array([chunk_mask], dtype=np.int64)
 
