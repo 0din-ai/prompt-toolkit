@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "odin-prompt-toolkit"
-version = "0.5.0"
+version = "0.6.0"
 description = "Multi-language SDK for LSH signature generation for AI prompt similarity detection"
 readme = "README.md"
 requires-python = ">=3.10"
