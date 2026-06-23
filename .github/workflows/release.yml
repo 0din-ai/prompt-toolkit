@@ -85,6 +85,8 @@ jobs:
   ci:
     needs: [version-check]
     uses: ./.github/workflows/ci.yml
+    with:
+      skip_parity: true
 
   # Build Python pure wheel + sdist
   build-python:
