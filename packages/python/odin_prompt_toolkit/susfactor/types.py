@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import List
 
 # Label strings used by the SusFactor classifier.
 LABEL_SUSPICIOUS = "suspicious"
@@ -13,6 +14,13 @@ LABEL_SAFE = "safe"
 MAX_SEQUENCE_LENGTH: int = 512
 MODEL_VERSION: str = "susfactor-v1"
 DEFAULT_THRESHOLD: float = 0.5
+
+# Chunking constants.
+# The model's hard limit is MAX_SEQUENCE_LENGTH tokens total, but the tokenizer
+# adds [CLS] and [SEP], leaving 510 usable positions for the prompt payload.
+MAX_CONTENT_TOKENS: int = MAX_SEQUENCE_LENGTH - 2  # 510
+CHUNK_OVERLAP: int = 50
+CHUNK_STRIDE: int = MAX_CONTENT_TOKENS - CHUNK_OVERLAP  # 460
 
 
 @dataclass
@@ -37,6 +45,46 @@ class SusFactorResult:
     def is_suspicious(self) -> bool:
         """Whether the prompt was classified as suspicious."""
         return self.label == LABEL_SUSPICIOUS
+
+
+@dataclass
+class ChunkedSusFactorResult:
+    """Return type of ``classify()`` for prompts of any length.
+
+    Prompts within ``MAX_CONTENT_TOKENS`` (510 tokens) produce exactly one
+    chunk. Longer prompts are split automatically — callers never need to
+    check length or call a different method.
+
+    Each chunk is an independent model inference; no scores are aggregated.
+
+    Attributes:
+        chunks: Individual result for each chunk, in order. Short prompts
+            always produce exactly one entry; access ``chunks[0]`` for the
+            score and label in that case.
+        is_suspicious: ``True`` if **any** chunk's label is ``"suspicious"``.
+            Use this field for security gating — a prompt is suspicious if
+            any portion of it is suspicious.
+        total_timing_ms: Wall-clock time for all chunks (parallel), in ms.
+
+    Displaying a single score:
+        The previous API returned one ``score`` and ``label`` directly. With
+        chunking, there is no single canonical score. Callers that need one
+        number for display should decide explicitly::
+
+            # Highest suspicion across all chunks (most conservative):
+            max_score = max(c.score for c in result.chunks)
+
+            # First chunk only (equivalent to the old score for short prompts;
+            # may miss a suspicious tail in long prompts):
+            first_score = result.chunks[0].score
+
+        Using ``is_suspicious`` is recommended for security decisions.
+        A display score is a UX choice, not a security one.
+    """
+
+    chunks: List[SusFactorResult]
+    is_suspicious: bool
+    total_timing_ms: float
 
 
 def suspicious_prob(logits: list[float]) -> float:

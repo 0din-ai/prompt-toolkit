@@ -113,7 +113,13 @@ async def classifier():
 @pytest.mark.asyncio
 async def test_score_matches_rust_reference(vec: dict, classifier) -> None:
     """Python score must be within TOLERANCE of the committed Rust score."""
-    result = await classifier.classify(vec["prompt"])
+    chunked = await classifier.classify(vec["prompt"])
+    # Parity vectors are short prompts — exactly one chunk.
+    assert len(chunked.chunks) == 1, (
+        f"[{vec['name']}] expected 1 chunk for short parity prompt, "
+        f"got {len(chunked.chunks)}"
+    )
+    result = chunked.chunks[0]
 
     rust_score: float = vec["rust_score"]
     expected_label: str = vec["expected_label"]

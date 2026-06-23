@@ -26,7 +26,10 @@ use ort::{
 
 use crate::error::{Result, SigError};
 use crate::providers::ModelCache;
-use crate::susfactor::types::{SusFactorResult, LABEL_SAFE, LABEL_SUSPICIOUS};
+use crate::susfactor::types::{
+    ChunkedSusFactorResult, SusFactorResult, CHUNK_STRIDE, LABEL_SAFE, LABEL_SUSPICIOUS,
+    MAX_CONTENT_TOKENS,
+};
 
 /// Softmax over a 2-logit slice, returning P(class 1) = suspicious.
 pub fn suspicious_prob(logits: &[f32]) -> f32 {
@@ -150,23 +153,18 @@ impl SusFactorClassifier {
         self.threshold
     }
 
-    fn tokenize(&self, text: &str) -> Result<(Vec<i64>, Vec<i64>)> {
+    fn tokenize_full(&self, text: &str) -> Result<(Vec<i64>, Vec<i64>)> {
         let encoding = self
             .tokenizer
             .encode(text, true)
             .map_err(|e| SigError::Model(format!("Tokenization failed: {e}")))?;
 
-        let mut input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
-        let mut attention_mask: Vec<i64> = encoding
+        let input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
+        let attention_mask: Vec<i64> = encoding
             .get_attention_mask()
             .iter()
             .map(|&m| m as i64)
             .collect();
-
-        if input_ids.len() > Self::MAX_SEQUENCE_LENGTH {
-            input_ids.truncate(Self::MAX_SEQUENCE_LENGTH);
-            attention_mask.truncate(Self::MAX_SEQUENCE_LENGTH);
-        }
 
         Ok((input_ids, attention_mask))
     }
@@ -226,33 +224,98 @@ impl SusFactorClassifier {
         Ok(flat)
     }
 
-    /// Classify a single prompt.
+    /// Split a token-ID sequence into overlapping chunks of at most
+    /// [`MAX_CONTENT_TOKENS`] tokens each.
     ///
-    /// CPU-bound inference is offloaded to `tokio::task::spawn_blocking` so
-    /// the async runtime is not stalled.
-    pub async fn classify(&self, text: &str) -> Result<SusFactorResult> {
-        let start = Instant::now();
-        let (input_ids, attention_mask) = self.tokenize(text)?;
+    /// - Sequences at or below `MAX_CONTENT_TOKENS` produce exactly one chunk.
+    /// - Adjacent chunks share [`CHUNK_OVERLAP`] tokens of context so that
+    ///   sentence boundaries near a chunk edge are still scored in full context.
+    /// - An empty input produces one empty chunk.
+    pub fn chunk_token_ids(ids: &[i64]) -> Vec<Vec<i64>> {
+        if ids.len() <= MAX_CONTENT_TOKENS {
+            return vec![ids.to_vec()];
+        }
+        let mut chunks = Vec::new();
+        let mut start = 0;
+        loop {
+            let end = (start + MAX_CONTENT_TOKENS).min(ids.len());
+            chunks.push(ids[start..end].to_vec());
+            if end == ids.len() {
+                break;
+            }
+            start += CHUNK_STRIDE;
+        }
+        chunks
+    }
 
-        let session = Arc::clone(&self.session);
-        let logits = tokio::task::spawn_blocking(move || {
-            // &Arc<Mutex<Session>> coerces to &Mutex<Session> via Arc's Deref impl.
-            Self::run_inference_sync(&session, input_ids, attention_mask)
-        })
-        .await
-        .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))?;
+    /// Classify a prompt of any length.
+    ///
+    /// Prompts that fit within [`MAX_CONTENT_TOKENS`] (510 tokens) are scored
+    /// in a single inference call. Longer prompts are automatically split into
+    /// overlapping chunks and each chunk is scored independently — callers do not
+    /// need to check length or call a separate method.
+    ///
+    /// # Returns
+    ///
+    /// A [`ChunkedSusFactorResult`] containing one [`SusFactorResult`] per chunk.
+    /// Short prompts produce exactly one chunk. No scores are aggregated.
+    /// `is_suspicious` is `true` if **any** chunk is suspicious.
+    ///
+    /// # Scheduling
+    ///
+    /// Chunks are dispatched as concurrent `tokio::task::spawn_blocking` tasks.
+    /// Actual concurrency depends on the ONNX Runtime session configuration —
+    /// a single shared session serializes inference internally. True simultaneous
+    /// execution would require multiple sessions (one per thread). Dispatching
+    /// concurrently still allows the runtime to pipeline and schedule work
+    /// efficiently; callers should not assume strict sequential execution.
+    pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
+        let wall_start = Instant::now();
 
-        let logits = logits?;
-        let score = suspicious_prob(&logits);
-        let label = label_for_score(score, self.threshold).to_string();
-        let timing_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let (all_ids, all_mask) = self.tokenize_full(text)?;
+        let id_chunks = Self::chunk_token_ids(&all_ids);
 
-        Ok(SusFactorResult {
-            score,
-            label,
-            model: self.model_name.clone(),
-            threshold: self.threshold,
-            timing_ms,
+        let mut handles = Vec::with_capacity(id_chunks.len());
+        for chunk_ids in id_chunks {
+            let chunk_len = chunk_ids.len();
+            let chunk_mask: Vec<i64> = all_mask[..chunk_len.min(all_mask.len())].to_vec();
+
+            let session = Arc::clone(&self.session);
+            let model_name = self.model_name.clone();
+            let threshold = self.threshold;
+
+            handles.push(tokio::task::spawn_blocking(
+                move || -> Result<SusFactorResult> {
+                    let chunk_start = Instant::now();
+                    let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
+                    let score = suspicious_prob(&logits);
+                    let label = label_for_score(score, threshold).to_string();
+                    Ok(SusFactorResult {
+                        score,
+                        label,
+                        model: model_name,
+                        threshold,
+                        timing_ms: chunk_start.elapsed().as_secs_f64() * 1000.0,
+                    })
+                },
+            ));
+        }
+
+        let mut chunk_results = Vec::with_capacity(handles.len());
+        for handle in handles {
+            let result = handle
+                .await
+                .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))?;
+            chunk_results.push(result?);
+        }
+
+        let is_suspicious = chunk_results.iter().any(|r| r.is_suspicious());
+        let total_timing_ms = wall_start.elapsed().as_secs_f64() * 1000.0;
+
+        Ok(ChunkedSusFactorResult {
+            chunks: chunk_results,
+            is_suspicious,
+            total_timing_ms,
         })
     }
 }
@@ -260,6 +323,7 @@ impl SusFactorClassifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::susfactor::types::{CHUNK_OVERLAP, CHUNK_STRIDE, MAX_CONTENT_TOKENS};
 
     #[test]
     fn suspicious_prob_favours_class_one() {
@@ -287,7 +351,8 @@ mod tests {
     }
 
     #[test]
-    fn result_is_suspicious_reflects_label() {
+    fn susfactor_result_is_suspicious_reflects_label() {
+        // SusFactorResult (individual chunk) still has is_suspicious().
         let suspicious = SusFactorResult {
             score: 0.8,
             label: LABEL_SUSPICIOUS.to_string(),
@@ -304,5 +369,119 @@ mod tests {
         };
         assert!(suspicious.is_suspicious());
         assert!(!safe.is_suspicious());
+    }
+
+    // -----------------------------------------------------------------------
+    // Chunking logic tests — pure, no model required
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn chunk_constants_are_consistent() {
+        assert_eq!(CHUNK_STRIDE, MAX_CONTENT_TOKENS - CHUNK_OVERLAP);
+        assert!(MAX_CONTENT_TOKENS <= SusFactorClassifier::MAX_SEQUENCE_LENGTH - 2);
+    }
+
+    #[test]
+    fn chunk_token_ids_short_prompt_produces_one_chunk() {
+        // Any token sequence at or below MAX_CONTENT_TOKENS → exactly one chunk,
+        // identical to the input.
+        let ids: Vec<i64> = (0..100).map(|i| i as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], ids);
+    }
+
+    #[test]
+    fn chunk_token_ids_exactly_at_limit_produces_one_chunk() {
+        let ids: Vec<i64> = (0..MAX_CONTENT_TOKENS as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0].len(), MAX_CONTENT_TOKENS);
+    }
+
+    #[test]
+    fn chunk_token_ids_one_over_limit_produces_two_chunks() {
+        let ids: Vec<i64> = (0..(MAX_CONTENT_TOKENS + 1) as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        assert_eq!(chunks.len(), 2);
+        // First chunk is full size.
+        assert_eq!(chunks[0].len(), MAX_CONTENT_TOKENS);
+        // Second chunk is the overflow — just the 1 token beyond stride, plus overlap.
+        // It should start at CHUNK_STRIDE and contain everything to the end.
+        assert_eq!(chunks[1], &ids[CHUNK_STRIDE..]);
+    }
+
+    #[test]
+    fn chunk_token_ids_overlap_is_shared() {
+        // For a 2-chunk case, the last CHUNK_OVERLAP tokens of chunk 0
+        // must equal the first CHUNK_OVERLAP tokens of chunk 1.
+        let ids: Vec<i64> = (0..(MAX_CONTENT_TOKENS + CHUNK_STRIDE) as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        assert!(chunks.len() >= 2);
+        let tail_of_first = &chunks[0][MAX_CONTENT_TOKENS - CHUNK_OVERLAP..];
+        let head_of_second = &chunks[1][..CHUNK_OVERLAP];
+        assert_eq!(tail_of_first, head_of_second);
+    }
+
+    #[test]
+    fn chunk_token_ids_all_tokens_covered() {
+        // Every token in the original sequence must appear in at least one chunk.
+        // Check by verifying the last chunk ends at the last token of `ids`.
+        let n = MAX_CONTENT_TOKENS * 3; // force at least 3 chunks
+        let ids: Vec<i64> = (0..n as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        assert!(chunks.len() >= 3);
+        let last_chunk = chunks.last().unwrap();
+        // The last token of the last chunk must be the last token of `ids`.
+        assert_eq!(*last_chunk.last().unwrap(), ids.last().copied().unwrap());
+    }
+
+    #[test]
+    fn chunk_token_ids_no_chunk_exceeds_max_content_tokens() {
+        let n = MAX_CONTENT_TOKENS * 5;
+        let ids: Vec<i64> = (0..n as i64).collect();
+        let chunks = SusFactorClassifier::chunk_token_ids(&ids);
+        for chunk in &chunks {
+            assert!(
+                chunk.len() <= MAX_CONTENT_TOKENS,
+                "chunk length {} exceeds MAX_CONTENT_TOKENS {}",
+                chunk.len(),
+                MAX_CONTENT_TOKENS
+            );
+        }
+    }
+
+    #[test]
+    fn chunk_token_ids_empty_input_produces_one_empty_chunk() {
+        let chunks = SusFactorClassifier::chunk_token_ids(&[]);
+        assert_eq!(chunks.len(), 1);
+        assert!(chunks[0].is_empty());
+    }
+
+    #[test]
+    fn chunked_result_is_suspicious_if_any_chunk_is() {
+        use crate::susfactor::types::{ChunkedSusFactorResult, LABEL_SAFE, LABEL_SUSPICIOUS};
+
+        let make = |label: &str| SusFactorResult {
+            score: if label == LABEL_SUSPICIOUS { 0.9 } else { 0.1 },
+            label: label.to_string(),
+            model: "m".to_string(),
+            threshold: 0.5,
+            timing_ms: 1.0,
+        };
+
+        let all_safe = ChunkedSusFactorResult {
+            chunks: vec![make(LABEL_SAFE), make(LABEL_SAFE)],
+            is_suspicious: false,
+            total_timing_ms: 2.0,
+        };
+        assert!(!all_safe.is_suspicious);
+
+        let one_suspicious = ChunkedSusFactorResult {
+            chunks: vec![make(LABEL_SAFE), make(LABEL_SUSPICIOUS), make(LABEL_SAFE)],
+            is_suspicious: true,
+            total_timing_ms: 3.0,
+        };
+        assert!(one_suspicious.is_suspicious);
     }
 }

@@ -19,6 +19,7 @@
 
 export {
   SusFactorClassifier,
+  chunkTokenIds,
   softmaxSuspicious,
   labelForScore,
   DEFAULT_MODEL,
@@ -28,5 +29,15 @@ export {
 } from "./classifier";
 export { susFactor } from "./compare";
 export type { SusFactorOptions } from "./compare";
-export { LABEL_SAFE, LABEL_SUSPICIOUS } from "./types";
-export type { SusFactorLabel, SusFactorResult } from "./types";
+export {
+  CHUNK_OVERLAP,
+  CHUNK_STRIDE,
+  LABEL_SAFE,
+  LABEL_SUSPICIOUS,
+  MAX_CONTENT_TOKENS,
+} from "./types";
+export type {
+  ChunkedSusFactorResult,
+  SusFactorLabel,
+  SusFactorResult,
+} from "./types";

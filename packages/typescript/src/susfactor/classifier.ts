@@ -19,11 +19,38 @@ import { ModelCache } from "../providers/model-cache";
 import type { GetModelOptions } from "../providers/model-cache";
 import { SusFactorError } from "../error";
 import {
+  CHUNK_STRIDE,
+  ChunkedSusFactorResult,
   LABEL_SAFE,
   LABEL_SUSPICIOUS,
+  MAX_CONTENT_TOKENS,
   SusFactorLabel,
   SusFactorResult,
 } from "./types";
+
+/**
+ * Split a token-ID sequence into overlapping chunks of at most
+ * {@link MAX_CONTENT_TOKENS} tokens each.
+ *
+ * - Sequences at or below MAX_CONTENT_TOKENS produce exactly one chunk.
+ * - Adjacent chunks share CHUNK_OVERLAP tokens of context.
+ * - An empty input produces one empty chunk.
+ */
+export function chunkTokenIds(ids: ArrayLike<bigint>): bigint[][] {
+  const arr = Array.from(ids);
+  if (arr.length <= MAX_CONTENT_TOKENS) {
+    return [arr];
+  }
+  const chunks: bigint[][] = [];
+  let start = 0;
+  while (start < arr.length) {
+    const end = Math.min(start + MAX_CONTENT_TOKENS, arr.length);
+    chunks.push(arr.slice(start, end));
+    if (end === arr.length) break;
+    start += CHUNK_STRIDE;
+  }
+  return chunks;
+}
 
 /** Canonical model identifier reported in results (shared across SDKs). */
 export const DEFAULT_MODEL = "0dinai/susfactor-e5-large";
@@ -165,51 +192,86 @@ export class SusFactorClassifier {
   }
 
   /**
-   * Classify a single prompt.
+   * Classify a prompt of any length.
+   *
+   * Prompts within {@link MAX_CONTENT_TOKENS} (510 tokens) are scored in a
+   * single inference call. Longer prompts are automatically split into
+   * overlapping chunks, each scored independently — callers do not need to
+   * check length or call a separate method.
+   *
+   * Chunks are dispatched concurrently via `Promise.all`. Actual concurrency
+   * depends on the ONNX Runtime session configuration; a single shared session
+   * serializes inference internally. Dispatching concurrently allows the
+   * runtime to schedule work efficiently.
+   *
+   * Each chunk is scored independently; no scores are aggregated.
+   * `isSuspicious` is `true` if **any** chunk is suspicious.
+   * Short prompts produce exactly one chunk.
    */
-  async classify(text: string): Promise<SusFactorResult> {
-    const start = Date.now();
+  async classify(text: string): Promise<ChunkedSusFactorResult> {
+    const wallStart = Date.now();
 
-    // Use padding=true (pad to the longest sequence in the batch, i.e. the actual
-    // input length for a single prompt) rather than "max_length" so short prompts
-    // don't wastefully run 512-token inference. The ONNX graph exports with a
-    // dynamic seq axis, so variable-length inputs are supported.
+    // Tokenize the full text without truncation.
     const encoded = this.tokenizer(text, {
-      padding: true,
-      truncation: true,
-      max_length: MAX_SEQUENCE_LENGTH,
+      padding: false,
+      truncation: false,
     });
-    const inputIdsData: BigInt64Array = encoded.input_ids.data;
-    const attentionMaskData: BigInt64Array = encoded.attention_mask.data;
-    const seqLen = inputIdsData.length;
+    const allIds: bigint[] = Array.from(
+      encoded.input_ids.data as BigInt64Array,
+    );
+    const allMask: bigint[] = Array.from(
+      encoded.attention_mask.data as BigInt64Array,
+    );
+
+    const idChunks = chunkTokenIds(allIds);
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const ort = require("onnxruntime-node");
-    const inputIdsTensor = new ort.Tensor("int64", inputIdsData, [1, seqLen]);
-    const attentionMaskTensor = new ort.Tensor("int64", attentionMaskData, [
-      1,
-      seqLen,
-    ]);
 
-    const results = await this.session.run({
-      input_ids: inputIdsTensor,
-      attention_mask: attentionMaskTensor,
-    });
+    const scoreChunk = async (chunkIds: bigint[]): Promise<SusFactorResult> => {
+      const chunkStart = Date.now();
+      const chunkLen = chunkIds.length;
+      const chunkMask = allMask.slice(0, chunkLen);
 
-    // Prefer the named "logits" output set by the export script; fall back to
-    // the first output so the classifier works with re-exported variants.
-    const logitsKey = "logits" in results ? "logits" : Object.keys(results)[0];
-    const logits = results[logitsKey].data as Float32Array;
-    const score = softmaxSuspicious(logits);
-    const label = labelForScore(score, this.decisionThreshold);
+      const inputIdsTensor = new ort.Tensor(
+        "int64",
+        new BigInt64Array(chunkIds),
+        [1, chunkLen],
+      );
+      const attentionMaskTensor = new ort.Tensor(
+        "int64",
+        new BigInt64Array(chunkMask),
+        [1, chunkLen],
+      );
+
+      const results = await this.session.run({
+        input_ids: inputIdsTensor,
+        attention_mask: attentionMaskTensor,
+      });
+
+      const logitsKey =
+        "logits" in results ? "logits" : Object.keys(results)[0];
+      const logits = results[logitsKey].data as Float32Array;
+      const score = softmaxSuspicious(logits);
+      const label = labelForScore(score, this.decisionThreshold);
+
+      return {
+        score,
+        label,
+        isSuspicious: label === LABEL_SUSPICIOUS,
+        model: this.modelName,
+        threshold: this.decisionThreshold,
+        timingMs: Date.now() - chunkStart,
+      };
+    };
+
+    // Run all chunks in parallel.
+    const chunkResults = await Promise.all(idChunks.map(scoreChunk));
 
     return {
-      score,
-      label,
-      isSuspicious: label === LABEL_SUSPICIOUS,
-      model: this.modelName,
-      threshold: this.decisionThreshold,
-      timingMs: Date.now() - start,
+      chunks: chunkResults,
+      isSuspicious: chunkResults.some((r) => r.isSuspicious),
+      totalTimingMs: Date.now() - wallStart,
     };
   }
 
