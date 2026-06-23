@@ -101,7 +101,7 @@ Scores a prompt for jailbreak / prompt-injection risk using the Sus Factor ONNX 
 |---|---|---|
 | `chunks` | `SusFactorResult[]` | One entry per chunk, in order. Short prompts: always one entry. |
 | `is_suspicious` / `isSuspicious` | bool | **Use this for security gating.** `true` if any chunk is suspicious. |
-| `total_timing_ms` / `totalTimingMs` | float | Wall-clock time for all chunks (parallel), in ms |
+| `total_timing_ms` / `totalTimingMs` | float | Wall-clock time for all chunks, in ms |
 
 Each `SusFactorResult` chunk entry:
 
@@ -176,7 +176,7 @@ const displayScore = result.chunks[0].score;                        // first-chu
 | `CHUNK_OVERLAP` | 50 | Tokens shared between adjacent chunks |
 | `CHUNK_STRIDE` | 460 | New tokens advanced per chunk |
 
-Chunks run in parallel — wall-clock time is bounded by the slowest single chunk, not the sum.
+Chunks are dispatched concurrently — the ONNX Runtime handles scheduling internally. Actual simultaneous execution depends on the session configuration; a single shared session serializes inference. Wall-clock time is generally better than pure sequential but is not guaranteed to be bounded by the slowest single chunk.
 
 ### Implementation options
 

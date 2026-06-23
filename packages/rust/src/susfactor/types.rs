@@ -80,6 +80,6 @@ pub struct ChunkedSusFactorResult {
     /// considered suspicious if any portion of it is suspicious, regardless
     /// of how many chunks are safe.
     pub is_suspicious: bool,
-    /// Total wall-clock time for all chunks (parallel), in milliseconds.
+    /// Total wall-clock time for all chunks, in milliseconds.
     pub total_timing_ms: f64,
 }

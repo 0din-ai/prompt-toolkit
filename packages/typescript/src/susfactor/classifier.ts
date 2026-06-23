@@ -196,8 +196,13 @@ export class SusFactorClassifier {
    *
    * Prompts within {@link MAX_CONTENT_TOKENS} (510 tokens) are scored in a
    * single inference call. Longer prompts are automatically split into
-   * overlapping chunks and each chunk is scored in parallel — callers do not
-   * need to check length or call a separate method.
+   * overlapping chunks, each scored independently — callers do not need to
+   * check length or call a separate method.
+   *
+   * Chunks are dispatched concurrently via `Promise.all`. Actual concurrency
+   * depends on the ONNX Runtime session configuration; a single shared session
+   * serializes inference internally. Dispatching concurrently allows the
+   * runtime to schedule work efficiently.
    *
    * Each chunk is scored independently; no scores are aggregated.
    * `isSuspicious` is `true` if **any** chunk is suspicious.

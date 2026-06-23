@@ -243,8 +243,13 @@ class SusFactorClassifier:
 
         Prompts within ``MAX_CONTENT_TOKENS`` (510 tokens) are scored in a
         single inference call. Longer prompts are automatically split into
-        overlapping chunks scored in parallel — callers do not need to check
-        length or call a separate method.
+        overlapping chunks, each scored independently — callers do not need
+        to check length or call a separate method.
+
+        Chunks are dispatched concurrently via ``asyncio.gather``. Actual
+        concurrency depends on the runtime; a single shared model serializes
+        inference internally. Dispatching concurrently allows the runtime to
+        schedule work efficiently.
 
         Each chunk is scored independently; no scores are aggregated.
         A prompt is suspicious if **any** chunk is suspicious.

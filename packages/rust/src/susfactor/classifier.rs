@@ -252,7 +252,7 @@ impl SusFactorClassifier {
     ///
     /// Prompts that fit within [`MAX_CONTENT_TOKENS`] (510 tokens) are scored
     /// in a single inference call. Longer prompts are automatically split into
-    /// overlapping chunks and each chunk is scored in parallel — callers do not
+    /// overlapping chunks and each chunk is scored independently — callers do not
     /// need to check length or call a separate method.
     ///
     /// # Returns
@@ -261,10 +261,14 @@ impl SusFactorClassifier {
     /// Short prompts produce exactly one chunk. No scores are aggregated.
     /// `is_suspicious` is `true` if **any** chunk is suspicious.
     ///
-    /// # Parallelism
+    /// # Scheduling
     ///
-    /// All chunks are dispatched as concurrent `tokio::task::spawn_blocking`
-    /// tasks, so wall-clock time is bounded by the slowest single chunk.
+    /// Chunks are dispatched as concurrent `tokio::task::spawn_blocking` tasks.
+    /// Actual concurrency depends on the ONNX Runtime session configuration —
+    /// a single shared session serializes inference internally. True simultaneous
+    /// execution would require multiple sessions (one per thread). Dispatching
+    /// concurrently still allows the runtime to pipeline and schedule work
+    /// efficiently; callers should not assume strict sequential execution.
     pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
         let wall_start = Instant::now();
 

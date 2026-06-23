@@ -286,7 +286,7 @@ const MODEL_AVAILABLE = Boolean(
 );
 const describeIfModel = MODEL_AVAILABLE ? describe : describe.skip;
 
-describeIfModel("SusFactorClassifier.classifyChunked (live model)", () => {
+describeIfModel("SusFactorClassifier.classify (live model)", () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ModelCache } = require("../src/providers/model-cache");
 

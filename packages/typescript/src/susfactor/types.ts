@@ -89,6 +89,6 @@ export interface ChunkedSusFactorResult {
    * portion of it is suspicious, regardless of how many chunks are safe.
    */
   isSuspicious: boolean;
-  /** Total wall-clock time for all chunks (parallel), in milliseconds. */
+  /** Total wall-clock time for all chunks, in milliseconds. */
   totalTimingMs: number;
 }
