@@ -10,6 +10,11 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
   workflow_call:
+    inputs:
+      skip_parity:
+        description: 'Skip the susfactor parity job (no model available)'
+        type: boolean
+        default: false
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -146,7 +151,7 @@ jobs:
     # unavailable in job-level if: conditions; forks without HF_TOKEN will have
     # the download steps fail with 401 — acceptable since this job only runs on
     # the upstream repo where the secret is configured.
-    if: github.event_name == 'schedule'
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && inputs.skip_parity != true
     steps:
       - name: Free disk space
         # The susfactor ONNX model is ~2.1 GB. Ubuntu runners ship with ~14 GB
