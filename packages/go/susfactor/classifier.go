@@ -48,6 +48,8 @@ type config struct {
 	model      string
 	threshold  float32
 	ortLibPath string
+	modelCache *ModelCache
+	cacheOpts  []CacheOption
 }
 
 // Option configures a SusFactorClassifier.
@@ -79,6 +81,19 @@ func WithORTLibPath(path string) Option {
 	return func(c *config) { c.ortLibPath = path }
 }
 
+// WithModelCache configures the classifier to download missing model files
+// from HuggingFace before loading. When combined with WithHFToken (via the
+// cache options), gated repos are accessible.
+//
+// WithModelCache and WithModelDir are mutually exclusive; WithModelCache takes
+// precedence when both are provided (the cache resolves the model directory).
+func WithModelCache(cache *ModelCache, cacheOpts ...CacheOption) Option {
+	return func(c *config) {
+		c.modelCache = cache
+		c.cacheOpts = cacheOpts
+	}
+}
+
 // SusFactorClassifier classifies prompts as safe or suspicious using the
 // SusFactor ONNX model. Safe to use from multiple goroutines; inference is
 // serialized via a mutex (a single DynamicAdvancedSession serializes calls).
@@ -102,6 +117,15 @@ func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
 	}
 	for _, o := range opts {
 		o(cfg)
+	}
+
+	// Resolve model directory: WithModelCache takes precedence over WithModelDir.
+	if cfg.modelCache != nil {
+		dir, err := cfg.modelCache.EnsureModel(context.Background(), DefaultOnnxRepo, cfg.cacheOpts...)
+		if err != nil {
+			return nil, newError("ensure model: %v", err)
+		}
+		cfg.modelDir = dir
 	}
 
 	if cfg.modelDir == "" {
