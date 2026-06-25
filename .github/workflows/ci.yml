@@ -120,10 +120,12 @@ jobs:
           sudo cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
                   /usr/local/lib/libonnxruntime.so
           sudo ldconfig
-          # libtokenizers.a static lib (pre-built; no Rust toolchain needed)
+          # libtokenizers.a static lib — extract to /tmp first, then sudo-copy
+          # (tar -xz -C /usr/local/lib/ fails with permission denied on Ubuntu runners)
           curl -fsSL \
             "https://github.com/daulet/tokenizers/releases/download/v${TOKENIZERS_VERSION}/libtokenizers.linux-amd64.tar.gz" \
-            | tar -xz -C /usr/local/lib/
+            | tar -xz -C /tmp/
+          sudo cp /tmp/libtokenizers.a /usr/local/lib/libtokenizers.a
 
       - name: Test (no model required — parity test skips automatically)
         working-directory: packages/go
@@ -248,9 +250,11 @@ jobs:
           sudo cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
                   /usr/local/lib/libonnxruntime.so
           sudo ldconfig
+          # libtokenizers.a — extract to /tmp first, then sudo-copy
           curl -fsSL \
             "https://github.com/daulet/tokenizers/releases/download/v${TOKENIZERS_VERSION}/libtokenizers.linux-amd64.tar.gz" \
-            | tar -xz -C /usr/local/lib/
+            | tar -xz -C /tmp/
+          sudo cp /tmp/libtokenizers.a /usr/local/lib/libtokenizers.a
 
       # Download the ONNX model used by Rust + TypeScript
       - name: Download susfactor-e5-large-onnx (Rust + TS)
