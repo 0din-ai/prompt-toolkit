@@ -249,7 +249,7 @@ func TestEnsureModel_downloadsRequired(t *testing.T) {
 
 	served := map[string]string{
 		"/0dinai/susfactor-e5-large-onnx/resolve/main/onnx/model.onnx": "onnx-bytes",
-		"/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json":   "{}",
+		"/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json":  "{}",
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if body, ok := served[r.URL.Path]; ok {
@@ -304,7 +304,7 @@ func TestEnsureModel_optionalMissing_ok(t *testing.T) {
 	// Serve required files; optional (model.onnx_data, tokenizer_config.json) → 404
 	served := map[string]string{
 		"/0dinai/susfactor-e5-large-onnx/resolve/main/onnx/model.onnx": "onnx",
-		"/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json":   "{}",
+		"/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json":  "{}",
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if body, ok := served[r.URL.Path]; ok {

@@ -22,10 +22,10 @@ const (
 	// ChunkStride is the number of new tokens advanced per chunk.
 	ChunkStride = MaxContentTokens - ChunkOverlap // 460
 
-	ModelVersion  = "susfactor-v1"
-	DefaultModel  = "0dinai/susfactor-e5-large"
-	DefaultOnnxRepo  = "0dinai/susfactor-e5-large-onnx"
-	OnnxModelFile    = "onnx/model.onnx"
+	ModelVersion      = "susfactor-v1"
+	DefaultModel      = "0dinai/susfactor-e5-large"
+	DefaultOnnxRepo   = "0dinai/susfactor-e5-large-onnx"
+	OnnxModelFile     = "onnx/model.onnx"
 	OnnxModelDataFile = "onnx/model.onnx_data"
 
 	DefaultThreshold float32 = 0.5

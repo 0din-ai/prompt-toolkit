@@ -1,3 +1,7 @@
 # Pre-built tokenizer static libs — downloaded via scripts/download-libtokenizers.sh
 # Not committed; too large (37 MB per platform) and platform-specific.
 lib/*/libtokenizers.a
+
+# Built binaries
+susfactor-check
+my-service
