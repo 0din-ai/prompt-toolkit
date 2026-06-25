@@ -2,7 +2,7 @@
 """
 Cross-language validation script for 0DIN Prompt Toolkit.
 
-Runs test suites for all three language implementations (Rust, Python, TypeScript)
+Runs test suites for all four language implementations (Rust, Python, TypeScript, Go)
 and validates that all tests pass. Used in CI pipeline to ensure cross-language
 compatibility.
 
@@ -100,6 +100,15 @@ def extract_test_count(output: str, language: str) -> int:
     return 0
 
 
+def _extract_go_test_count(output: str) -> int:
+    """Extract passing test count from `go test -v` output."""
+    count = 0
+    for line in output.split("\n"):
+        if line.startswith("--- PASS:"):
+            count += 1
+    return count
+
+
 def check_susfactor_goldens_present(root_dir: Path) -> tuple[bool, int]:
     """Check whether the golden fixture has scored vectors. Returns (present, count)."""
     fixture = root_dir / "spec" / "test-vectors" / "susfactor_vectors.json"
@@ -166,6 +175,23 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
     )
     results["typescript"] = (success, 0)
 
+    # ── Go parity ────────────────────────────────────────────────────────────
+    # Reuses the same ONNX model dir as Rust + TypeScript (/tmp/susfactor-v1).
+    # The parity test skips automatically when SUSFACTOR_MODEL_DIR is unset,
+    # so this is safe to run even without a model in standard mode.
+    success, output = run_command(
+        [
+            "go", "test",
+            "./susfactor/...",
+            "-run", "TestSusFactorParityGoldens",
+            "-v", "-count=1",
+        ],
+        root_dir / "packages" / "go",
+        "Go SusFactor parity",
+        env={**env, "CGO_ENABLED": "1"},
+    )
+    results["go"] = (success, _extract_go_test_count(output))
+
     return results
 
 
@@ -224,6 +250,19 @@ def main() -> int:
     results["typescript"] = success
     test_counts["typescript"] = extract_test_count(output, "typescript")
 
+    # CGO_LDFLAGS is not set here explicitly — run_command merges os.environ, so
+    # it inherits whatever the caller has set (CI sets it via the step-level env:
+    # block; locally, set CGO_LDFLAGS before invoking this script or ensure
+    # libtokenizers.a is in a path the linker already searches).
+    success, output = run_command(
+        ["go", "test", "./susfactor/...", "-count=1"],
+        root_dir / "packages" / "go",
+        "Go tests",
+        env={"CGO_ENABLED": "1"},
+    )
+    results["go"] = success
+    test_counts["go"] = _extract_go_test_count(output)
+
     # ── SusFactor parity (optional) ──────────────────────────────────────────
 
     parity_results: dict[str, tuple[bool, int]] = {}
@@ -280,7 +319,7 @@ def main() -> int:
 
     if all_passed:
         print(f"{GREEN}✅ All validations passed!{RESET}")
-        print(f"{GREEN}Total: {total_tests} tests passing across 3 languages{RESET}\n")
+        print(f"{GREEN}Total: {total_tests} tests passing across 4 languages{RESET}\n")
         return 0
     else:
         failed = [lang for lang, passed in results.items() if not passed]
