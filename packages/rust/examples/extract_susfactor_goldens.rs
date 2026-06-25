@@ -101,33 +101,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let result = clf.classify(&prompt).await?;
 
+        // rust_score records chunk[0].score for both single- and multi-chunk
+        // prompts. For single-chunk prompts this is the only score. For
+        // multi-chunk prompts callers compare chunk[0].score against rust_score
+        // and check is_suspicious for the overall label.
+        let chunk0 = &result.chunks[0];
+
         // Store score at full f64 precision (the model outputs f32; we widen
         // to f64 for JSON so downstream parsers don't lose mantissa bits).
-        entry["rust_score"] = json!(result.score as f64);
+        entry["rust_score"] = json!(chunk0.score as f64);
 
         // Fill expected_label for near-boundary entries (where it was null).
+        // Use is_suspicious (any-chunk) as the canonical label gate.
         if entry["expected_label"].is_null() {
-            let label = if result.score >= threshold {
+            let label = if result.is_suspicious {
                 "suspicious"
             } else {
                 "safe"
             };
             entry["expected_label"] = json!(label);
+            let n = result.chunks.len();
             println!(
-                "  {name}: score={:.6}  label={label}  (was null — now filled)",
-                result.score
+                "  {name}: score={:.6}  label={label}  chunks={n}  (was null — now filled)",
+                chunk0.score
             );
         } else {
             let expected = entry["expected_label"].as_str().unwrap_or("?");
-            let actual_label = &result.label;
-            let ok = if actual_label == expected {
+            let actual_is_suspicious = result.is_suspicious;
+            let expected_is_suspicious = expected == "suspicious";
+            let ok = if actual_is_suspicious == expected_is_suspicious {
                 "✅"
             } else {
                 "❌ MISMATCH"
             };
+            let n = result.chunks.len();
             println!(
-                "  {name}: score={:.6}  {ok}  (expected={expected}, got={actual_label})",
-                result.score
+                "  {name}: score={:.6}  {ok}  chunks={n}  (expected={expected})",
+                chunk0.score
             );
         }
     }
