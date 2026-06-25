@@ -404,7 +404,7 @@ func TestNewClassifier_withModelCache(t *testing.T) {
 		os.WriteFile(dst, data, 0644)
 	}
 
-	clf, err := NewClassifier(
+	clf, err := NewClassifier(context.Background(),
 		WithModelCache(cache),
 		WithORTLibPath(os.Getenv("ORT_LIB_PATH")),
 	)
