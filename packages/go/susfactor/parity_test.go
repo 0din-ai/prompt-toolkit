@@ -82,24 +82,28 @@ func TestSusFactorParityGoldens(t *testing.T) {
 				t.Fatal("no chunks returned")
 			}
 
-			// For all current goldens the prompt fits in one chunk.
-			// We validate the first chunk score and the overall label.
-			chunk := result.Chunks[0]
+			// rust_score records chunk[0] score for both single- and multi-chunk
+			// prompts. Validate chunk[0] score against the reference, then check
+			// the overall IsSuspicious flag (any-chunk rule).
+			chunk0 := result.Chunks[0]
 
-			diff := math.Abs(float64(chunk.Score) - *v.RustScore)
+			diff := math.Abs(float64(chunk0.Score) - *v.RustScore)
 			if diff > gf.ScoreTolerance {
-				t.Errorf("score mismatch: got %.8f, want %.8f (diff=%.2e > tol=%.0e)",
-					chunk.Score, *v.RustScore, diff, gf.ScoreTolerance)
-			}
-			if chunk.Label != v.ExpectedLabel {
-				t.Errorf("label mismatch: got %q, want %q (score=%.6f)",
-					chunk.Label, v.ExpectedLabel, chunk.Score)
+				t.Errorf("chunk[0] score mismatch: got %.8f, want %.8f (diff=%.2e > tol=%.0e)",
+					chunk0.Score, *v.RustScore, diff, gf.ScoreTolerance)
 			}
 
-			// Overall IsSuspicious must agree with any-chunk rule.
+			// For single-chunk prompts, chunk[0].Label must equal expected_label directly.
+			// For multi-chunk prompts, IsSuspicious (any-chunk) is the canonical gate.
 			wantSuspicious := v.ExpectedLabel == LabelSuspicious
 			if result.IsSuspicious != wantSuspicious {
-				t.Errorf("IsSuspicious=%v, want %v", result.IsSuspicious, wantSuspicious)
+				t.Errorf("IsSuspicious=%v, want %v (expected_label=%q)",
+					result.IsSuspicious, wantSuspicious, v.ExpectedLabel)
+			}
+			// Single-chunk: also assert chunk label directly.
+			if len(result.Chunks) == 1 && chunk0.Label != v.ExpectedLabel {
+				t.Errorf("label mismatch: got %q, want %q (score=%.6f)",
+					chunk0.Label, v.ExpectedLabel, chunk0.Score)
 			}
 		})
 	}
