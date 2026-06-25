@@ -125,14 +125,28 @@ func run() int {
 func loadVectors() ([]goldenVector, float64, error) {
 	path := os.Getenv("SUSFACTOR_VECTORS_PATH")
 	if path == "" {
-		// Resolve relative to this source file when running via go run,
-		// or relative to the binary when installed.
+		// Attempt to resolve relative to the source file path baked in at
+		// compile time. This works with `go run` in-tree, but the baked path
+		// does not exist on a deployment machine where the source is absent.
+		// We stat the candidate before committing to it so that installed
+		// binaries get a clear actionable error rather than a confusing
+		// "no such file" pointing at a developer's working tree.
 		_, thisFile, _, ok := runtime.Caller(0)
 		if ok {
 			// packages/go/cmd/susfactor-check/main.go → repo root is 4 levels up
-			root := filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..")
-			path = filepath.Join(root, "spec", "test-vectors", "susfactor_vectors.json")
+			candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..",
+				"spec", "test-vectors", "susfactor_vectors.json")
+			if _, err := os.Stat(candidate); err == nil {
+				path = candidate
+			}
 		}
+	}
+
+	if path == "" {
+		return nil, 0, fmt.Errorf(
+			"SUSFACTOR_VECTORS_PATH is not set and source path is unavailable " +
+				"(binary was built outside the repo tree); " +
+				"set SUSFACTOR_VECTORS_PATH to the absolute path of susfactor_vectors.json")
 	}
 
 	data, err := os.ReadFile(path)
