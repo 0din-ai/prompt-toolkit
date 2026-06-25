@@ -19,14 +19,15 @@ help: ## Display this help message
 
 ##@ Testing
 
-test: test-rust test-python test-typescript ## Run all tests across all languages
+test: test-rust test-python test-typescript test-go ## Run all tests across all languages
 	@echo "$(GREEN)✅ All tests passed!$(RESET)"
 	@echo ""
 	@echo "$(CYAN)Test Summary:$(RESET)"
 	@echo "  Rust:       43 tests passing"
 	@echo "  Python:     11 tests passing"
 	@echo "  TypeScript: 7 tests passing"
-	@echo "  $(GREEN)Total:      61 tests passing$(RESET)"
+	@echo "  Go:         27+ tests passing"
+	@echo "  $(GREEN)Total:      88+ tests passing$(RESET)"
 
 test-rust: ## Run Rust tests
 	@echo "$(CYAN)Running Rust tests...$(RESET)"
@@ -44,6 +45,12 @@ test-typescript: ## Run TypeScript tests
 	@echo "$(CYAN)Running TypeScript tests...$(RESET)"
 	@cd packages/typescript && npm test
 	@echo "$(GREEN)✅ TypeScript tests passed$(RESET)"
+	@echo ""
+
+test-go: ## Run Go tests (requires libtokenizers.a — run scripts/download-libtokenizers.sh first)
+	@echo "$(CYAN)Running Go tests...$(RESET)"
+	@cd packages/go && CGO_ENABLED=1 go test ./... -count=1
+	@echo "$(GREEN)✅ Go tests passed$(RESET)"
 	@echo ""
 
 test-all: test ## Alias for 'test'
@@ -245,7 +252,7 @@ examples-typescript: ## Run TypeScript example files
 
 ##@ Installation
 
-install: install-rust install-python install-typescript ## Install dependencies for all packages
+install: install-rust install-python install-typescript install-go ## Install dependencies for all packages
 
 install-rust: ## Install Rust dependencies
 	@echo "$(CYAN)Installing Rust dependencies...$(RESET)"
@@ -262,9 +269,15 @@ install-typescript: ## Install TypeScript dependencies
 	@cd packages/typescript && npm install
 	@echo "$(GREEN)✅ TypeScript dependencies installed$(RESET)"
 
+install-go: ## Install Go dependencies (download module deps + libtokenizers)
+	@echo "$(CYAN)Installing Go dependencies...$(RESET)"
+	@cd packages/go && go mod download
+	@bash packages/go/scripts/download-libtokenizers.sh
+	@echo "$(GREEN)✅ Go dependencies installed$(RESET)"
+
 ##@ Code Quality
 
-lint: lint-rust lint-python lint-typescript ## Run linters for all languages
+lint: lint-rust lint-python lint-typescript lint-go ## Run linters for all languages
 
 lint-rust: ## Run Rust linter
 	@echo "$(CYAN)Linting Rust code...$(RESET)"
@@ -278,7 +291,12 @@ lint-typescript: ## Run TypeScript linter
 	@echo "$(CYAN)Linting TypeScript code...$(RESET)"
 	@cd packages/typescript && npm run lint
 
-fmt: fmt-rust fmt-python fmt-typescript ## Format code for all languages
+lint-go: ## Run Go linter (go vet)
+	@echo "$(CYAN)Linting Go code...$(RESET)"
+	@cd packages/go && CGO_ENABLED=1 go vet ./...
+	@echo "$(GREEN)✅ Go code linted$(RESET)"
+
+fmt: fmt-rust fmt-python fmt-typescript fmt-go ## Format code for all languages
 
 fmt-rust: ## Format Rust code
 	@echo "$(CYAN)Formatting Rust code...$(RESET)"
@@ -294,6 +312,11 @@ fmt-typescript: ## Format TypeScript code
 	@echo "$(CYAN)Formatting TypeScript code...$(RESET)"
 	@cd packages/typescript && npm run format
 	@echo "$(GREEN)✅ TypeScript code formatted$(RESET)"
+
+fmt-go: ## Format Go code
+	@echo "$(CYAN)Formatting Go code...$(RESET)"
+	@cd packages/go && gofmt -w .
+	@echo "$(GREEN)✅ Go code formatted$(RESET)"
 
 check: ## Run all checks (lint + test)
 	@$(MAKE) lint
