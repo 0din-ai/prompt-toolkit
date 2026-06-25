@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -254,16 +253,4 @@ func isExistErr(err error) bool {
 	return os.IsExist(err) || errors.Is(err, os.ErrExist)
 }
 
-// platformDefaultORTLib returns the well-known ORT shared library path.
-// Duplicated here for use by WithModelCache without importing classifier internals.
-func platformDefaultORTLibPath() string {
-	switch runtime.GOOS {
-	case "darwin":
-		if _, err := os.Stat("/opt/homebrew/lib/libonnxruntime.dylib"); err == nil {
-			return "/opt/homebrew/lib/libonnxruntime.dylib"
-		}
-		return "/usr/local/lib/libonnxruntime.dylib"
-	default:
-		return "libonnxruntime.so"
-	}
-}
+

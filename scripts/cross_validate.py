@@ -179,7 +179,7 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
     # Reuses the same ONNX model dir as Rust + TypeScript (/tmp/susfactor-v1).
     # The parity test skips automatically when SUSFACTOR_MODEL_DIR is unset,
     # so this is safe to run even without a model in standard mode.
-    success, _ = run_command(
+    success, output = run_command(
         [
             "go", "test",
             "./susfactor/...",
@@ -190,7 +190,7 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
         "Go SusFactor parity",
         env={**env, "CGO_ENABLED": "1"},
     )
-    results["go"] = (success, 15)
+    results["go"] = (success, _extract_go_test_count(output))
 
     return results
 
