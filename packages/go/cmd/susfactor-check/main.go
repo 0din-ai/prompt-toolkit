@@ -59,7 +59,7 @@ func run() int {
 		return exitSetup
 	}
 
-	clf, err := susfactor.NewClassifier(
+	clf, err := susfactor.NewClassifier(context.Background(),
 		susfactor.WithModelDir(modelDir),
 	)
 	if err != nil {
@@ -87,17 +87,28 @@ func run() int {
 			failed++
 			continue
 		}
-		chunk := result.Chunks[0]
-		diff := math.Abs(float64(chunk.Score) - *v.RustScore)
-		labelOK := chunk.Label == v.ExpectedLabel
+		chunk0 := result.Chunks[0]
+		diff := math.Abs(float64(chunk0.Score) - *v.RustScore)
 		scoreOK := diff <= tol
 
+		// Use IsSuspicious (any-chunk) as the canonical label gate, matching
+		// parity_test.go. For single-chunk prompts this is equivalent to
+		// chunk[0].Label == expected_label; for multi-chunk prompts it correctly
+		// catches a suspicious tail in a later chunk.
+		wantSuspicious := v.ExpectedLabel == "suspicious"
+		labelOK := result.IsSuspicious == wantSuspicious
+
 		if scoreOK && labelOK {
-			fmt.Printf("  PASS %-45s  score=%.6f label=%s\n", v.Name, chunk.Score, chunk.Label)
+			fmt.Printf("  PASS %-45s  chunks=%d score=%.6f label=%s\n",
+				v.Name, len(result.Chunks), chunk0.Score, v.ExpectedLabel)
 			passed++
 		} else {
-			fmt.Printf("  FAIL %-45s  score=%.6f (want %.6f, diff=%.2e) label=%s (want %s)\n",
-				v.Name, chunk.Score, *v.RustScore, diff, chunk.Label, v.ExpectedLabel)
+			gotLabel := "safe"
+			if result.IsSuspicious {
+				gotLabel = "suspicious"
+			}
+			fmt.Printf("  FAIL %-45s  chunks=%d score=%.6f (want %.6f, diff=%.2e) label=%s (want %s)\n",
+				v.Name, len(result.Chunks), chunk0.Score, *v.RustScore, diff, gotLabel, v.ExpectedLabel)
 			failed++
 		}
 	}

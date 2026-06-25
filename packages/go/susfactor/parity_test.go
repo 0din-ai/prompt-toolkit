@@ -58,7 +58,7 @@ func TestSusFactorParityGoldens(t *testing.T) {
 		t.Skip("SUSFACTOR_MODEL_DIR not set — skipping parity test")
 	}
 
-	clf, err := NewClassifier(
+	clf, err := NewClassifier(context.Background(),
 		WithModelDir(modelDir),
 	)
 	if err != nil {

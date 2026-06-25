@@ -15,6 +15,13 @@ import (
 
 // ortOnce guards ORT environment initialization — InitializeEnvironment must
 // be called exactly once per process.
+//
+// ORT registers a global ONNX Runtime environment on first call. The shared
+// library path passed here wins for the lifetime of the process; subsequent
+// calls to NewClassifier with a different WithORTLibPath will silently use
+// whatever path was set first. Design accordingly: use the same ORT build for
+// all classifiers in a process, and set ORT_LIB_PATH or WithORTLibPath
+// consistently before the first NewClassifier call.
 var (
 	ortOnce    sync.Once
 	ortInitErr error
@@ -77,6 +84,9 @@ func WithThreshold(t float32) Option {
 
 // WithORTLibPath sets the path to the ONNX Runtime shared library.
 // Defaults to ORT_LIB_PATH env var, then platform-specific well-known paths.
+//
+// ORT is initialized once per process; the first call wins. See the package-
+// level note on ortOnce for implications.
 func WithORTLibPath(path string) Option {
 	return func(c *config) { c.ortLibPath = path }
 }
@@ -96,21 +106,26 @@ func WithModelCache(cache *ModelCache, cacheOpts ...CacheOption) Option {
 
 // SusFactorClassifier classifies prompts as safe or suspicious using the
 // SusFactor ONNX model. Safe to use from multiple goroutines; inference is
-// serialized via a mutex (a single DynamicAdvancedSession serializes calls).
+// serialized via a mutex (a single DynamicAdvancedSession handles one call at
+// a time).
 //
 // Create with NewClassifier; release resources with Close.
 type SusFactorClassifier struct {
-	dynSession           *ort.DynamicAdvancedSession
-	tokenizer            *tokenizers.Tokenizer
-	model                string
-	threshold            float32
-	requiresTokenTypeIDs bool
-	inputNames           []string
-	mu                   sync.Mutex
+	dynSession *ort.DynamicAdvancedSession
+	tokenizer  *tokenizers.Tokenizer
+	model      string
+	threshold  float32
+	// closed tracks whether Close has been called; guarded by mu.
+	closed bool
+	mu     sync.Mutex
 }
 
 // NewClassifier creates a SusFactorClassifier from local model files.
-func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
+//
+// ctx is used for any HuggingFace downloads triggered by WithModelCache.
+// Pass context.Background() for startup code; pass a request context when
+// calling from a handler that has a deadline.
+func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, error) {
 	cfg := &config{
 		model:     DefaultModel,
 		threshold: DefaultThreshold,
@@ -121,7 +136,7 @@ func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
 
 	// Resolve model directory: WithModelCache takes precedence over WithModelDir.
 	if cfg.modelCache != nil {
-		dir, err := cfg.modelCache.EnsureModel(context.Background(), DefaultOnnxRepo, cfg.cacheOpts...)
+		dir, err := cfg.modelCache.EnsureModel(ctx, DefaultOnnxRepo, cfg.cacheOpts...)
 		if err != nil {
 			return nil, newError("ensure model: %v", err)
 		}
@@ -160,11 +175,11 @@ func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
 		return nil, newError("set graph optimization: %v", err)
 	}
 
-	// Probe whether the graph requires token_type_ids.
-	requiresTypeIDs, inputNames, err := probeInputNames(modelPath, sessionOpts)
-	if err != nil {
-		return nil, newError("probe model inputs: %v", err)
-	}
+	// The validated SusFactor ONNX graph always uses exactly these two inputs.
+	// token_type_ids is not required by this model; we avoid the double-load
+	// that a probe session would impose (~2 GB for this model's external weights).
+	// If a future export adds token_type_ids, add it back here.
+	inputNames := []string{"input_ids", "attention_mask"}
 
 	// Create DynamicAdvancedSession — accepts variable-length inputs at Run time.
 	dynSession, err := ort.NewDynamicAdvancedSession(
@@ -184,12 +199,10 @@ func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
 	}
 
 	return &SusFactorClassifier{
-		dynSession:           dynSession,
-		tokenizer:            tk,
-		model:                cfg.model,
-		threshold:            cfg.threshold,
-		requiresTokenTypeIDs: requiresTypeIDs,
-		inputNames:           inputNames,
+		dynSession: dynSession,
+		tokenizer:  tk,
+		model:      cfg.model,
+		threshold:  cfg.threshold,
 	}, nil
 }
 
@@ -199,7 +212,12 @@ func NewClassifier(opts ...Option) (*SusFactorClassifier, error) {
 //
 // A prompt is suspicious if any chunk scores at or above the threshold.
 func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (ChunkedSusFactorResult, error) {
-	if c.dynSession == nil {
+	// Guard against use-after-Close under the lock to avoid a data race with
+	// Close setting dynSession to nil.
+	c.mu.Lock()
+	closed := c.closed
+	c.mu.Unlock()
+	if closed {
 		return ChunkedSusFactorResult{}, newError("Classify called on a closed SusFactorClassifier")
 	}
 
@@ -281,25 +299,16 @@ func (c *SusFactorClassifier) runInference(ids, mask []int64) ([2]float32, error
 	}
 	defer maskTensor.Destroy()
 
-	inputs := []ort.Value{idTensor, maskTensor}
-
-	if c.requiresTokenTypeIDs {
-		zeros := make([]int64, len(ids))
-		zeroTensor, err := ort.NewTensor(shape, zeros)
-		if err != nil {
-			return [2]float32{}, fmt.Errorf("type id tensor: %w", err)
-		}
-		defer zeroTensor.Destroy()
-		inputs = append(inputs, zeroTensor)
-	}
-
 	outputTensor, err := ort.NewEmptyTensor[float32](ort.NewShape(1, 2))
 	if err != nil {
 		return [2]float32{}, fmt.Errorf("output tensor: %w", err)
 	}
 	defer outputTensor.Destroy()
 
-	if err := c.dynSession.Run(inputs, []ort.Value{outputTensor}); err != nil {
+	if err := c.dynSession.Run(
+		[]ort.Value{idTensor, maskTensor},
+		[]ort.Value{outputTensor},
+	); err != nil {
 		return [2]float32{}, fmt.Errorf("ORT run: %w", err)
 	}
 
@@ -307,10 +316,14 @@ func (c *SusFactorClassifier) runInference(ids, mask []int64) ([2]float32, error
 	return [2]float32{data[0], data[1]}, nil
 }
 
-// Close releases all model resources.
+// Close releases all model resources. The classifier must not be used after Close.
 func (c *SusFactorClassifier) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return nil
+	}
+	c.closed = true
 	if c.tokenizer != nil {
 		c.tokenizer.Close()
 		c.tokenizer = nil
@@ -330,63 +343,4 @@ func u32ToI64(in []uint32) []int64 {
 		out[i] = int64(v)
 	}
 	return out
-}
-
-// probeInputNames checks whether the model requires token_type_ids by trying
-// to create a temporary session with just input_ids + attention_mask.
-func probeInputNames(modelPath string, opts *ort.SessionOptions) (requiresTypeIDs bool, names []string, err error) {
-	dummy := []int64{0}
-	shape := ort.NewShape(1, 1)
-
-	idT, err := ort.NewTensor(shape, dummy)
-	if err != nil {
-		return false, nil, err
-	}
-	defer idT.Destroy()
-
-	maskT, err := ort.NewTensor(shape, dummy)
-	if err != nil {
-		return false, nil, err
-	}
-	defer maskT.Destroy()
-
-	logitsT, err := ort.NewEmptyTensor[float32](ort.NewShape(1, 2))
-	if err != nil {
-		return false, nil, err
-	}
-	defer logitsT.Destroy()
-
-	// Try without token_type_ids.
-	s, probeErr := ort.NewAdvancedSession(modelPath,
-		[]string{"input_ids", "attention_mask"},
-		[]string{"logits"},
-		[]ort.Value{idT, maskT},
-		[]ort.Value{logitsT},
-		opts,
-	)
-	if probeErr == nil {
-		s.Destroy()
-		return false, []string{"input_ids", "attention_mask"}, nil
-	}
-
-	// Try with token_type_ids.
-	typeT, err := ort.NewTensor(shape, dummy)
-	if err != nil {
-		return false, nil, err
-	}
-	defer typeT.Destroy()
-
-	s, probeErr = ort.NewAdvancedSession(modelPath,
-		[]string{"input_ids", "attention_mask", "token_type_ids"},
-		[]string{"logits"},
-		[]ort.Value{idT, maskT, typeT},
-		[]ort.Value{logitsT},
-		opts,
-	)
-	if probeErr == nil {
-		s.Destroy()
-		return true, []string{"input_ids", "attention_mask", "token_type_ids"}, nil
-	}
-
-	return false, nil, fmt.Errorf("cannot determine model inputs: %w", probeErr)
 }

@@ -60,7 +60,7 @@ import (
     "github.com/0din-ai/prompt-toolkit/packages/go/susfactor"
 )
 
-clf, err := susfactor.NewClassifier(
+clf, err := susfactor.NewClassifier(context.Background(),
     susfactor.WithModelDir(os.Getenv("SUSFACTOR_MODEL_DIR")),
 )
 if err != nil {
@@ -81,7 +81,7 @@ fmt.Printf("suspicious=%v score=%.4f\n", result.IsSuspicious, result.Chunks[0].S
 ```go
 cache := susfactor.NewModelCache("") // defaults to ~/.cache/signature-sdk/models
 
-clf, err := susfactor.NewClassifier(
+clf, err := susfactor.NewClassifier(context.Background(),
     susfactor.WithModelCache(cache,
         susfactor.WithHFToken(os.Getenv("HF_TOKEN")), // required: repo is gated
     ),
@@ -168,7 +168,7 @@ SUSFACTOR_MODEL_DIR=/path/to/model \
 
 ## API
 
-### `NewClassifier(opts ...Option) (*SusFactorClassifier, error)`
+### `NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, error)`
 
 Loads the ONNX session and tokenizer. Initializes the ORT environment once per process.
 

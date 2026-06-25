@@ -250,6 +250,10 @@ def main() -> int:
     results["typescript"] = success
     test_counts["typescript"] = extract_test_count(output, "typescript")
 
+    # CGO_LDFLAGS is not set here explicitly — run_command merges os.environ, so
+    # it inherits whatever the caller has set (CI sets it via the step-level env:
+    # block; locally, set CGO_LDFLAGS before invoking this script or ensure
+    # libtokenizers.a is in a path the linker already searches).
     success, output = run_command(
         ["go", "test", "./susfactor/...", "-count=1"],
         root_dir / "packages" / "go",

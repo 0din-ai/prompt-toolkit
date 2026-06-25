@@ -88,7 +88,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         doc["vectors"].as_array().map(|v| v.len()).unwrap_or(0)
     });
 
-    let threshold = doc["threshold"].as_f64().unwrap_or(0.5) as f32;
+    // threshold is baked into is_suspicious via the classifier; kept here for
+    // documentation but not used directly in this extractor.
+    let _threshold = doc["threshold"].as_f64().unwrap_or(0.5) as f32;
 
     // ── Score each vector ────────────────────────────────────────────────────
     let vectors = doc["vectors"]

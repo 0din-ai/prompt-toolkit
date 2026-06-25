@@ -5,17 +5,34 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 // ErrNotFound is returned by downloadFile when the server returns HTTP 404.
 // Callers use this to distinguish optional files (tolerate) from required ones (fail).
 var ErrNotFound = errors.New("file not found on server (HTTP 404)")
+
+// tmpCounter ensures unique temp file names even when two goroutines race
+// within the same nanosecond (possible on macOS with coarse clock resolution).
+var tmpCounter atomic.Int64
+
+// hfHTTPClient is shared across all downloads. It uses a 30s dial/TLS timeout
+// but no overall transfer timeout, since model files can be several GB and
+// transfer speed varies widely. Cancellation is via the request context.
+var hfHTTPClient = &http.Client{
+	Transport: &http.Transport{
+		DialContext:           (&net.Dialer{Timeout: 30 * time.Second}).DialContext,
+		TLSHandshakeTimeout:   30 * time.Second,
+		ResponseHeaderTimeout: 60 * time.Second,
+	},
+}
 
 // defaultCacheDir returns the default model cache root.
 // Matches Rust/TS convention: $SIGNATURE_SDK_MODEL_CACHE or ~/.cache/signature-sdk/models
@@ -184,8 +201,7 @@ func (c *ModelCache) downloadFile(ctx context.Context, repoID, filename, hfToken
 	}
 	req.Header.Set("User-Agent", "odin-prompt-toolkit-go/0.1.0")
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := hfHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("HTTP GET %s: %w", url, err)
 	}
@@ -199,7 +215,10 @@ func (c *ModelCache) downloadFile(ctx context.Context, repoID, filename, hfToken
 	}
 
 	// Stream to a unique temp file, then atomically rename into place.
-	tmp := fmt.Sprintf("%s.tmp.%d.%d", destPath, os.Getpid(), time.Now().UnixNano())
+	// Include a per-process atomic counter so concurrent goroutines downloading
+	// the same file always get distinct temp names, even at the same nanosecond.
+	tmp := fmt.Sprintf("%s.tmp.%d.%d.%d",
+		destPath, os.Getpid(), time.Now().UnixNano(), tmpCounter.Add(1))
 	f, err := os.Create(tmp)
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
