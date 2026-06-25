@@ -1,0 +1,109 @@
+# SusFactor Go SDK — Reference Multi-Stage Dockerfile
+#
+# Builds a production Go service with the SusFactor classifier embedded.
+# The ONNX model is downloaded at build time and baked into the image so
+# inference is fully offline at runtime.
+#
+# Build:
+#   docker build --build-arg HF_TOKEN="$HF_TOKEN" \
+#     -t my-service:latest -f Dockerfile.example .
+#
+# Run:
+#   docker run -e SUSFACTOR_MODEL_DIR=/model/susfactor my-service:latest
+#
+# Verify:
+#   docker run --rm my-service:latest /usr/local/bin/susfactor-check
+
+# ─── Pinned versions ─────────────────────────────────────────────────────────
+# yalue/onnxruntime_go v1.31.0 requires ORT API version 26 → ORT v1.26.0 exactly.
+ARG ORT_VERSION=1.26.0
+ARG TOKENIZERS_VERSION=1.27.0
+ARG GO_VERSION=1.22
+
+# ─── Stage 1: Download SusFactor model from HuggingFace ──────────────────────
+FROM python:3.12-slim AS model-fetcher
+ARG HF_TOKEN
+RUN pip install --quiet huggingface_hub && \
+    python -c "
+import os, sys
+token = os.environ.get('HF_TOKEN', '')
+if not token:
+    print('ERROR: HF_TOKEN build arg is required (repo is gated)', file=sys.stderr)
+    sys.exit(1)
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='0dinai/susfactor-e5-large-onnx',
+    local_dir='/model',
+    token=token,
+    allow_patterns=['onnx/model.onnx', 'onnx/model.onnx_data',
+                    'tokenizer.json', 'tokenizer_config.json'],
+)
+print('Model ready at /model')
+"
+
+# ─── Stage 2: Build Go binary ─────────────────────────────────────────────────
+FROM golang:${GO_VERSION} AS builder
+ARG ORT_VERSION
+ARG TOKENIZERS_VERSION
+WORKDIR /build
+
+# CGo build deps
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# ONNX Runtime shared lib (build-time linker target; also copied to runtime)
+RUN curl -fsSL \
+    "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
+    | tar -xz -C /opt/ && \
+    cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
+       /usr/local/lib/libonnxruntime.so && \
+    ldconfig
+
+# libtokenizers.a — pre-built static lib; no Rust toolchain needed
+RUN curl -fsSL \
+    "https://github.com/daulet/tokenizers/releases/download/v${TOKENIZERS_VERSION}/libtokenizers.linux-amd64.tar.gz" \
+    | tar -xz -C /usr/local/lib/
+
+# Module dependencies first (layer cached independently of source changes)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Source
+COPY . .
+
+# Build service binary and susfactor-check validation tool
+RUN CGO_ENABLED=1 \
+    CGO_LDFLAGS="-L/usr/local/lib" \
+    go build -o /usr/local/bin/my-service ./cmd/my-service && \
+    CGO_ENABLED=1 \
+    CGO_LDFLAGS="-L/usr/local/lib" \
+    go build -o /usr/local/bin/susfactor-check \
+    github.com/0din-ai/prompt-toolkit/packages/go/cmd/susfactor-check
+
+# ─── Stage 3: Minimal runtime image ──────────────────────────────────────────
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# ORT shared library
+COPY --from=builder /usr/local/lib/libonnxruntime.so /usr/local/lib/libonnxruntime.so
+RUN ldconfig
+
+# Service and validation binaries
+COPY --from=builder /usr/local/bin/my-service /usr/local/bin/my-service
+COPY --from=builder /usr/local/bin/susfactor-check /usr/local/bin/susfactor-check
+
+# SusFactor model — large layer last for optimal cache reuse
+# model.onnx ~1.4 GB + model.onnx_data ~0.7 GB + tokenizer files ~5 MB
+COPY --from=model-fetcher /model /model/susfactor
+
+# Runtime configuration
+ENV ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so
+ENV SUSFACTOR_MODEL_DIR=/model/susfactor
+
+# Verify classifier on each container start
+HEALTHCHECK --interval=60s --timeout=30s --start-period=10s --retries=1 \
+  CMD ["/usr/local/bin/susfactor-check"]
+
+ENTRYPOINT ["/usr/local/bin/my-service"]
