@@ -247,10 +247,14 @@ def main() -> int:
 
     # ── Standard test suites ─────────────────────────────────────────────────
 
+    # Rust: unset ORT_LIB_PATH so ort-sys uses its download-binaries path.
+    # The default feature set includes "onnx", which pulls in ort-sys; if
+    # ORT_LIB_PATH points at a Go-only ORT v1.26 install, ort-sys rejects it.
     success, output = run_command(
         ["cargo", "test", "--lib", "--features", "cm-lsh"],
         root_dir / "packages" / "rust",
         "Rust tests",
+        unset_keys=["ORT_LIB_PATH"],
     )
     results["rust"] = success
     test_counts["rust"] = extract_test_count(output, "rust")

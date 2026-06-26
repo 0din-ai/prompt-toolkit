@@ -225,10 +225,7 @@ jobs:
 
       - name: Install Python deps (with susfactor extras)
         working-directory: packages/python
-        # onnx extra (onnxruntime) is needed by SusFactorOnnxClassifier
-        # integration tests in test_susfactor_chunking.py that run when
-        # SUSFACTOR_MODEL_DIR is set (the model-gated @requires_model tests).
-        run: pip install -e ".[dev,susfactor,onnx]" huggingface_hub
+        run: pip install -e ".[dev,susfactor]" huggingface_hub
 
       - uses: actions/setup-node@v4
         with:
