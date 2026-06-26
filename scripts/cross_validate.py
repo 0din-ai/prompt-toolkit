@@ -33,11 +33,26 @@ YELLOW = "\033[0;33m"
 RESET = "\033[0m"
 
 
-def run_command(cmd: list[str], cwd: Path, description: str, env: dict | None = None) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
+def run_command(
+    cmd: list[str],
+    cwd: Path,
+    description: str,
+    env: dict | None = None,
+    unset_keys: list[str] | None = None,
+) -> tuple[bool, str]:
+    """Run a command and return (success, output).
+
+    Args:
+        env: Extra env vars merged on top of os.environ.
+        unset_keys: Keys to remove from the merged environment (after merging
+            os.environ with env).  Use this to prevent an inherited CI env var
+            from reaching a subprocess that must not see it.
+    """
     print(f"{CYAN}Running {description}...{RESET}")
     try:
         merged_env = {**os.environ, **(env or {})}
+        for key in unset_keys or []:
+            merged_env.pop(key, None)
         result = subprocess.run(
             cmd,
             cwd=cwd,
@@ -135,6 +150,11 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
     py_env = {**env, "SIGNATURE_SDK_MODEL_CACHE": py_model_cache} if py_model_cache else env
 
     # ── Rust parity (self-check) ─────────────────────────────────────────────
+    # ORT_LIB_PATH is set in the CI step env to point the Go SDK at its private
+    # ORT v1.26 install (/opt/ort-go/lib/).  ort-sys for ort 2.0.0-rc.12 reads
+    # this var and tries to link against that path, but rejects the v1.26 ABI.
+    # With download-binaries enabled, ort-sys fetches its own ORT 2.x — but
+    # only when ORT_LIB_PATH is absent.  Unset it so Rust uses download-binaries.
     success, _ = run_command(
         [
             "cargo", "test",
@@ -145,6 +165,7 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
         root_dir / "packages" / "rust",
         "Rust SusFactor parity (self-check)",
         env=env,
+        unset_keys=["ORT_LIB_PATH"],
     )
     results["rust"] = (success, 0)
 
