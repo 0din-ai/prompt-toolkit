@@ -127,14 +127,21 @@ async fn rust_scores_match_committed_goldens() {
         let chunk0 = &chunked.chunks[0];
 
         let score_diff = (chunk0.score as f64 - entry.rust_score).abs();
-        let got_label = if chunked.is_suspicious { "suspicious" } else { "safe" };
+        let got_label = if chunked.is_suspicious {
+            "suspicious"
+        } else {
+            "safe"
+        };
         let label_ok = got_label == entry.expected_label;
         let score_ok = score_diff <= TOLERANCE;
 
         if label_ok && score_ok {
             println!(
                 "  ✅  {}: score={:.6} (Δ={:.2e}) chunks={}",
-                entry.name, chunk0.score, score_diff, chunked.chunks.len()
+                entry.name,
+                chunk0.score,
+                score_diff,
+                chunked.chunks.len()
             );
         } else {
             failures += 1;
