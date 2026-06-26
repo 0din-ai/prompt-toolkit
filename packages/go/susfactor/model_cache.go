@@ -18,6 +18,12 @@ import (
 // Callers use this to distinguish optional files (tolerate) from required ones (fail).
 var ErrNotFound = errors.New("file not found on server (HTTP 404)")
 
+// ErrUnauthorized is returned by downloadFile when the server returns HTTP 401
+// or 403. For optional files in gated repos this is treated the same as
+// ErrNotFound — the file may exist but the token lacks access or the file is
+// not present in the gated manifest.
+var ErrUnauthorized = errors.New("server returned 401/403 — check HF_TOKEN")
+
 // tmpCounter ensures unique temp file names even when two goroutines race
 // within the same nanosecond (possible on macOS with coarse clock resolution).
 var tmpCounter atomic.Int64
@@ -157,11 +163,14 @@ func (c *ModelCache) EnsureModel(ctx context.Context, repoID string, opts ...Cac
 		}
 	}
 
-	// Optional files — tolerate 404.
+	// Optional files — tolerate 404 and auth errors (401/403).
+	// A gated repo may return 401 for optional files that exist but aren't
+	// accessible with the provided token, or that simply aren't present in the
+	// gated manifest. Either way, the classifier can still run without them.
 	for _, rel := range susfactorOptionalFiles {
 		if err := c.downloadFile(ctx, repoID, rel, cfg.hfToken, cfg.baseURL); err != nil {
-			if errors.Is(err, ErrNotFound) {
-				continue // not present on server; that's fine
+			if errors.Is(err, ErrNotFound) || errors.Is(err, ErrUnauthorized) {
+				continue // absent or inaccessible; that's fine for optional files
 			}
 			return "", newError("download optional file %q: %v", rel, err)
 		}
@@ -206,10 +215,14 @@ func (c *ModelCache) downloadFile(ctx context.Context, repoID, filename, hfToken
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
+	switch resp.StatusCode {
+	case http.StatusNotFound:
 		return ErrNotFound
-	}
-	if resp.StatusCode != http.StatusOK {
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return ErrUnauthorized
+	case http.StatusOK:
+		// fall through to download
+	default:
 		return fmt.Errorf("server returned %d for %s", resp.StatusCode, url)
 	}
 
