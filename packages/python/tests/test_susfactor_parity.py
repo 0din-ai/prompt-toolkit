@@ -114,26 +114,29 @@ async def classifier():
 async def test_score_matches_rust_reference(vec: dict, classifier) -> None:
     """Python score must be within TOLERANCE of the committed Rust score."""
     chunked = await classifier.classify(vec["prompt"])
-    # Parity vectors are short prompts — exactly one chunk.
-    assert len(chunked.chunks) == 1, (
-        f"[{vec['name']}] expected 1 chunk for short parity prompt, "
-        f"got {len(chunked.chunks)}"
-    )
-    result = chunked.chunks[0]
 
     rust_score: float = vec["rust_score"]
     expected_label: str = vec["expected_label"]
 
-    assert result.label == expected_label, (
-        f"[{vec['name']}] label mismatch: got {result.label!r}, "
-        f"expected {expected_label!r} (rust_score={rust_score:.6f})"
-    )
+    # rust_score records chunk[0].score for both single- and multi-chunk prompts.
+    # Validate chunk[0] score against the reference, then check is_suspicious
+    # (any-chunk) for the label — matching the Go and Rust parity test logic.
+    chunk0 = chunked.chunks[0]
 
-    diff = abs(result.score - rust_score)
+    diff = abs(chunk0.score - rust_score)
     assert diff <= TOLERANCE, (
-        f"[{vec['name']}] score drift: Python={result.score:.6f} "
+        f"[{vec['name']}] score drift: Python={chunk0.score:.6f} "
         f"Rust={rust_score:.6f} diff={diff:.2e} > tolerance={TOLERANCE:.0e}\n"
+        f"  chunks={len(chunked.chunks)}\n"
         f"  prompt: {vec['prompt'][:80]!r}\n"
         f"  This is likely a divergence in _build_head or _mean_pool. "
         f"Investigate before loosening the tolerance."
+    )
+
+    # Use is_suspicious (any-chunk gate) as the canonical label check.
+    got_label = "suspicious" if chunked.is_suspicious else "safe"
+    assert got_label == expected_label, (
+        f"[{vec['name']}] label mismatch: got {got_label!r}, "
+        f"expected {expected_label!r} (chunk0.score={chunk0.score:.6f}, "
+        f"chunks={len(chunked.chunks)})"
     )
