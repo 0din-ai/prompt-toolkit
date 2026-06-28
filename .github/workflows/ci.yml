@@ -113,13 +113,18 @@ jobs:
           ORT_VERSION: "1.26.0"
           TOKENIZERS_VERSION: "1.27.0"
         run: |
-          # ONNX Runtime shared lib (API version 26, matches yalue/onnxruntime_go v1.31.0)
+          # ORT v1.26.0 is for the Go SDK (yalue/onnxruntime_go v1.31.0, API v26).
+          # Install to /opt/ort-go/lib/ to avoid polluting /usr/local/lib, which
+          # the Rust SDK's ort-sys probes when the download-binaries feature is used.
+          # A stale v1.26 .so in /usr/local/lib causes ort-sys to reject it
+          # ("could not link to the ONNX Runtime build") because Rust's ort crate
+          # expects ORT 2.x, not 1.26.
+          sudo mkdir -p /opt/ort-go/lib
           curl -fsSL \
             "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
             | tar -xz -C /opt/
           sudo cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
-                  /usr/local/lib/libonnxruntime.so
-          sudo ldconfig
+                  /opt/ort-go/lib/libonnxruntime.so
           # libtokenizers.a static lib — extract to /tmp first, then sudo-copy
           # (tar -xz -C /usr/local/lib/ fails with permission denied on Ubuntu runners)
           curl -fsSL \
@@ -131,8 +136,8 @@ jobs:
         working-directory: packages/go
         env:
           CGO_ENABLED: "1"
-          CGO_LDFLAGS: "-L/usr/local/lib"
-          ORT_LIB_PATH: /usr/local/lib/libonnxruntime.so
+          CGO_LDFLAGS: "-L/opt/ort-go/lib -L/usr/local/lib"
+          ORT_LIB_PATH: /opt/ort-go/lib/libonnxruntime.so
         run: go test ./susfactor/... -count=1 -v
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -243,13 +248,20 @@ jobs:
           ORT_VERSION: "1.26.0"
           TOKENIZERS_VERSION: "1.27.0"
         run: |
-          # ORT shared lib — same version used by the standard Go job
+          # ORT v1.26.0 is for the Go SDK (yalue/onnxruntime_go v1.31.0, API v26).
+          # Install to /opt/ort-go/lib/ — NOT /usr/local/lib/ — so the system lib
+          # path stays clean for the Rust SDK. The Rust ort crate uses the
+          # "download-binaries" feature and fetches ORT 2.x at build time; ort-sys
+          # then validates against /usr/local/lib/libonnxruntime.so if present. A
+          # mismatched v1.26 .so there causes: "ort-sys could not link to the ONNX
+          # Runtime build in /usr/local/lib/libonnxruntime.so". Using /opt/ort-go/lib/
+          # avoids that probe entirely.
+          sudo mkdir -p /opt/ort-go/lib
           curl -fsSL \
             "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
             | tar -xz -C /opt/
           sudo cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
-                  /usr/local/lib/libonnxruntime.so
-          sudo ldconfig
+                  /opt/ort-go/lib/libonnxruntime.so
           # libtokenizers.a — extract to /tmp first, then sudo-copy
           curl -fsSL \
             "https://github.com/daulet/tokenizers/releases/download/v${TOKENIZERS_VERSION}/libtokenizers.linux-amd64.tar.gz" \
@@ -310,8 +322,9 @@ jobs:
           # leak into the Rust unit tests and break cache-path assertions that
           # expect the default ~/.cache/signature-sdk path. cross_validate.py
           # passes it only to the Python parity subprocess internally.
-          # Go parity env vars (reuses the same /tmp/susfactor-v1 model dir)
+          # Go parity env vars — ORT lives in /opt/ort-go/lib/ (not /usr/local/lib/)
+          # to keep the Rust ort-sys linker probe path clean (see Install Go CGo deps).
           CGO_ENABLED: "1"
-          CGO_LDFLAGS: "-L/usr/local/lib"
-          ORT_LIB_PATH: /usr/local/lib/libonnxruntime.so
+          CGO_LDFLAGS: "-L/opt/ort-go/lib -L/usr/local/lib"
+          ORT_LIB_PATH: /opt/ort-go/lib/libonnxruntime.so
         run: python scripts/cross_validate.py --susfactor-parity --py-model-cache /tmp/py-model-cache

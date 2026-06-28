@@ -179,6 +179,29 @@ func TestDownloadFile_auth(t *testing.T) {
 	})
 }
 
+func TestDownloadFile_unauthorized(t *testing.T) {
+	tmp := t.TempDir()
+	cache := NewModelCache(tmp)
+
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		status := status
+		t.Run(fmt.Sprintf("HTTP_%d", status), func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(status)
+			}))
+			defer srv.Close()
+
+			err := cache.downloadFile(context.Background(), "org/repo", "file.txt", "", srv.URL)
+			if err == nil {
+				t.Fatalf("expected error for %d, got nil", status)
+			}
+			if err != ErrUnauthorized {
+				t.Errorf("want ErrUnauthorized, got %v", err)
+			}
+		})
+	}
+}
+
 func TestDownloadFile_serverError(t *testing.T) {
 	tmp := t.TempDir()
 	cache := NewModelCache(tmp)
@@ -191,6 +214,33 @@ func TestDownloadFile_serverError(t *testing.T) {
 	err := cache.downloadFile(context.Background(), "org/repo", "bad.txt", "", srv.URL)
 	if err == nil {
 		t.Fatal("expected error for 500, got nil")
+	}
+}
+
+func TestEnsureModel_optionalUnauthorized_ok(t *testing.T) {
+	tmp := t.TempDir()
+	cache := NewModelCache(tmp)
+
+	// Required files serve fine; optional files return 401 (gated repo behaviour)
+	served := map[string]string{
+		"/0dinai/susfactor-e5-large-onnx/resolve/main/onnx/model.onnx": "onnx",
+		"/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json":  "{}",
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if body, ok := served[r.URL.Path]; ok {
+			fmt.Fprint(w, body)
+		} else {
+			// Optional files return 401 — as on a gated HF repo without a token
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	}))
+	defer srv.Close()
+
+	_, err := cache.EnsureModel(context.Background(), DefaultOnnxRepo,
+		WithCacheBaseURL(srv.URL),
+	)
+	if err != nil {
+		t.Fatalf("EnsureModel should succeed when optional files return 401: %v", err)
 	}
 }
 

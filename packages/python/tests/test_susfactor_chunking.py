@@ -148,9 +148,17 @@ class TestChunkedSusFactorResult:
 # ---------------------------------------------------------------------------
 
 MODEL_DIR = os.environ.get("SUSFACTOR_MODEL_DIR")
+
+def _onnxruntime_available() -> bool:
+    try:
+        import onnxruntime  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
 requires_model = pytest.mark.skipif(
-    not MODEL_DIR,
-    reason="SUSFACTOR_MODEL_DIR not set — skipping live model tests",
+    not MODEL_DIR or not _onnxruntime_available(),
+    reason="SUSFACTOR_MODEL_DIR not set or onnxruntime not installed — skipping live ONNX tests",
 )
 
 

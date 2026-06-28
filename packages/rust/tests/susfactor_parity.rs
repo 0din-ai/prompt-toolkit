@@ -119,28 +119,42 @@ async fn rust_scores_match_committed_goldens() {
     let mut failures = 0usize;
 
     for entry in &entries {
-        let result = clf.classify(entry.prompt).await.expect("classify");
+        // classify() returns ChunkedSusFactorResult since PR #15.
+        // rust_score records chunk[0].score for both single- and multi-chunk
+        // prompts. Use is_suspicious (any-chunk gate) for the label check,
+        // matching the Python and Go parity test logic.
+        let chunked = clf.classify(entry.prompt).await.expect("classify");
+        let chunk0 = &chunked.chunks[0];
 
-        let score_diff = (result.score as f64 - entry.rust_score).abs();
-        let label_ok = result.label == entry.expected_label;
+        let score_diff = (chunk0.score as f64 - entry.rust_score).abs();
+        let got_label = if chunked.is_suspicious {
+            "suspicious"
+        } else {
+            "safe"
+        };
+        let label_ok = got_label == entry.expected_label;
         let score_ok = score_diff <= TOLERANCE;
 
         if label_ok && score_ok {
             println!(
-                "  ✅  {}: score={:.6} (Δ={:.2e})",
-                entry.name, result.score, score_diff
+                "  ✅  {}: score={:.6} (Δ={:.2e}) chunks={}",
+                entry.name,
+                chunk0.score,
+                score_diff,
+                chunked.chunks.len()
             );
         } else {
             failures += 1;
             eprintln!(
-                "  ❌  {}: score={:.6} (committed={:.6}, Δ={:.2e} > tol={:.0e}) label={} (expected={})",
+                "  ❌  {}: score={:.6} (committed={:.6}, Δ={:.2e} > tol={:.0e}) label={} (expected={}) chunks={}",
                 entry.name,
-                result.score,
+                chunk0.score,
                 entry.rust_score,
                 score_diff,
                 TOLERANCE,
-                result.label,
+                got_label,
                 entry.expected_label,
+                chunked.chunks.len(),
             );
         }
     }
