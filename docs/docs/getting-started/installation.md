@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Installation
 
-Install odin-prompt-toolkit for your preferred language. All three implementations provide identical functionality and signatures.
+Install odin-prompt-toolkit for your preferred language. All implementations provide identical SusFactor classification; Rust, Python, and TypeScript also include LSH signatures and the threat feed.
 
 ## Rust
 
@@ -121,6 +121,78 @@ import { simhashLshMulti } from '@0din/odin-prompt-toolkit';
 console.log('odin-prompt-toolkit installed successfully');
 ```
 
+## Go
+
+The Go SDK provides SusFactor jailbreak classification. It requires two native shared libraries (ORT and libtokenizers) installed separately — see [Go + Docker Integration](../guides/go-docker-integration) for a production-ready setup.
+
+```bash
+go get github.com/0din-ai/prompt-toolkit/packages/go@main
+```
+
+### Native Dependencies
+
+The Go SDK uses CGo and links against:
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| `libonnxruntime.so` | 1.26.0 | ONNX Runtime inference |
+| `libtokenizers.a` | 1.27.0 | HuggingFace tokenizers |
+
+**Linux (CI / Docker):**
+
+```bash
+# ORT v1.26.0
+curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.26.0/onnxruntime-linux-x64-1.26.0.tgz \
+  | tar -xz -C /opt/
+sudo cp /opt/onnxruntime-linux-x64-1.26.0/lib/libonnxruntime.so.1.26.0 /usr/local/lib/libonnxruntime.so
+sudo ldconfig
+
+# libtokenizers v1.27.0
+curl -fsSL https://github.com/daulet/tokenizers/releases/download/v1.27.0/libtokenizers.linux-amd64.tar.gz \
+  | tar -xz -C /tmp/
+sudo cp /tmp/libtokenizers.a /usr/local/lib/libtokenizers.a
+```
+
+Then build with:
+
+```bash
+CGO_ENABLED=1 CGO_LDFLAGS="-L/usr/local/lib" \
+  ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so \
+  go build ./...
+```
+
+### Requirements
+
+- Go 1.22 or higher
+- CGo enabled (`CGO_ENABLED=1`)
+- ORT v1.26.0 shared library
+- libtokenizers v1.27.0 static library
+
+### Verify Installation
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/0din-ai/prompt-toolkit/packages/go/susfactor"
+)
+
+func main() {
+    clf, err := susfactor.NewClassifier(context.Background(),
+        susfactor.WithModelDir("/path/to/susfactor-v1"),
+    )
+    if err != nil {
+        panic(err)
+    }
+    defer clf.Close()
+    fmt.Println("Go SDK ready")
+}
+```
+
+---
+
 ## Development Installation
 
 If you're contributing to the SDK or need the latest unreleased changes:
@@ -138,10 +210,11 @@ cd prompt-toolkit
 make install
 ```
 
-This installs dependencies for all three languages:
+This installs dependencies for all four languages:
 - Rust: `cargo fetch`
 - Python: `pip install -e ".[dev,all]"`
 - TypeScript: `npm install`
+- Go: native libraries must be installed separately (see [Go section](#go) above)
 
 ### Run Tests
 
@@ -149,7 +222,7 @@ This installs dependencies for all three languages:
 make test
 ```
 
-Runs all 384 tests across the three implementations.
+Runs all 400+ tests across the four implementations.
 
 ## Next Steps
 

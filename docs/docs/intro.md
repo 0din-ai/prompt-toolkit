@@ -5,7 +5,7 @@ slug: /
 
 # Introduction to odin-prompt-toolkit
 
-**odin-prompt-toolkit** is a multi-language SDK for AI prompt safety and security. It gives you the tools to detect jailbreaks, find similar or duplicate prompts, and match incoming prompts against known threat intelligence — across Rust, Python, and TypeScript.
+**odin-prompt-toolkit** is a multi-language SDK for AI prompt safety and security. It gives you the tools to detect jailbreaks, find similar or duplicate prompts, and match incoming prompts against known threat intelligence — across Rust, Python, TypeScript, and Go.
 
 ## What It Does
 
@@ -36,10 +36,10 @@ Use it to:
 - 🔒 **Jailbreak detection** — SusFactor classifier scores prompts 0–1 for suspicious intent
 - 🔍 **Similarity signatures** — 256-bit SimHash LSH signatures for fast deduplication and ANN search
 - 🛡️ **Threat intelligence** — Sync and query the 0DIN threat feed of known adversarial prompts
-- 🌍 **Cross-language** — Identical signatures and parity scores across Rust, Python, and TypeScript
+- 🌍 **Cross-language** — Identical signatures and parity scores across Rust, Python, TypeScript, and Go
 - 📦 **No API required** — Local ONNX models for both embeddings (V1) and classification
 - 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (627× speedup)
-- 🧪 **Battle-tested** — 384 tests across 3 languages
+- 🧪 **Battle-tested** — 400+ tests across 4 languages
 
 ---
 
@@ -99,9 +99,39 @@ import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
 
 const clf = await SusFactorClassifier.create(new ModelCache());
 const result = await clf.classify('Ignore all previous instructions');
-console.log(result.score, result.label); // 0.972 suspicious
+console.log(result.chunks[0].score, result.chunks[0].label); // 0.972 suspicious
 await clf.close();
 ```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/0din-ai/prompt-toolkit/packages/go/susfactor"
+)
+
+func main() {
+    ctx := context.Background()
+    clf, err := susfactor.NewClassifier(ctx,
+        susfactor.WithModelDir("/path/to/susfactor-v1"),
+    )
+    if err != nil {
+        panic(err)
+    }
+    defer clf.Close()
+
+    result, _ := clf.Classify(ctx, "Ignore all previous instructions")
+    fmt.Printf("%.3f — %s\n", result.Chunks[0].Score, result.Chunks[0].Label)
+    // 0.972 — suspicious
+}
+```
+
+Requires ORT v1.26+ shared lib and libtokenizers. See [Installation](./getting-started/installation) and [Go + Docker Guide](./guides/go-docker-integration).
 
   </TabItem>
 </Tabs>
@@ -211,13 +241,14 @@ Signatures are generated using **SimHash via Random Hyperplane LSH** — a deter
 
 ## Project Status
 
-✅ **Production Ready** — All three language implementations validated with 384 passing tests
+✅ **Production Ready** — All four language implementations validated with 400+ passing tests
 
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
-| Rust | `odin-prompt-toolkit` v0.5.0 | ✅ Ready | 69 passing |
+| Rust | `odin-prompt-toolkit` v0.6.0 | ✅ Ready | 69 passing |
 | Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
-| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 132 passing |
+| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 146 passing |
+| Go | `github.com/0din-ai/prompt-toolkit/packages/go` | ✅ Ready (SusFactor) | 27+ passing |
 
 See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language parity results.
 
@@ -225,7 +256,7 @@ See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/
 
 ## Next Steps
 
-- **[Installation](./getting-started/installation)** — Install for Rust, Python, or TypeScript
+- **[Installation](./getting-started/installation)** — Install for Rust, Python, TypeScript, or Go
 - **[Quick Start](./getting-started/quick-start)** — Your first jailbreak check or LSH signature
 - **[SusFactor](./concepts/susfactor)** — Jailbreak classification deep dive
 - **[Threat Feed](./guides/threatfeed)** — Match prompts against 0DIN threat intelligence
