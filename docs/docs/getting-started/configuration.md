@@ -107,15 +107,17 @@ bits = bands × bits_per_band
 
 ## Language-Specific Timing
 
-Measured on Apple M3 Pro (arm64, CPU only, no GPU). All SusFactor numbers use the `0dinai/susfactor-e5-large-onnx` model. LSH numbers use 384-dim random vectors (3 families × 256 bits).
+Measured on Apple M4 Pro (arm64, CPU only, no GPU). Numbers are medians from 50+ repeated calls; see [Reproducing These Numbers](#reproducing-these-numbers) below.
 
 :::note
-These are single-process, single-thread benchmarks. Concurrency, batch size, and hardware all affect real-world numbers. See methodology below if you want to reproduce them.
+Single-process, single-thread benchmarks. Concurrency, batch size, and hardware all affect real-world results.
 :::
 
-### SusFactor Classification
+---
 
-Single-call latency — tokenize + ONNX inference + softmax, short prompt (~10 tokens).
+### ① SusFactor: jailbreak classification latency
+
+**What this measures:** one call to `classify()` — tokenize the prompt + run ONNX inference + compute softmax. Short prompt (~10 tokens). Uses the `0dinai/susfactor-e5-large-onnx` model.
 
 | Language | Backend | p50 | p95 | p99 | Throughput |
 |----------|---------|-----|-----|-----|------------|
@@ -124,27 +126,27 @@ Single-call latency — tokenize + ONNX inference + softmax, short prompt (~10 t
 | **TypeScript** | onnxruntime-node | 22.2ms | 34.7ms | 53.4ms | ~42 req/s |
 | **Go** | ort via CGo (ORT 1.26) | ~15–25ms¹ | — | — | ~40–65 req/s¹ |
 
-¹ Go numbers are estimated from the same ORT 1.26 backend on equivalent hardware; exact measurement requires the CGo native libs (ORT + libtokenizers) installed locally.
+¹ Estimated from the same ORT 1.26 backend on equivalent hardware; exact measurement requires the CGo native libs installed locally.
 
-**Why does Rust lead?** All four SDKs run the same ONNX graph through the same ORT C++ engine. The Rust gap comes from lower tokenizer overhead (the `tokenizers` crate compiles to native code) and zero Python/JS interpreter overhead in the hot path.
+**Why does Rust lead?** All four SDKs run the same ONNX graph through the same ORT C++ engine. The Rust advantage comes from a native tokenizer (the `tokenizers` crate) and zero interpreter overhead in the hot path.
 
-**Long prompts (> 510 tokens):** All SDKs chunk automatically. Each 510-token chunk costs one inference call; total latency scales linearly with chunk count. See [SusFactor concepts](../concepts/susfactor) for chunking details.
+**Long prompts (> 510 tokens):** All SDKs chunk automatically. Each 510-token chunk is one inference call; total latency scales linearly with chunk count. See [SusFactor concepts](../concepts/susfactor).
 
 ---
 
-### LSH Signature Generation
+### ② LSH Signatures: signature generation throughput
 
-Latency per signature — normalize vector + SimHash + 3 families × 256 bits. Pre-computed embeddings; embedding generation is not included.
+**What this measures:** one call to `simhash_lsh_multi()` — normalize a pre-computed 384-dim embedding vector and compute 3 families × 256-bit SimHash signatures. Embedding generation is **not** included.
 
 | Language | Implementation | p50 | Throughput | Notes |
 |----------|---------------|-----|------------|-------|
 | **Rust** | Native (pure Rust) | **0.19ms** | **~5,400/s** | Compiled to native code |
+| **Python (native ext)** | Rust extension (PyO3) | **~0.19ms** | **~5,300/s** | Same Rust core via FFI |
 | **TypeScript** | Pure JS | 30ms | ~33/s | JIT-compiled; no SIMD |
-| **Python (native)** | Rust extension (PyO3) | **~0.19ms** | **~5,300/s** | Same Rust core via FFI |
-| **Python (pure)** | Pure Python | 111ms | ~9/s | Fallback; not recommended for prod |
-| **Go** | — | — | — | Go SDK is SusFactor-only; no LSH |
+| **Python (pure)** | Pure Python | 111ms | ~9/s | Fallback only; not for production |
+| **Go** | — | — | — | Go SDK is SusFactor-only; LSH not implemented |
 
-**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension that calls the same Rust core — bit-identical results at Rust speed. The pure-Python fallback exists for environments where Rust isn't available (not published yet; see [Native Acceleration guide](../guides/native-acceleration)).
+**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration)).
 
 ---
 
