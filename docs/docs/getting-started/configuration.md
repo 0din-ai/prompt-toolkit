@@ -479,6 +479,53 @@ config = LshConfig(families=3, bits=256, bands=16)
 
 ---
 
+## Go Configuration
+
+The Go SDK is SusFactor-only (no LSH signatures or embedding providers). Configure the classifier via functional options passed to `NewClassifier`.
+
+### Classifier Options
+
+```go
+import "github.com/0din-ai/prompt-toolkit/packages/go/susfactor"
+
+clf, err := susfactor.NewClassifier(ctx,
+    // Point at a pre-downloaded model directory (fastest, no HF download)
+    susfactor.WithModelDir("/path/to/susfactor-v1"),
+
+    // Or let the classifier download via ModelCache (requires HF_TOKEN for gated repo)
+    susfactor.WithModelCache(
+        susfactor.NewModelCache("~/.cache/susfactor"),
+        susfactor.WithHFToken(os.Getenv("HF_TOKEN")),
+    ),
+
+    // Override the decision threshold (default 0.5)
+    susfactor.WithThreshold(0.7),
+
+    // Override the ORT shared library path (default: auto-detected)
+    susfactor.WithORTLibPath("/opt/ort/lib/libonnxruntime.so"),
+)
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `ORT_LIB_PATH` | Path to `libonnxruntime.so` (overrides auto-detection) |
+| `SUSFACTOR_MODEL_DIR` | Convenience variable — pass its value to `WithModelDir` |
+| `HF_TOKEN` | HuggingFace token for downloading the gated model |
+
+### Build Variables
+
+```bash
+CGO_ENABLED=1                              # Required — Go SDK uses CGo
+CGO_LDFLAGS="-L/usr/local/lib"            # Path containing libonnxruntime.so + libtokenizers.a
+ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so  # Passed to ort-sys at link time
+```
+
+See [Go + Docker Integration](../guides/go-docker-integration) for a complete production setup with multi-stage Docker builds.
+
+---
+
 ## See Also
 
 - [Quick Start](./quick-start) - Basic setup and usage
@@ -486,3 +533,4 @@ config = LshConfig(families=3, bits=256, bands=16)
 - [Providers API](../api/providers) - Full provider API reference
 - [Performance Guide](../guides/performance) - Optimization strategies
 - [Native Acceleration](../guides/native-acceleration) - Python speedup details
+- [Go + Docker Integration](../guides/go-docker-integration) - Go deployment guide
