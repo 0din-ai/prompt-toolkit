@@ -107,7 +107,7 @@ bits = bands × bits_per_band
 
 ## Language-Specific Timing
 
-Measured on Apple M3 Pro (arm64, CPU only, no GPU). Numbers are medians from 50+ repeated calls; see [Reproducing These Numbers](#reproducing-these-numbers) below.
+Measured on Apple M4 Pro (arm64, CPU only, no GPU). Numbers are medians from 50+ repeated calls; see [Reproducing These Numbers](#reproducing-these-numbers) below.
 
 :::note
 Single-process, single-thread benchmarks. Concurrency, batch size, and hardware all affect real-world results.
