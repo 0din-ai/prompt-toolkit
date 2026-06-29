@@ -30,7 +30,7 @@ odin-prompt-toolkit = {
 | `openai` | ✅ Yes | OpenAI API embedding provider (V0 signatures) |
 | `onnx` | ✅ Yes | Local ONNX embedding provider (V1 signatures) |
 | `cm-lsh` | ❌ No | Confidence Matrix LSH (experimental, higher accuracy) |
-| `susfactor` | ❌ No | Jailbreak/prompt-injection classifier ([SusFactor](../concepts/susfactor)) |
+| `susfactor` | ❌ No | Jailbreak/prompt-injection classifier ([SusFactor](../concepts/susfactor.md)) |
 | `threatfeed` | ❌ No | Threat feed sync and similarity lookup |
 
 :::note ONNX Runtime build requirement
@@ -123,7 +123,7 @@ console.log('odin-prompt-toolkit installed successfully');
 
 ## Go
 
-The Go SDK provides SusFactor jailbreak classification. It requires two native shared libraries (ORT and libtokenizers) installed separately — see [Go + Docker Integration](../guides/go-docker-integration) for a production-ready setup.
+The Go SDK provides SusFactor jailbreak classification. It requires two native shared libraries (ORT and libtokenizers) installed separately — see [Go + Docker Integration](../guides/go-docker-integration.md) for a production-ready setup.
 
 ```bash
 go get github.com/0din-ai/prompt-toolkit/packages/go@main

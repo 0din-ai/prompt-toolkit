@@ -130,7 +130,7 @@ Single-process, single-thread benchmarks. Concurrency, batch size, and hardware 
 
 **Why does Rust lead?** All four SDKs run the same ONNX graph through the same ORT C++ engine. The Rust advantage comes from a native tokenizer (the `tokenizers` crate) and zero interpreter overhead in the hot path.
 
-**Long prompts (> 510 tokens):** All SDKs chunk automatically. Each 510-token chunk is one inference call; total latency scales linearly with chunk count. See [SusFactor concepts](../concepts/susfactor).
+**Long prompts (> 510 tokens):** All SDKs chunk automatically. Each 510-token chunk is one inference call; total latency scales linearly with chunk count. See [Long-Prompt Chunking](../concepts/susfactor.md#long-prompt-chunking).
 
 ---
 
@@ -146,7 +146,7 @@ Single-process, single-thread benchmarks. Concurrency, batch size, and hardware 
 | **Python (pure)** | Pure Python | 111ms | ~9/s | Fallback only; not for production |
 | **Go** | — | — | — | Go SDK is SusFactor-only; LSH not implemented |
 
-**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration)).
+**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration.md)).
 
 ---
 
@@ -504,7 +504,7 @@ python -c "from odin_prompt_toolkit import NATIVE_AVAILABLE; print(NATIVE_AVAILA
 - `cosine_from_hamming()` - 112× faster
 - `compute_embedding_sha256()` - 95× faster
 
-See [Native Acceleration Guide](../guides/native-acceleration) for details.
+See [Native Acceleration Guide](../guides/native-acceleration.md) for details.
 
 ### Caching Strategies
 
@@ -652,15 +652,15 @@ CGO_LDFLAGS="-L/usr/local/lib"            # Path containing libonnxruntime.so + 
 ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so  # Passed to ort-sys at link time
 ```
 
-See [Go + Docker Integration](../guides/go-docker-integration) for a complete production setup with multi-stage Docker builds.
+See [Go + Docker Integration](../guides/go-docker-integration.md) for a complete production setup with multi-stage Docker builds.
 
 ---
 
 ## See Also
 
 - [Quick Start](./quick-start) - Basic setup and usage
-- [LSH Overview](../concepts/lsh-overview) - Algorithm fundamentals
-- [Providers API](../api/providers) - Full provider API reference
-- [Performance Guide](../guides/performance) - Optimization strategies
-- [Native Acceleration](../guides/native-acceleration) - Python speedup details
-- [Go + Docker Integration](../guides/go-docker-integration) - Go deployment guide
+- [LSH Overview](../concepts/lsh-overview.md) - Algorithm fundamentals
+- [Providers API](../api/providers.md) - Full provider API reference
+- [Performance Guide](../guides/performance.md) - Optimization strategies
+- [Native Acceleration](../guides/native-acceleration.md) - Python speedup details
+- [Go + Docker Integration](../guides/go-docker-integration.md) - Go deployment guide

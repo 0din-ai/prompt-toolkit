@@ -108,7 +108,7 @@ Build with `CGO_ENABLED=1`. The model directory must contain `onnx/model.onnx` a
   </TabItem>
 </Tabs>
 
-The score is a probability from 0 (safe) to 1 (suspicious). The default threshold is `0.5` — anything at or above is labeled `suspicious`. See the [Jailbreak Detection Guide](../guides/jailbreak-detection) for threshold tuning and batching.
+The score is a probability from 0 (safe) to 1 (suspicious). The default threshold is `0.5` — anything at or above is labeled `suspicious`. See the [Jailbreak Detection Guide](../guides/jailbreak-detection.md) for threshold tuning and batching.
 
 ---
 
@@ -377,7 +377,7 @@ console.log(`Signature: ${families[0].signature}`);
   </TabItem>
 </Tabs>
 
-See the [Core Functions API](../api/core-functions) for detailed documentation of all low-level functions.
+See the [Core Functions API](../api/core-functions.md) for detailed documentation of all low-level functions.
 
 ## Compare Two Prompts
 
@@ -592,12 +592,12 @@ const families = simhashLshMulti(normalized, {
 
 ## Next Steps
 
-- **[Jailbreak Detection Guide](../guides/jailbreak-detection)** — Threshold tuning, batching, and integration patterns for SusFactor
-- **[Defense in Depth](../concepts/defense-in-depth)** — Combine SusFactor + signatures + threat feed
+- **[Jailbreak Detection Guide](../guides/jailbreak-detection.md)** — Threshold tuning, batching, and integration patterns for SusFactor
+- **[Defense in Depth](../concepts/defense-in-depth.md)** — Combine SusFactor + signatures + threat feed
 - **[Configuration Guide](./configuration)** — Embedding providers and advanced options
-- **[LSH Overview](../concepts/lsh-overview)** — Deep dive into how LSH works
-- **[Duplicate Detection Guide](../guides/duplicate-detection)** — Build a real-world duplicate detector
-- **[API Reference](../api/core-functions)** — Complete API documentation
+- **[LSH Overview](../concepts/lsh-overview.md)** — Deep dive into how LSH works
+- **[Duplicate Detection Guide](../guides/duplicate-detection.md)** — Build a real-world duplicate detector
+- **[API Reference](../api/core-functions.md)** — Complete API documentation
 
 ## Common Patterns
 
@@ -628,4 +628,4 @@ for i, band in enumerate(query_bands):
     candidates.update(band_index.get((i, band), []))
 ```
 
-See the [Duplicate Detection Guide](../guides/duplicate-detection) for a complete implementation.
+See the [Duplicate Detection Guide](../guides/duplicate-detection.md) for a complete implementation.
