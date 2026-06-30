@@ -54,7 +54,7 @@ A reference implementation and production plugin for [OpenClaw](https://github.c
 
 1. **Text normalization** — strips invisible Unicode, normalizes homoglyphs (Cyrillic а → a), decodes HTML entities
 2. **Pattern matching** — 49 substring patterns across 7 jailbreak categories; sub-microsecond, always active
-3. **LSH signature similarity** — ~788 signatures from 0DIN threat feed, backed by `@0din/prompt-toolkit` with `jailbreak-embeddings-large` (1024d ONNX, XLM-RoBERTa large); sliding window for documents
+3. **LSH signature similarity** — ~788 signatures from 0DIN threat feed, backed by `@0din/odin-prompt-toolkit` with `jailbreak-embeddings-large` (1024d ONNX, XLM-RoBERTa large); sliding window for documents
 
 **Five integration points:**
 
