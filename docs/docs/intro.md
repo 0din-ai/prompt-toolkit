@@ -261,3 +261,4 @@ See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/
 - **[SusFactor](./concepts/susfactor)** — Jailbreak classification deep dive
 - **[Threat Feed](./guides/threatfeed)** — Match prompts against 0DIN threat intelligence
 - **[LSH Overview](./concepts/lsh-overview)** — How similarity signatures work
+- **[Ecosystem](./guides/ecosystem)** — Projects and integrations built with the toolkit
