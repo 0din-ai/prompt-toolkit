@@ -98,6 +98,51 @@ A reference implementation and production plugin for [OpenClaw](https://github.c
 
 ---
 
+### bedrock-shield
+
+**Repository:** [0din-ai/bedrock-shield](https://github.com/0din-ai/bedrock-shield)  
+**Language:** Python  
+**Toolkit packages used:** Python SDK (`odin-prompt-toolkit`), SusFactor classifier
+
+A drop-in replacement or complement for AWS Bedrock Runtime guardrail APIs. Wraps the 0DIN SusFactor ONNX classifier with a response shape compatible with `InvokeGuardrailChecks` and `ApplyGuardrail` — so teams already using Bedrock Guardrails can swap in SusFactor with no integration pattern change.
+
+**Three integration modes:**
+
+| Mode | Description | IAM required |
+|---|---|---|
+| Replace `InvokeGuardrailChecks` | Swap `client.invoke_guardrail_checks(...)` for `SusFactorChecks().invoke_guardrail_checks(...)` — same request/response shape | None |
+| Stack with `ApplyGuardrail` | Runs both AWS guardrail + SusFactor in parallel, merges results (most-severe-wins) | `bedrock:ApplyGuardrail` |
+| Standalone | Pure local inference — no AWS account or IAM required | None |
+
+**Key characteristics:**
+- Response shape is wire-compatible with Bedrock Runtime — no caller-side changes needed
+- `severityScore` bucketed to nearest 0.2 step (`{0.0, 0.2, 0.4, 0.6, 0.8, 1.0}`) for `InvokeGuardrailChecks`; `confidence` string enum (`NONE / LOW / MEDIUM / HIGH`) for `ApplyGuardrail`
+- `block` / `flag` / `shadow` enforcement modes with `fail_open` support
+- Async core with `*_sync` wrappers for non-async boto3 callers
+
+**Performance (ONNX backend, CPU):**
+
+| Backend | P50 latency |
+|---|---|
+| ONNX (default) | ~20–50 ms |
+| Torch | ~150–400 ms |
+| AWS `InvokeGuardrailChecks` | ~200–500 ms (network) |
+
+```python
+from bedrock_shield import SusFactorChecks
+
+checker = SusFactorChecks(threshold=0.5)
+response = await checker.invoke_guardrail_checks(
+    messages=[{"role": "user", "content": [{"type": "text", "text": user_input}]}],
+    checks={"promptAttack": {"categories": [{"category": "JAILBREAK"}]}},
+)
+pa = response["results"]["promptAttack"]["results"][0]
+if pa["severityScore"] >= 0.4:
+    raise ValueError("Jailbreak attempt detected")
+```
+
+---
+
 ## Add Your Project
 
 Using `odin-prompt-toolkit` in production? Open a PR or issue on [GitHub](https://github.com/0din-ai/prompt-toolkit) to add it here.
