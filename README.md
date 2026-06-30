@@ -151,6 +151,15 @@ prompt-toolkit/
 - **[Validation Report](VALIDATION.md)** — Cross-language parity results
 - **[Contributing](.github/CONTRIBUTING.md)** — Development setup and standards
 
+## Built With This Toolkit
+
+| Project | Language | What It Does |
+|---|---|---|
+| [litellm-shield](https://github.com/0din-ai/litellm-shield) | Python | SusFactor jailbreak guardrail for LiteLLM — `shadow`, `flag`, or `block` enforcement at `pre_call`/`during_call`/`post_call` |
+| [openclaw-shield](https://github.com/0din-ai/openclaw-shield) | TypeScript | Prompt injection detection for OpenClaw agents — LSH signatures + pattern matching at 5 lifecycle hooks including tool results |
+
+Using the toolkit in production? Open a PR to add your project here.
+
 ## License
 
 MIT

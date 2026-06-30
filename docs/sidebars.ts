@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         'guides/native-acceleration',
         'guides/performance',
         'guides/migration',
+        'guides/ecosystem',
       ],
     },
     {
