@@ -157,6 +157,7 @@ prompt-toolkit/
 |---|---|---|
 | [litellm-shield](https://github.com/0din-ai/litellm-shield) | Python | SusFactor jailbreak guardrail for LiteLLM — `shadow`, `flag`, or `block` enforcement at `pre_call`/`during_call`/`post_call` |
 | [openclaw-shield](https://github.com/0din-ai/openclaw-shield) | TypeScript | Prompt injection detection for OpenClaw agents — LSH signatures + pattern matching at 5 lifecycle hooks including tool results |
+| [bedrock-shield](https://github.com/0din-ai/bedrock-shield) | Python | SusFactor jailbreak detection for AWS Bedrock — drop-in replacement or complement for `InvokeGuardrailChecks` and `ApplyGuardrail` |
 
 Using the toolkit in production? Open a PR to add your project here.
 
