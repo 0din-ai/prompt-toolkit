@@ -222,13 +222,10 @@ impl OnnxSusFactor {
         let wall_start = Instant::now();
 
         let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
-        let id_chunks = common::chunk_token_ids(&all_ids);
+        let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
 
-        let mut handles = Vec::with_capacity(id_chunks.len());
-        for chunk_ids in id_chunks {
-            let chunk_len = chunk_ids.len();
-            let chunk_mask: Vec<i64> = all_mask[..chunk_len.min(all_mask.len())].to_vec();
-
+        let mut handles = Vec::with_capacity(chunks.len());
+        for (chunk_ids, chunk_mask) in chunks {
             let session = Arc::clone(&self.session);
             let model_name = self.model_name.clone();
             let threshold = self.threshold;
