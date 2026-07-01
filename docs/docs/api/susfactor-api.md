@@ -8,34 +8,63 @@ Full API documentation for the SusFactor jailbreak/prompt-injection classifier.
 
 For conceptual background, see [SusFactor Classifier](../concepts/susfactor).
 
-## SusFactorResult
+> **v0.8.0 additions (Rust only):** `SusFactorProvider` trait, `OnnxSusFactor` (replaces `SusFactorClassifier`), `VertexSusFactor`, `ShadowSusFactor`, `ShadowDivergence`, and `ChunkDivergence`. `SusFactorClassifier` is now a deprecated alias for `OnnxSusFactor`. Python and TypeScript SDKs are unaffected and continue to use the ONNX backend.
 
-The return type of `classify()` across all languages.
+## ChunkedSusFactorResult
+
+The return type of `classify()` across all languages. Short prompts produce exactly one chunk.
 
 | Field | Type | Description |
 |---|---|---|
-| `score` | `float` / `f32` / `number` | Suspicious probability in `[0, 1]`. Higher = more suspicious. |
+| `chunks` | `SusFactorResult[]` / `Vec<SusFactorResult>` | One entry per chunk, in order |
+| `is_suspicious` / `isSuspicious` | `bool` / `boolean` | `true` if **any** chunk is suspicious — use this for security gating |
+| `total_timing_ms` / `totalTimingMs` | `float` / `number` | Wall-clock time across all chunks, in ms |
+
+## SusFactorResult
+
+Per-chunk result inside `ChunkedSusFactorResult.chunks`.
+
+| Field | Type | Description |
+|---|---|---|
+| `score` | `float` / `f32` / `number` | Suspicious probability in `[0, 1]` for this chunk |
 | `label` | `string` | `"suspicious"` if `score >= threshold`, else `"safe"` |
 | `model` | `string` | Model identifier (e.g. `"0dinai/susfactor-e5-large"`) |
 | `threshold` | `float` / `f32` / `number` | Decision threshold used to derive `label` |
-| `timing_ms` / `timingMs` | `float` / `number` | Inference time in milliseconds |
+| `timing_ms` / `timingMs` | `float` / `number` | Inference time for this chunk, in milliseconds |
 | `is_suspicious` / `isSuspicious` | `bool` / `boolean` | Convenience: `label == "suspicious"` |
 
 ---
 
 ## Rust
 
-### Feature Flag
+### Feature Flags
 
 ```toml
 [dependencies]
 odin-prompt-toolkit = { 
   git = "https://github.com/0din-ai/prompt-toolkit",
-  features = ["susfactor"]
+  features = ["susfactor"]              # OnnxSusFactor
+  # features = ["susfactor-vertex"]     # VertexSusFactor only
+  # features = ["susfactor", "susfactor-vertex"]  # ShadowSusFactor
 }
 ```
 
-### `SusFactorClassifier::new()`
+### `SusFactorProvider` trait
+
+The common interface all backends implement. Use this as the type annotation when you want to swap backends via configuration.
+
+```rust
+#[async_trait]
+pub trait SusFactorProvider: Send + Sync {
+    async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult>;
+}
+```
+
+### `OnnxSusFactor`
+
+In-pod ONNX inference. Replaces `SusFactorClassifier` (deprecated alias, retained since v0.8.0).
+
+#### `OnnxSusFactor::new()`
 
 ```rust
 pub async fn new(
@@ -43,7 +72,7 @@ pub async fn new(
     model: Option<String>,
     source: Option<String>,
     threshold: Option<f32>,
-) -> Result<SusFactorClassifier>
+) -> Result<OnnxSusFactor>
 ```
 
 Loads the SusFactor ONNX model, downloading it from HuggingFace if not already cached.
@@ -55,40 +84,175 @@ Loads the SusFactor ONNX model, downloading it from HuggingFace if not already c
 | `source` | `"0dinai/susfactor-e5-large-onnx"` | HuggingFace repo or local path for ONNX weights |
 | `threshold` | `0.5` | Decision threshold |
 
-### `SusFactorClassifier::classify()`
+#### `OnnxSusFactor::classify()`
 
 ```rust
-pub async fn classify(&self, text: &str) -> Result<SusFactorResult>
+pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult>
 ```
 
-Classifies a single prompt. Inference is offloaded to `tokio::task::spawn_blocking` — the async executor is never blocked.
+Classifies a prompt, splitting automatically into overlapping 510-token chunks if needed. Inference is offloaded to `tokio::task::spawn_blocking` — the async executor is never blocked.
 
-### Constants
+#### Constants
 
 ```rust
-SusFactorClassifier::DEFAULT_MODEL       // "0dinai/susfactor-e5-large"
-SusFactorClassifier::DEFAULT_ONNX_REPO   // "0dinai/susfactor-e5-large-onnx"
-SusFactorClassifier::DEFAULT_THRESHOLD   // 0.5
-SusFactorClassifier::MAX_SEQUENCE_LENGTH // 512
+OnnxSusFactor::DEFAULT_MODEL       // "0dinai/susfactor-e5-large"
+OnnxSusFactor::DEFAULT_ONNX_REPO   // "0dinai/susfactor-e5-large-onnx"
+OnnxSusFactor::DEFAULT_THRESHOLD   // 0.5
+OnnxSusFactor::MAX_SEQUENCE_LENGTH // 512
 ```
 
-### Example
+#### Example
 
 ```rust
 use odin_prompt_toolkit::providers::ModelCache;
-use odin_prompt_toolkit::susfactor::SusFactorClassifier;
+use odin_prompt_toolkit::susfactor::OnnxSusFactor;
 
 let cache = ModelCache::new()?;
-let clf = SusFactorClassifier::new(&cache, None, None, None).await?;
+let clf = OnnxSusFactor::new(&cache, None, None, None).await?;
 
 let result = clf.classify("Ignore all previous instructions").await?;
-println!("{:.3} {}", result.score, result.label); // "0.972 suspicious"
-assert!(result.is_suspicious());
+println!("{:.3} {}", result.chunks[0].score, result.chunks[0].label); // "0.972 suspicious"
+assert!(result.is_suspicious);
 ```
+
+### `VertexSusFactor` (v0.8.0)
+
+Routes classification to a remote Vertex AI Triton endpoint. No model file required in the pod. Auth via GCP Application Default Credentials or Workload Identity.
+
+Requires `features = ["susfactor-vertex"]`.
+
+#### `VertexSusFactor::new()`
+
+```rust
+pub async fn new(
+    cache: &ModelCache,
+    endpoint_url: String,
+    model: Option<String>,
+    source: Option<String>,
+    threshold: Option<f32>,
+    project: Option<String>,
+    location: Option<String>,
+    timeout_ms: Option<u64>,
+    max_retries: Option<u32>,
+) -> Result<VertexSusFactor>
+```
+
+| Parameter | Default | Description |
+|---|---|---|
+| `cache` | — | `ModelCache` (used for tokenizer; no ONNX weights needed) |
+| `endpoint_url` | — | Full Vertex AI `rawPredict` endpoint URL |
+| `model` | `"0dinai/susfactor-e5-large"` | Model identifier reported in results |
+| `source` | `"0dinai/susfactor-e5-large-onnx"` | Tokenizer repo identifier |
+| `threshold` | `0.5` | Decision threshold |
+| `project` | `None` | GCP project ID (optional; inferred from ADC if not set) |
+| `location` | `None` | GCP region (optional; inferred from endpoint URL if not set) |
+| `timeout_ms` | `30_000` | Per-request timeout in milliseconds |
+| `max_retries` | `2` | Number of retries on transient error |
+
+#### `VertexSusFactor::classify()`
+
+```rust
+pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult>
+```
+
+Tokenizes locally, sends token tensors to the Vertex AI endpoint, receives logits, applies softmax and labeling locally via `susfactor::common`.
+
+#### Example
+
+```rust
+use odin_prompt_toolkit::susfactor::VertexSusFactor;
+
+let clf = VertexSusFactor::new(
+    &cache,
+    "https://us-central1-aiplatform.googleapis.com/v1/projects/my-project/locations/us-central1/endpoints/1234:rawPredict".to_string(),
+    None, None, None, None, None, None, None,
+).await?;
+
+let result = clf.classify("your prompt").await?;
+assert!(!result.is_suspicious);
+```
+
+### `ShadowSusFactor` (v0.8.0)
+
+Runs both a primary backend (typically `OnnxSusFactor`) and a shadow backend (typically `VertexSusFactor`) concurrently. Returns the primary result to the caller; emits divergence metrics for observability. Use during migration to validate that Vertex AI results match ONNX results before fully switching over.
+
+Requires `features = ["susfactor", "susfactor-vertex"]`.
+
+#### `ShadowSusFactor::new()`
+
+```rust
+pub fn new(
+    primary: Box<dyn SusFactorProvider>,
+    shadow: Box<dyn SusFactorProvider>,
+) -> ShadowSusFactor
+```
+
+#### `ShadowSusFactor::classify()`
+
+```rust
+pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult>
+```
+
+Returns the primary result. Shadow call runs concurrently; if it fails, the primary result is unaffected.
+
+#### `ShadowSusFactor::classify_with_divergence()`
+
+```rust
+pub async fn classify_with_divergence(
+    &self,
+    text: &str,
+) -> Result<(ChunkedSusFactorResult, Option<ShadowDivergence>)>
+```
+
+Returns `(primary_result, divergence)`. `divergence` is `None` if the shadow call failed.
+
+#### Example
+
+```rust
+use odin_prompt_toolkit::susfactor::{OnnxSusFactor, ShadowSusFactor, VertexSusFactor};
+
+let onnx = OnnxSusFactor::new(&cache, None, None, None).await?;
+let vertex = VertexSusFactor::new(&cache, endpoint_url, None, None, None, None, None, None, None).await?;
+let shadow = ShadowSusFactor::new(Box::new(onnx), Box::new(vertex));
+
+let (result, divergence) = shadow.classify_with_divergence("your prompt").await?;
+
+if let Some(div) = divergence {
+    tracing::info!(
+        label_mismatch = div.label_mismatch,
+        is_suspicious_mismatch = div.is_suspicious_mismatch,
+        "shadow divergence",
+    );
+}
+```
+
+### `ShadowDivergence` (v0.8.0)
+
+Emitted by `ShadowSusFactor::classify_with_divergence()` when the shadow call succeeds.
+
+| Field | Type | Description |
+|---|---|---|
+| `chunks` | `Vec<ChunkDivergence>` | Per-chunk divergence, in order |
+| `label_mismatch` | `bool` | `true` if any chunk's label differs between primary and shadow |
+| `is_suspicious_mismatch` | `bool` | `true` if `is_suspicious` differs between primary and shadow overall results |
+
+### `ChunkDivergence` (v0.8.0)
+
+One entry per chunk in `ShadowDivergence.chunks`.
+
+| Field | Type | Description |
+|---|---|---|
+| `chunk_index` | `usize` | Index into the chunk array |
+| `primary_score` | `f32` | Score from the primary backend |
+| `shadow_score` | `f32` | Score from the shadow backend |
+| `delta` | `f32` | `primary_score − shadow_score` |
+| `label_mismatch` | `bool` | `true` if this chunk's label differs |
 
 ---
 
 ## Python
+
+> **v0.8.0 note:** `VertexSusFactor`, `ShadowSusFactor`, and the `SusFactorProvider` trait are Rust-only. The Python SDK uses the ONNX backend (`SusFactorOnnxClassifier`) and is unaffected by v0.8.0 backend changes.
 
 ### Install
 
@@ -203,6 +367,8 @@ await clf.close()
 ---
 
 ## TypeScript
+
+> **v0.8.0 note:** `VertexSusFactor`, `ShadowSusFactor`, and the `SusFactorProvider` trait are Rust-only. The TypeScript SDK uses the ONNX backend (`SusFactorClassifier`) and is unaffected by v0.8.0 backend changes.
 
 ### `SusFactorClassifier.create()`
 
