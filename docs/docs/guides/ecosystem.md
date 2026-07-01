@@ -32,7 +32,7 @@ guardrails:
 ```
 
 **Key characteristics:**
-- Runs the SusFactor e5-large encoder + MLP head as a single ONNX graph (~16ms P50 on CPU, Apple M1)
+- Runs the SusFactor e5-large encoder + MLP head as a single ONNX graph (~16ms P50 on CPU)[^hw]
 - Three enforcement modes: `shadow` (log only), `flag` (allow + annotate via `X-SusFactor-Decision` header), `block` (reject with 400)
 - Three call positions: `pre_call` (prompt never reaches model), `during_call` (parallel with LLM), `post_call` (scan model output)
 - Structured observability via `StandardLoggingGuardrailInformation` — Langfuse, Datadog, and OpenTelemetry compatible
@@ -84,7 +84,7 @@ A reference implementation and production plugin for [OpenClaw](https://github.c
 }
 ```
 
-**Performance (Apple M1, CPU):**
+**Performance:**[^hw]
 
 | Stage | Latency |
 |---|---|
@@ -131,7 +131,7 @@ if pa["severityScore"] >= 0.4:
 - `block` / `flag` / `shadow` enforcement modes with `fail_open` support
 - Async core with `*_sync` wrappers for non-async boto3 callers
 
-**Performance (ONNX backend, CPU):**
+**Performance (ONNX backend):**[^hw]
 
 | Backend | P50 latency |
 |---|---|
@@ -144,3 +144,5 @@ if pa["severityScore"] >= 0.4:
 ## Add Your Project
 
 Using `odin-prompt-toolkit` in production? Open a PR or issue on [GitHub](https://github.com/0din-ai/prompt-toolkit) to add it here.
+
+[^hw]: Measured on Apple M4 Pro, CPU only.
