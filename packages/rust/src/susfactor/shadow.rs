@@ -7,6 +7,8 @@
 //!
 //! This module compiles only when the `susfactor-vertex` feature is enabled.
 
+use async_trait::async_trait;
+
 use crate::error::Result;
 use crate::susfactor::provider::SusFactorProvider;
 use crate::susfactor::types::ChunkedSusFactorResult;
@@ -41,6 +43,10 @@ pub struct ShadowDivergence {
     /// `true` if the top-level `is_suspicious` flag differs between the two
     /// backends.
     pub is_suspicious_mismatch: bool,
+    /// Number of chunks produced by the primary backend.
+    pub primary_chunk_count: usize,
+    /// Number of chunks produced by the shadow backend.
+    pub shadow_chunk_count: usize,
 }
 
 // ---------------------------------------------------------------------------
@@ -98,6 +104,26 @@ impl ShadowSusFactor {
 }
 
 // ---------------------------------------------------------------------------
+// SusFactorProvider impl
+// ---------------------------------------------------------------------------
+
+#[async_trait]
+impl SusFactorProvider for ShadowSusFactor {
+    fn model(&self) -> &str {
+        self.primary.model()
+    }
+
+    fn threshold(&self) -> f32 {
+        self.primary.threshold()
+    }
+
+    async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
+        let (primary_result, _divergence) = self.classify_with_divergence(text).await?;
+        Ok(primary_result)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Divergence computation
 // ---------------------------------------------------------------------------
 
@@ -126,6 +152,8 @@ fn compute_divergence(
         chunks,
         label_mismatch,
         is_suspicious_mismatch: primary.is_suspicious != shadow.is_suspicious,
+        primary_chunk_count: primary.chunks.len(),
+        shadow_chunk_count: shadow.chunks.len(),
     }
 }
 
@@ -234,6 +262,8 @@ mod tests {
             !div.is_suspicious_mismatch,
             "both are suspicious — no mismatch"
         );
+        assert_eq!(div.primary_chunk_count, 1);
+        assert_eq!(div.shadow_chunk_count, 1);
     }
 
     // -----------------------------------------------------------------------
@@ -297,5 +327,19 @@ mod tests {
             "expected delta ≈ 0.6, got {}",
             div.chunks[0].delta
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 4: primary fails — error propagates to caller
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn primary_failure_propagates_as_error() {
+        let shadow = ShadowSusFactor::new(
+            Box::new(FakeProvider::err()),
+            Box::new(FakeProvider::ok(0.5, "suspicious", "shadow-model")),
+        );
+
+        let result = shadow.classify_with_divergence("test").await;
+        assert!(result.is_err(), "primary failure must propagate as error");
     }
 }
