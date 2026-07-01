@@ -165,7 +165,13 @@ use odin_prompt_toolkit::susfactor::VertexSusFactor;
 let clf = VertexSusFactor::new(
     &cache,
     "https://us-central1-aiplatform.googleapis.com/v1/projects/my-project/locations/us-central1/endpoints/1234:rawPredict".to_string(),
-    None, None, None, None, None, None, None,
+    None,  // model — defaults to "0dinai/susfactor-e5-large"
+    None,  // source — defaults to "0dinai/susfactor-e5-large-onnx"
+    None,  // threshold — defaults to 0.5
+    None,  // project — inferred from ADC
+    None,  // location — inferred from endpoint URL
+    None,  // timeout_ms — defaults to 30,000ms
+    None,  // max_retries — defaults to 2
 ).await?;
 
 let result = clf.classify("your prompt").await?;
@@ -212,7 +218,17 @@ Returns `(primary_result, divergence)`. `divergence` is `None` if the shadow cal
 use odin_prompt_toolkit::susfactor::{OnnxSusFactor, ShadowSusFactor, VertexSusFactor};
 
 let onnx = OnnxSusFactor::new(&cache, None, None, None).await?;
-let vertex = VertexSusFactor::new(&cache, endpoint_url, None, None, None, None, None, None, None).await?;
+let vertex = VertexSusFactor::new(
+    &cache,
+    endpoint_url,
+    None,  // model
+    None,  // source
+    None,  // threshold
+    None,  // project
+    None,  // location
+    None,  // timeout_ms
+    None,  // max_retries
+).await?;
 let shadow = ShadowSusFactor::new(Box::new(onnx), Box::new(vertex));
 
 let (result, divergence) = shadow.classify_with_divergence("your prompt").await?;
@@ -284,14 +300,14 @@ async def new(
 | Parameter | Default | Description |
 |---|---|---|
 | `cache` | — | `ModelCache` for locating the model |
-| `model` | `"0dinai/susfactor-e5-large-onnx"` | Identifier reported in results |
+| `model` | `"0dinai/susfactor-e5-large"` | Identifier reported in results |
 | `threshold` | `0.5` | Decision threshold |
 | `device` | `None` | Accepted for API parity; ONNX Runtime selects providers automatically |
 
 #### `SusFactorOnnxClassifier.classify()`
 
 ```python
-async def classify(self, text: str) -> SusFactorResult
+async def classify(self, text: str) -> ChunkedSusFactorResult
 ```
 
 #### `SusFactorOnnxClassifier.close()`
@@ -331,7 +347,7 @@ async def sus_factor(
     model: str | None = None,
     threshold: float = 0.5,
     device: str | None = None,
-) -> SusFactorResult
+) -> ChunkedSusFactorResult
 ```
 
 Classifies a single prompt. If `classifier` is provided, it is used directly (caller manages lifecycle). Otherwise a classifier is constructed from `cache`, used once, and closed.
@@ -394,7 +410,7 @@ npm install onnxruntime-node @huggingface/transformers
 ### `SusFactorClassifier.classify()`
 
 ```typescript
-async classify(text: string): Promise<SusFactorResult>
+async classify(text: string): Promise<ChunkedSusFactorResult>
 ```
 
 ### `SusFactorClassifier.close()`
@@ -409,7 +425,7 @@ async close(): Promise<void>
 async function susFactor(
   text: string,
   options?: SusFactorOptions
-): Promise<SusFactorResult>
+): Promise<ChunkedSusFactorResult>
 ```
 
 ```typescript
