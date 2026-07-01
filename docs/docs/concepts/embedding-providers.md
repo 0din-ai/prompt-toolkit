@@ -2,6 +2,9 @@
 sidebar_position: 3
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Embedding Providers
 
 Embedding providers generate vector embeddings from text. The odin-prompt-toolkit SDK uses an ONNX-based local inference provider by default, with support for custom providers.
@@ -22,9 +25,6 @@ trait EmbeddingProvider {
 
 This allows you to switch between providers without changing your signature generation code.
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 ## ONNX Provider (V1)
 
 **Best for:** Local development, API-free deployment, cost-sensitive applications
@@ -33,7 +33,7 @@ import TabItem from '@theme/TabItem';
 - **Dimensions**: 1024
 - **Cost**: Free (local inference)
 - **Setup**: Model auto-downloads to `~/.cache/odin-prompt-toolkit/models/v1/`
-- **Latency**: ~50-100ms (CPU inference on M1 Mac)
+- **Latency**: ~50-100ms (CPU inference, Apple M4 Pro)
 - **Quality**: Good multilingual performance, optimized for prompt similarity
 
 ### Usage
@@ -183,4 +183,4 @@ class MyProvider implements EmbeddingProvider {
   </TabItem>
 </Tabs>
 
-See [Signature Versions](./signature-versions) for more details on V0 vs V1 compatibility.
+See [Signature Versions](./signature-versions) for details on versioning and backward compatibility.
