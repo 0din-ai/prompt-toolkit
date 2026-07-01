@@ -360,7 +360,9 @@ mod tests {
         let bytes = reqwest::blocking::get(url)
             .and_then(|r| r.bytes())
             .unwrap_or_else(|e| {
-                eprintln!("load_test_tokenizer: download failed ({e}); skipping network-dependent tests");
+                eprintln!(
+                    "load_test_tokenizer: download failed ({e}); skipping network-dependent tests"
+                );
                 std::process::exit(0);
             });
 
