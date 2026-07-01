@@ -135,8 +135,8 @@ fn compute_divergence(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use async_trait::async_trait;
     use crate::susfactor::types::{ChunkedSusFactorResult, SusFactorResult};
+    use async_trait::async_trait;
 
     // -----------------------------------------------------------------------
     // FakeProvider: a test double for SusFactorProvider.
@@ -227,7 +227,10 @@ mod tests {
             div.chunk_score_deltas[0]
         );
         assert!(!div.label_mismatch, "both label 'suspicious' — no mismatch");
-        assert!(!div.is_suspicious_mismatch, "both are suspicious — no mismatch");
+        assert!(
+            !div.is_suspicious_mismatch,
+            "both are suspicious — no mismatch"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -251,7 +254,10 @@ mod tests {
             "primary score must be 0.9, got {}",
             result.chunks[0].score
         );
-        assert!(divergence.is_none(), "divergence must be None when shadow fails");
+        assert!(
+            divergence.is_none(),
+            "divergence must be None when shadow fails"
+        );
     }
 
     // -----------------------------------------------------------------------

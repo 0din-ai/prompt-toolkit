@@ -254,7 +254,10 @@ impl OnnxSusFactor {
             chunk_results.push(result?);
         }
 
-        Ok(common::reduce(chunk_results, common::elapsed_ms(wall_start)))
+        Ok(common::reduce(
+            chunk_results,
+            common::elapsed_ms(wall_start),
+        ))
     }
 }
 
