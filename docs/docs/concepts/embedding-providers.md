@@ -2,9 +2,12 @@
 sidebar_position: 3
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Embedding Providers
 
-Embedding providers generate vector embeddings from text. The odin-prompt-toolkit SDK supports two built-in providers: OpenAI (API-based) and ONNX (local inference).
+Embedding providers generate vector embeddings from text. The odin-prompt-toolkit SDK uses an ONNX-based local inference provider by default, with support for custom providers.
 
 ## Provider Interface
 
@@ -22,102 +25,6 @@ trait EmbeddingProvider {
 
 This allows you to switch between providers without changing your signature generation code.
 
-## OpenAI Provider (V0)
-
-**Best for:** Production applications requiring state-of-the-art embeddings
-
-- **Model**: text-embedding-3-large
-- **Dimensions**: 1536
-- **Cost**: $0.13 per 1M tokens (~$0.000013 per prompt)
-- **Setup**: Requires OpenAI API key
-- **Latency**: ~100-200ms (network + API)
-- **Quality**: Industry-leading semantic understanding
-
-### Usage
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-<Tabs groupId="language">
-  <TabItem value="rust" label="Rust">
-
-```rust
-use odin_prompt_toolkit::{sign_text, SignatureVersion};
-use odin_prompt_toolkit::providers::OpenAIProvider;
-
-let provider = OpenAIProvider::new(
-    std::env::var("OPENAI_API_KEY")?,
-    None, // model (defaults to text-embedding-3-large)
-    None, // dimensions (defaults to 1536)
-    None, // name
-);
-
-let result = sign_text("Your text here", &provider, SignatureVersion::V0, None).await?;
-```
-
-  </TabItem>
-  <TabItem value="python" label="Python">
-
-```python
-from odin_prompt_toolkit import sign_text, SignatureVersion
-from odin_prompt_toolkit.providers import OpenAIProvider
-import os
-
-provider = OpenAIProvider(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    model="text-embedding-3-large",  # optional
-    dimensions=1536,  # optional
-)
-
-result = await sign_text("Your text here", provider, SignatureVersion.V0)
-```
-
-  </TabItem>
-  <TabItem value="typescript" label="TypeScript">
-
-```typescript
-import { signText, SignatureVersion } from '@0din/odin-prompt-toolkit';
-import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
-
-const provider = new OpenAIProvider({
-  apiKey: process.env.OPENAI_API_KEY!,
-  model: 'text-embedding-3-large',  // optional
-  dimensions: 1536,  // optional
-});
-
-const result = await signText("Your text here", provider, SignatureVersion.V0);
-```
-
-  </TabItem>
-</Tabs>
-
-**Installation:**
-
-<Tabs groupId="language">
-  <TabItem value="rust" label="Rust">
-
-```toml
-[dependencies]
-odin-prompt-toolkit = { version = "0.1", features = ["openai"] }
-```
-
-  </TabItem>
-  <TabItem value="python" label="Python">
-
-```bash
-pip install 'odin-prompt-toolkit[openai]'
-```
-
-  </TabItem>
-  <TabItem value="typescript" label="TypeScript">
-
-```bash
-npm install @0din/odin-prompt-toolkit openai
-```
-
-  </TabItem>
-</Tabs>
-
 ## ONNX Provider (V1)
 
 **Best for:** Local development, API-free deployment, cost-sensitive applications
@@ -126,7 +33,7 @@ npm install @0din/odin-prompt-toolkit openai
 - **Dimensions**: 1024
 - **Cost**: Free (local inference)
 - **Setup**: Model auto-downloads to `~/.cache/odin-prompt-toolkit/models/v1/`
-- **Latency**: ~50-100ms (CPU inference on M1 Mac)
+- **Latency**: ~50-100ms (CPU inference, Apple M4 Pro)
 - **Quality**: Good multilingual performance, optimized for prompt similarity
 
 ### Usage
@@ -203,19 +110,6 @@ npm install @0din/odin-prompt-toolkit onnxruntime-node
   </TabItem>
 </Tabs>
 
-## Comparison
-
-| Feature | OpenAI (V0) | ONNX (V1) |
-|---------|-------------|-----------|
-| **Dimensions** | 1536 | 1024 |
-| **Cost** | $0.13 per 1M tokens | Free |
-| **Latency** | ~100-200ms | ~50-100ms (CPU) |
-| **API Key** | Required | Not required |
-| **Network** | Required | Not required |
-| **Quality** | Highest | Good |
-| **Storage** | ~1.5KB per signature | ~1KB per signature |
-| **Use Case** | Production apps | Local dev, cost-sensitive |
-
 ## Custom Providers
 
 You can implement your own embedding provider by implementing the `EmbeddingProvider` trait/interface:
@@ -289,4 +183,4 @@ class MyProvider implements EmbeddingProvider {
   </TabItem>
 </Tabs>
 
-See [Signature Versions](./signature-versions) for more details on V0 vs V1 compatibility.
+See [Signature Versions](./signature-versions) for details on versioning and backward compatibility.
