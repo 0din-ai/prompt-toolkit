@@ -18,7 +18,7 @@
 #![cfg(feature = "susfactor")]
 
 use odin_prompt_toolkit::providers::ModelCache;
-use odin_prompt_toolkit::susfactor::SusFactorClassifier;
+use odin_prompt_toolkit::susfactor::OnnxSusFactor;
 
 /// Maximum allowed absolute difference between the committed rust_score and the
 /// current run.  This catches meaningful numeric drift while tolerating harmless
@@ -112,7 +112,7 @@ async fn rust_scores_match_committed_goldens() {
     }
 
     let cache = ModelCache::new().expect("ModelCache::new");
-    let clf = SusFactorClassifier::new(&cache, None, Some(dir), None)
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
         .await
         .expect("load classifier");
 

@@ -5,6 +5,27 @@ All notable changes to the `odin-prompt-toolkit` Rust crate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-07-01
+
+### Added
+- `susfactor-vertex` Cargo feature: new `VertexSusFactor` backend that delegates
+  ONNX graph execution to a Vertex AI Triton endpoint via `rawPredict`. Tokenization,
+  chunking, softmax, and labeling remain client-side — results are byte-compatible
+  with the ONNX backend.
+- `SusFactorProvider` trait: abstraction over `OnnxSusFactor` and `VertexSusFactor`.
+- `ShadowSusFactor`: runs both backends concurrently, returns the primary (ONNX)
+  result, and emits a `ShadowDivergence` signal for divergence tracking during
+  migration.
+- `susfactor::common` module: shared tokenize/chunk/softmax/label/reduce functions
+  used verbatim by both backends.
+
+### Changed
+- `SusFactorClassifier` renamed to `OnnxSusFactor`. `SusFactorClassifier` is
+  retained as a deprecated type alias and will be removed in v0.9.0.
+
+### Dependencies
+- Added `gcp_auth = "0.12"` (optional, enabled by `susfactor-vertex` feature).
+
 ## [0.2.0] - Unreleased
 
 Production-grade concurrency hardening for `OnnxProvider` (0DIN-1555). Adopts
