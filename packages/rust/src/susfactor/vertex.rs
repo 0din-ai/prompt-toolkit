@@ -292,7 +292,10 @@ mod tests {
 
     #[async_trait::async_trait]
     impl gcp_auth::TokenProvider for FakeTokenProvider {
-        async fn token(&self, _scopes: &[&str]) -> std::result::Result<Arc<gcp_auth::Token>, gcp_auth::Error> {
+        async fn token(
+            &self,
+            _scopes: &[&str],
+        ) -> std::result::Result<Arc<gcp_auth::Token>, gcp_auth::Error> {
             // gcp_auth::Token stores the raw JSON from a token endpoint; the
             // simplest way to construct a test token without private fields is
             // to parse a minimal JSON blob.
@@ -320,13 +323,14 @@ mod tests {
             .join("tokenizer.json");
 
         if cache_dir.exists() {
-            let tok = tokenizers::Tokenizer::from_file(&cache_dir)
-                .expect("cached tokenizer must load");
+            let tok =
+                tokenizers::Tokenizer::from_file(&cache_dir).expect("cached tokenizer must load");
             return Arc::new(tok);
         }
 
         // Fall back: download synchronously via the blocking HuggingFace URL.
-        let url = "https://huggingface.co/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json";
+        let url =
+            "https://huggingface.co/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json";
         let bytes = std::process::Command::new("curl")
             .args(["-fsSL", "--max-time", "30", url])
             .output()
@@ -383,7 +387,10 @@ mod tests {
             .await;
 
         let clf = build_vertex(&server.url(), 0.5);
-        let result = clf.classify("hello world").await.expect("classify must succeed");
+        let result = clf
+            .classify("hello world")
+            .await
+            .expect("classify must succeed");
 
         assert_eq!(result.chunks.len(), 1);
 
