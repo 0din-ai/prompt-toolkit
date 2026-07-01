@@ -16,7 +16,7 @@ Projects and integrations built with `odin-prompt-toolkit`.
 **Language:** Python  
 **Toolkit packages used:** Python SDK (`odin-prompt-toolkit`), SusFactor classifier
 
-A [LiteLLM](https://docs.litellm.ai/) guardrail that runs the 0DIN SusFactor classifier in-process to detect jailbreak and prompt-injection attempts across user messages, assistant responses, and tool-call arguments. No network hop — fully offline once the ONNX model is provisioned.
+A [LiteLLM](https://docs.litellm.ai/) guardrail that runs the 0DIN SusFactor classifier in-process to detect jailbreak and prompt-injection attempts across user messages, assistant responses, and tool-call arguments. No network hop — fully offline once the ONNX model is provisioned.[^litellm-perf]
 
 **Recommended rollout path:** Shadow → Flag → Block
 
@@ -32,11 +32,10 @@ guardrails:
 ```
 
 **Key characteristics:**
-- Runs the SusFactor e5-large encoder + MLP head as a single ONNX graph (~16ms P50 on CPU, Apple M1)
+- Runs the SusFactor e5-large encoder + MLP head as a single ONNX graph
 - Three enforcement modes: `shadow` (log only), `flag` (allow + annotate via `X-SusFactor-Decision` header), `block` (reject with 400)
 - Three call positions: `pre_call` (prompt never reaches model), `during_call` (parallel with LLM), `post_call` (scan model output)
 - Structured observability via `StandardLoggingGuardrailInformation` — Langfuse, Datadog, and OpenTelemetry compatible
-- End-to-end latency penalty ≈ 0ms in `during_call` parallel mode (ONNX backend)
 
 ---
 
@@ -83,16 +82,7 @@ A reference implementation and production plugin for [OpenClaw](https://github.c
   }
 }
 ```
-
-**Performance (Apple M1, CPU):**
-
-| Stage | Latency |
-|---|---|
-| Text normalization + pattern matching | < 0.01 ms |
-| Band-index lookup (match) | ~0.14 ms |
-| ONNX embedding (warm) | ~150–250 ms |
-| Full pipeline (no ONNX match) | < 0.01 ms |
-| Sliding window (1 KB document) | ~600–1000 ms |
+[^openclaw-perf]
 
 ---
 
@@ -129,18 +119,34 @@ if pa["severityScore"] >= 0.4:
 - Response shape is wire-compatible with Bedrock Runtime — no caller-side changes needed
 - `severityScore` bucketed to nearest 0.2 step (`{0.0, 0.2, 0.4, 0.6, 0.8, 1.0}`) for `InvokeGuardrailChecks`; `confidence` string enum (`NONE / LOW / MEDIUM / HIGH`) for `ApplyGuardrail`
 - `block` / `flag` / `shadow` enforcement modes with `fail_open` support
-- Async core with `*_sync` wrappers for non-async boto3 callers
-
-**Performance (ONNX backend, CPU):**
-
-| Backend | P50 latency |
-|---|---|
-| ONNX (default) | ~20–50 ms |
-| Torch | ~150–400 ms |
-| AWS `InvokeGuardrailChecks` | ~200–500 ms (network) |
+- Async core with `*_sync` wrappers for non-async boto3 callers[^bedrock-perf]
 
 ---
 
 ## Add Your Project
 
 Using `odin-prompt-toolkit` in production? Open a PR or issue on [GitHub](https://github.com/0din-ai/prompt-toolkit) to add it here.
+
+---
+
+## Performance Notes
+
+[^litellm-perf]: **litellm-shield latency (Apple M4 Pro, CPU):** ~16ms P50 on CPU in `during_call` parallel mode (ONNX backend, effectively 0ms end-to-end latency penalty).
+
+[^openclaw-perf]: **openclaw-shield latency (Apple M4 Pro, CPU):**
+
+    | Stage | Latency |
+    |---|---|
+    | Text normalization + pattern matching | < 0.01 ms |
+    | Band-index lookup (match) | ~0.14 ms |
+    | ONNX embedding (warm) | ~150–250 ms |
+    | Full pipeline (no ONNX match) | < 0.01 ms |
+    | Sliding window (1 KB document) | ~600–1000 ms |
+
+[^bedrock-perf]: **bedrock-shield latency (Apple M4 Pro, CPU):**
+
+    | Backend | P50 latency |
+    |---|---|
+    | ONNX (default) | ~20–50 ms |
+    | Torch | ~150–400 ms |
+    | AWS `InvokeGuardrailChecks` | ~200–500 ms (network) |
