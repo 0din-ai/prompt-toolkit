@@ -131,8 +131,18 @@ pub use hashers::{
 pub mod threatfeed;
 
 // SusFactor jailbreak classifier
-#[cfg(feature = "susfactor")]
+#[cfg(any(feature = "susfactor", feature = "susfactor-vertex"))]
 pub mod susfactor;
 
+#[cfg(any(feature = "susfactor", feature = "susfactor-vertex"))]
+pub use susfactor::{ChunkedSusFactorResult, SusFactorProvider, SusFactorResult};
+
 #[cfg(feature = "susfactor")]
-pub use susfactor::{ChunkedSusFactorResult, SusFactorClassifier, SusFactorResult};
+#[allow(deprecated)]
+pub use susfactor::{OnnxSusFactor, SusFactorClassifier};
+
+#[cfg(feature = "susfactor-vertex")]
+pub use susfactor::{VertexAuth, VertexSusFactor};
+
+#[cfg(all(feature = "susfactor", feature = "susfactor-vertex"))]
+pub use susfactor::{ShadowDivergence, ShadowSusFactor};

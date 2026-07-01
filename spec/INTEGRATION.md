@@ -182,12 +182,26 @@ Chunks are dispatched concurrently — the ONNX Runtime handles scheduling inter
 
 | Path | How |
 |---|---|
-| Rust | `SusFactorClassifier.classify()` in `packages/rust` (requires `susfactor` feature) |
+| Rust | `OnnxSusFactor.classify()` in `packages/rust` (requires `susfactor` feature) |
 | Python | `SusFactorOnnxClassifier.classify()` in `packages/python` |
 | TypeScript | `SusFactorClassifier.classify()` in `packages/typescript` |
 | gRPC | `SusFactorService.Evaluate` in Heimdall proto |
 | HTTP | `POST /v1/susfactor` in Heimdall OpenAPI spec |
 | New language | Auto-generate a gRPC client from the Heimdall proto |
+
+### Backend selection
+
+The Rust library exposes three backend implementations, all implementing the `SusFactorProvider` trait:
+
+| Mode     | Struct            | Behavior                                                           | Feature flag                       |
+|----------|-------------------|--------------------------------------------------------------------|------------------------------------|
+| `onnx`   | `OnnxSusFactor`   | In-pod ONNX inference (requires model file in pod)                 | `susfactor`                        |
+| `vertex` | `VertexSusFactor` | Remote Vertex AI Triton endpoint; no model file in pod             | `susfactor-vertex`                 |
+| `shadow` | `ShadowSusFactor` | Both concurrently; primary=ONNX result; emits divergence metrics   | `susfactor` + `susfactor-vertex`   |
+
+`ShadowSusFactor` always returns the primary (ONNX) result to the caller. The shadow (Vertex) result is used only for observability via `ShadowDivergence`; if the shadow call fails, the primary result is still returned.
+
+> **Deprecation note**: `SusFactorClassifier` is a deprecated alias for `OnnxSusFactor`, retained for backwards compatibility since v0.8.0. Use `OnnxSusFactor` in new code.
 
 ---
 
