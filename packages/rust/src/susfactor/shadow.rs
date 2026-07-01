@@ -16,15 +16,13 @@ use crate::susfactor::types::ChunkedSusFactorResult;
 // ---------------------------------------------------------------------------
 
 /// Per-chunk divergence between two SusFactor backends.
-///
-/// Retained for callers that need the full per-chunk breakdown.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ChunkDivergence {
-    /// Score from the primary backend.
-    pub primary_score: f32,
-    /// Score from the shadow backend.
-    pub shadow_score: f32,
-    /// Absolute difference between the two scores.
+    /// Score from the ONNX (primary) backend.
+    pub onnx_score: f32,
+    /// Score from the Vertex (shadow) backend.
+    pub vertex_score: f32,
+    /// Absolute difference between the two scores: `|onnx_score - vertex_score|`.
     pub delta: f32,
     /// Whether the two backends disagree on the label for this chunk.
     pub label_mismatch: bool,
@@ -33,11 +31,11 @@ pub struct ChunkDivergence {
 /// Divergence report comparing primary and shadow backends across all chunks.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ShadowDivergence {
-    /// Absolute score delta per paired chunk: `|primary.score - shadow.score|`.
+    /// Per-chunk divergence, one entry per paired chunk.
     ///
     /// If the backends produce different chunk counts, only `min(p, s)` pairs
     /// are included.
-    pub chunk_score_deltas: Vec<f32>,
+    pub chunks: Vec<ChunkDivergence>,
     /// `true` if any paired chunk has different labels between the two backends.
     pub label_mismatch: bool,
     /// `true` if the top-level `is_suspicious` flag differs between the two
@@ -109,20 +107,23 @@ fn compute_divergence(
 ) -> ShadowDivergence {
     let pair_count = primary.chunks.len().min(shadow.chunks.len());
 
-    let mut chunk_score_deltas = Vec::with_capacity(pair_count);
-    let mut label_mismatch = false;
+    let chunks: Vec<ChunkDivergence> = (0..pair_count)
+        .map(|i| {
+            let p = &primary.chunks[i];
+            let s = &shadow.chunks[i];
+            ChunkDivergence {
+                onnx_score: p.score,
+                vertex_score: s.score,
+                delta: (p.score - s.score).abs(),
+                label_mismatch: p.label != s.label,
+            }
+        })
+        .collect();
 
-    for i in 0..pair_count {
-        let p = &primary.chunks[i];
-        let s = &shadow.chunks[i];
-        chunk_score_deltas.push((p.score - s.score).abs());
-        if p.label != s.label {
-            label_mismatch = true;
-        }
-    }
+    let label_mismatch = chunks.iter().any(|c| c.label_mismatch);
 
     ShadowDivergence {
-        chunk_score_deltas,
+        chunks,
         label_mismatch,
         is_suspicious_mismatch: primary.is_suspicious != shadow.is_suspicious,
     }
@@ -220,12 +221,14 @@ mod tests {
 
         // Divergence present.
         let div = divergence.expect("divergence must be Some when both succeed");
-        assert_eq!(div.chunk_score_deltas.len(), 1);
+        assert_eq!(div.chunks.len(), 1);
         assert!(
-            (div.chunk_score_deltas[0] - (0.9_f32 - 0.85_f32).abs()).abs() < 1e-5,
+            (div.chunks[0].delta - (0.9_f32 - 0.85_f32).abs()).abs() < 1e-5,
             "expected delta ≈ 0.05, got {}",
-            div.chunk_score_deltas[0]
+            div.chunks[0].delta
         );
+        assert_eq!(div.chunks[0].onnx_score, 0.9);
+        assert_eq!(div.chunks[0].vertex_score, 0.85_f32);
         assert!(!div.label_mismatch, "both label 'suspicious' — no mismatch");
         assert!(
             !div.is_suspicious_mismatch,
@@ -288,11 +291,11 @@ mod tests {
             div.is_suspicious_mismatch,
             "primary is suspicious, shadow is safe — must be true"
         );
-        assert_eq!(div.chunk_score_deltas.len(), 1);
+        assert_eq!(div.chunks.len(), 1);
         assert!(
-            (div.chunk_score_deltas[0] - (0.9_f32 - 0.3_f32).abs()).abs() < 1e-5,
+            (div.chunks[0].delta - (0.9_f32 - 0.3_f32).abs()).abs() < 1e-5,
             "expected delta ≈ 0.6, got {}",
-            div.chunk_score_deltas[0]
+            div.chunks[0].delta
         );
     }
 }

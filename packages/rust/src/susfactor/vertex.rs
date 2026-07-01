@@ -15,10 +15,10 @@
 //!   output contains a flat `float32` array of length ≥ 2.
 
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryStreamExt};
 
 use crate::error::{Result, SigError};
 use crate::providers::ModelCache;
@@ -76,19 +76,28 @@ pub struct VertexSusFactor {
 
 impl VertexSusFactor {
     /// Canonical model identifier reported in results (shared across SDKs).
-    pub const DEFAULT_MODEL: &'static str = "0dinai/susfactor-e5-large";
+    pub const DEFAULT_MODEL: &'static str = common::DEFAULT_MODEL;
 
     /// HuggingFace repo holding the tokenizer downloaded at runtime.
-    pub const DEFAULT_ONNX_REPO: &'static str = "0dinai/susfactor-e5-large-onnx";
+    ///
+    /// Alias kept for backward compatibility; prefer [`Self::DEFAULT_TOKENIZER_REPO`].
+    pub const DEFAULT_ONNX_REPO: &'static str = common::DEFAULT_ONNX_REPO;
+
+    /// HuggingFace repo holding the tokenizer downloaded at runtime.
+    pub const DEFAULT_TOKENIZER_REPO: &'static str = common::DEFAULT_ONNX_REPO;
 
     /// Default decision threshold.
-    pub const DEFAULT_THRESHOLD: f32 = 0.5;
+    pub const DEFAULT_THRESHOLD: f32 = common::DEFAULT_THRESHOLD;
 
     /// Default number of in-flight chunk requests.
     pub const DEFAULT_MAX_CONCURRENT_CHUNKS: usize = 4;
 
     /// GCP scope required to call a Vertex AI endpoint.
     const VERTEX_SCOPE: &'static str = "https://www.googleapis.com/auth/cloud-platform";
+
+    /// Maximum bytes of an error response body embedded in a [`SigError::Provider`]
+    /// message. Prevents accidentally logging megabyte-sized HTML error pages.
+    const MAX_ERROR_BODY: usize = 512;
 
     /// Create a new [`VertexSusFactor`] classifier.
     ///
@@ -100,12 +109,15 @@ impl VertexSusFactor {
     /// * `cache` — Model cache for the tokenizer download.
     /// * `endpoint_url` — Full Vertex AI `rawPredict` URL.
     /// * `model_source` — HF repo ID for the tokenizer (default:
-    ///   [`Self::DEFAULT_ONNX_REPO`]).
+    ///   [`Self::DEFAULT_TOKENIZER_REPO`]).
     /// * `model_name` — Canonical model identifier reported in results (default:
     ///   [`Self::DEFAULT_MODEL`]).
     /// * `threshold` — Decision threshold (default: [`Self::DEFAULT_THRESHOLD`]).
     /// * `max_concurrent_chunks` — In-flight chunk request limit (default:
     ///   [`Self::DEFAULT_MAX_CONCURRENT_CHUNKS`]).
+    /// * `connect_timeout` — TCP connect timeout (default: 5 s).
+    /// * `request_timeout` — Full request timeout (default: 30 s).
+    #[allow(clippy::too_many_arguments)]
     pub async fn new(
         cache: &ModelCache,
         endpoint_url: String,
@@ -113,12 +125,16 @@ impl VertexSusFactor {
         model_name: Option<String>,
         threshold: Option<f32>,
         max_concurrent_chunks: Option<usize>,
+        connect_timeout: Option<Duration>,
+        request_timeout: Option<Duration>,
     ) -> Result<Self> {
-        let source = model_source.unwrap_or_else(|| Self::DEFAULT_ONNX_REPO.to_string());
+        let source = model_source.unwrap_or_else(|| Self::DEFAULT_TOKENIZER_REPO.to_string());
         let model_name = model_name.unwrap_or_else(|| Self::DEFAULT_MODEL.to_string());
         let threshold = threshold.unwrap_or(Self::DEFAULT_THRESHOLD);
         let max_concurrent_chunks =
             max_concurrent_chunks.unwrap_or(Self::DEFAULT_MAX_CONCURRENT_CHUNKS);
+        let connect_timeout = connect_timeout.unwrap_or(Duration::from_secs(5));
+        let request_timeout = request_timeout.unwrap_or(Duration::from_secs(30));
 
         // Load tokenizer only — no ONNX weights needed for the Vertex backend.
         let tokenizer_path = cache.get_tokenizer(&source).await?;
@@ -134,8 +150,8 @@ impl VertexSusFactor {
             .map_err(|e| SigError::Provider(format!("GCP auth initialisation failed: {e}")))?;
 
         let client = reqwest::Client::builder()
-            .connect_timeout(std::time::Duration::from_secs(5))
-            .timeout(std::time::Duration::from_secs(30))
+            .connect_timeout(connect_timeout)
+            .timeout(request_timeout)
             .build()
             .map_err(|e| SigError::Provider(format!("Failed to create HTTP client: {e}")))?;
 
@@ -148,86 +164,6 @@ impl VertexSusFactor {
             auth,
             max_concurrent_chunks,
         })
-    }
-
-    /// Classify a single chunk of token IDs against the remote endpoint.
-    async fn classify_chunk(
-        &self,
-        chunk_ids: Vec<i64>,
-        start_time: Instant,
-    ) -> Result<SusFactorResult> {
-        let seq_len = chunk_ids.len();
-        let attention_mask: Vec<i64> = vec![1i64; seq_len];
-
-        let body = InferRequest {
-            inputs: vec![
-                InferInput {
-                    name: "input_ids",
-                    shape: [1, seq_len],
-                    datatype: "INT64",
-                    data: chunk_ids,
-                },
-                InferInput {
-                    name: "attention_mask",
-                    shape: [1, seq_len],
-                    datatype: "INT64",
-                    data: attention_mask,
-                },
-            ],
-        };
-
-        let token = self
-            .auth
-            .token(&[Self::VERTEX_SCOPE])
-            .await
-            .map_err(|e| SigError::Provider(format!("Vertex AI token fetch failed: {e}")))?;
-
-        let response = self
-            .client
-            .post(&self.endpoint_url)
-            .bearer_auth(token.as_str())
-            .json(&body)
-            .send()
-            .await
-            .map_err(|e| SigError::Provider(format!("Vertex AI request failed: {e}")))?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let body_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "<unreadable body>".to_string());
-            return Err(SigError::Provider(format!(
-                "Vertex AI returned HTTP {status}: {body_text}"
-            )));
-        }
-
-        let infer: InferResponse = response
-            .json()
-            .await
-            .map_err(|e| SigError::Provider(format!("Vertex AI response parse failed: {e}")))?;
-
-        // Locate the logits output: prefer the output named "logits"; fall back
-        // to the first output; error if there are no outputs at all.
-        let output = infer
-            .outputs
-            .iter()
-            .find(|o| o.name == "logits")
-            .or_else(|| infer.outputs.first())
-            .ok_or_else(|| {
-                SigError::Model(
-                    "Unexpected SusFactor output shape; got 0 elements, expected >= 2".to_string(),
-                )
-            })?;
-
-        let logits = common::validate_logits(output.data.clone())?;
-
-        Ok(common::result_from_logits(
-            &logits,
-            &self.model_name,
-            self.threshold,
-            common::elapsed_ms(start_time),
-        ))
     }
 }
 
@@ -244,26 +180,116 @@ impl SusFactorProvider for VertexSusFactor {
     async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
         let wall_start = Instant::now();
 
-        let (all_ids, _all_mask) = common::tokenize_full(&self.tokenizer, text)?;
-        let id_chunks = common::chunk_token_ids(&all_ids);
+        let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
+        let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
 
         let concurrency = self.max_concurrent_chunks;
 
+        // Clone fields needed inside the async closures so `self` is not
+        // borrowed across `.await` points inside the stream.
+        let client = self.client.clone();
+        let endpoint_url = self.endpoint_url.clone();
+        let auth = Arc::clone(&self.auth);
+        let model_name = self.model_name.clone();
+        let threshold = self.threshold;
+
         // Fan out chunk requests concurrently, bounded by max_concurrent_chunks.
-        let chunk_results: Vec<Result<SusFactorResult>> =
-            futures_util::stream::iter(id_chunks.into_iter().map(|chunk| {
-                let chunk_start = Instant::now();
-                self.classify_chunk(chunk, chunk_start)
+        // `Instant::now()` is captured inside `async move` so each chunk gets
+        // its own start timestamp rather than inheriting the stream-construction
+        // timestamp.
+        let results: Vec<SusFactorResult> =
+            futures_util::stream::iter(chunks.into_iter().map(|(chunk_ids, chunk_mask)| {
+                // Clone per-chunk so each future is self-contained.
+                let client = client.clone();
+                let endpoint_url = endpoint_url.clone();
+                let auth = Arc::clone(&auth);
+                let model_name = model_name.clone();
+                async move {
+                    let chunk_start = Instant::now();
+                    let seq_len = chunk_ids.len();
+
+                    let body = InferRequest {
+                        inputs: vec![
+                            InferInput {
+                                name: "input_ids",
+                                shape: [1, seq_len],
+                                datatype: "INT64",
+                                data: chunk_ids,
+                            },
+                            InferInput {
+                                name: "attention_mask",
+                                shape: [1, seq_len],
+                                datatype: "INT64",
+                                data: chunk_mask,
+                            },
+                        ],
+                    };
+
+                    let token =
+                        auth.token(&[VertexSusFactor::VERTEX_SCOPE])
+                            .await
+                            .map_err(|e| {
+                                SigError::Provider(format!("Vertex AI token fetch failed: {e}"))
+                            })?;
+
+                    let response = client
+                        .post(&endpoint_url)
+                        .bearer_auth(token.as_str())
+                        .json(&body)
+                        .send()
+                        .await
+                        .map_err(|e| {
+                            SigError::Provider(format!("Vertex AI request failed: {e}"))
+                        })?;
+
+                    if !response.status().is_success() {
+                        let status = response.status();
+                        let body_text = response
+                            .text()
+                            .await
+                            .unwrap_or_else(|_| "<unreadable body>".to_string());
+                        let truncated = if body_text.len() > VertexSusFactor::MAX_ERROR_BODY {
+                            format!(
+                                "{}… (truncated)",
+                                &body_text[..VertexSusFactor::MAX_ERROR_BODY]
+                            )
+                        } else {
+                            body_text
+                        };
+                        return Err(SigError::Provider(format!(
+                            "Vertex AI returned HTTP {status}: {truncated}"
+                        )));
+                    }
+
+                    let infer: InferResponse = response.json().await.map_err(|e| {
+                        SigError::Provider(format!("Vertex AI response parse failed: {e}"))
+                    })?;
+
+                    let output = infer
+                        .outputs
+                        .iter()
+                        .find(|o| o.name == "logits")
+                        .or_else(|| infer.outputs.first())
+                        .ok_or_else(|| {
+                            SigError::Model(
+                                "Unexpected SusFactor output shape; got 0 elements, expected >= 2"
+                                    .to_string(),
+                            )
+                        })?;
+
+                    common::validate_logits(&output.data)?;
+
+                    Ok(common::result_from_logits(
+                        &output.data,
+                        &model_name,
+                        threshold,
+                        common::elapsed_ms(chunk_start),
+                    ))
+                }
             }))
             .buffer_unordered(concurrency)
-            .collect()
-            .await;
-
-        // Collect results, propagating the first error.
-        let mut results = Vec::with_capacity(chunk_results.len());
-        for r in chunk_results {
-            results.push(r?);
-        }
+            .try_collect()
+            .await?;
 
         Ok(common::reduce(results, common::elapsed_ms(wall_start)))
     }
@@ -328,28 +354,26 @@ mod tests {
             return Arc::new(tok);
         }
 
-        // Fall back: download synchronously via the blocking HuggingFace URL.
+        // Fall back: download synchronously via reqwest blocking (no external
+        // binary dependency).
         let url =
             "https://huggingface.co/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json";
-        let bytes = std::process::Command::new("curl")
-            .args(["-fsSL", "--max-time", "30", url])
-            .output()
-            .expect("curl must be available to download test tokenizer");
-
-        if !bytes.status.success() {
-            panic!(
-                "Failed to download test tokenizer; run tests with network access once to populate the cache.\ncurl stderr: {}",
-                String::from_utf8_lossy(&bytes.stderr)
-            );
-        }
+        let bytes = reqwest::blocking::get(url)
+            .and_then(|r| r.bytes())
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Failed to download test tokenizer (run with network access once to populate \
+                     the cache): {e}"
+                );
+            });
 
         // Write to cache so subsequent runs skip the download.
         if let Some(parent) = cache_dir.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        let _ = std::fs::write(&cache_dir, &bytes.stdout);
+        let _ = std::fs::write(&cache_dir, &bytes);
 
-        let tok = tokenizers::Tokenizer::from_bytes(&bytes.stdout)
+        let tok = tokenizers::Tokenizer::from_bytes(&bytes)
             .expect("downloaded tokenizer bytes must parse");
         Arc::new(tok)
     }
