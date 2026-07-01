@@ -1,2 +1,0 @@
-createSrcSidebar('[["odin_prompt_toolkit",["",[["hashers",[],["cm_lsh.rs","lsh.rs","mod.rs"]],["providers",[],["mod.rs","model_cache.rs","onnx.rs","openai.rs"]]],["error.rs","hasher.rs","lib.rs","lsh.rs","provider.rs","sign.rs","types.rs"]]]]');
-//{"start":19,"fragment_lengths":[222]}
