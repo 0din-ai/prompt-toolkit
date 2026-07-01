@@ -30,7 +30,7 @@
 use std::path::Path;
 
 use odin_prompt_toolkit::providers::ModelCache;
-use odin_prompt_toolkit::susfactor::SusFactorClassifier;
+use odin_prompt_toolkit::susfactor::OnnxSusFactor;
 use serde_json::{json, Value};
 
 #[tokio::main]
@@ -76,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── Load classifier ──────────────────────────────────────────────────────
     println!("Loading SusFactor from: {model_dir}");
     let cache = ModelCache::new()?;
-    let clf = SusFactorClassifier::new(
+    let clf = OnnxSusFactor::new(
         &cache,
         None,                    // model name: default
         Some(model_dir.clone()), // source: local dir

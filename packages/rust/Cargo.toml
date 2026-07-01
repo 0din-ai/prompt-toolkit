@@ -1,6 +1,6 @@
 [package]
 name = "odin-prompt-toolkit"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 description = "LSH signature generation for AI prompt similarity detection"
 license = "MIT"
@@ -13,6 +13,9 @@ default = ["openai", "onnx"]
 openai = ["dep:reqwest", "reqwest?/json"]
 onnx = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs", "dep:reqwest", "dep:futures-util", "reqwest?/stream"]
 susfactor = ["onnx"]
+# Remote Vertex AI serving backend for SusFactor. Deliberately excludes ort/ndarray
+# so it compiles without the in-pod inference runtime (see spec §7).
+susfactor-vertex = ["dep:gcp_auth", "dep:reqwest", "dep:tokenizers", "dep:dirs", "dep:futures-util", "reqwest?/json", "reqwest?/stream"]
 cm-lsh = []  # CM-LSH support (no extra deps, uses existing lsh.rs internals)
 threatfeed = ["dep:reqwest", "reqwest?/json", "dep:dirs", "dep:chrono", "dep:urlencoding"]
 
@@ -36,6 +39,9 @@ ndarray = { version = "0.17", default-features = false, features = ["std"], opti
 tokenizers = { version = "0.20", features = ["http"], optional = true }
 dirs = { version = "5.0", optional = true }
 
+# SusFactor Vertex feature: GCP OAuth2 access tokens (ADC + GKE Workload Identity)
+gcp_auth = { version = "0.12", optional = true }
+
 # Threat feed feature
 chrono = { version = "0.4", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
@@ -46,6 +52,7 @@ approx = "0.5"
 tempfile = "3.26"
 rand = "0.8"
 mockito = "1.4"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
 
 [[example]]
 name = "generate_vectors"

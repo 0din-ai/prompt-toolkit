@@ -11,7 +11,7 @@
 #![cfg(feature = "susfactor")]
 
 use odin_prompt_toolkit::providers::ModelCache;
-use odin_prompt_toolkit::susfactor::SusFactorClassifier;
+use odin_prompt_toolkit::susfactor::OnnxSusFactor;
 
 fn model_dir() -> Option<String> {
     let dir = std::env::var("SUSFACTOR_MODEL_DIR").ok()?;
@@ -34,7 +34,7 @@ async fn classifies_real_prompts() {
     };
 
     let cache = ModelCache::new().expect("cache");
-    let clf = SusFactorClassifier::new(&cache, None, Some(dir), None)
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
         .await
         .expect("load classifier");
     assert_eq!(clf.model(), "0dinai/susfactor-e5-large");
@@ -71,7 +71,7 @@ async fn classify_long_prompt_produces_multiple_chunks() {
     };
 
     let cache = ModelCache::new().expect("cache");
-    let clf = SusFactorClassifier::new(&cache, None, Some(dir), None)
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
         .await
         .expect("load classifier");
 
@@ -114,7 +114,7 @@ async fn classify_suspicious_tail_flags_overall() {
     };
 
     let cache = ModelCache::new().expect("cache");
-    let clf = SusFactorClassifier::new(&cache, None, Some(dir), None)
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
         .await
         .expect("load classifier");
 
@@ -149,7 +149,7 @@ async fn classify_no_score_aggregation() {
     };
 
     let cache = ModelCache::new().expect("cache");
-    let clf = SusFactorClassifier::new(&cache, None, Some(dir), None)
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
         .await
         .expect("load classifier");
 

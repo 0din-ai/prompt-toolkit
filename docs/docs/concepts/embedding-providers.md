@@ -184,3 +184,7 @@ class MyProvider implements EmbeddingProvider {
 </Tabs>
 
 See [Signature Versions](./signature-versions) for details on versioning and backward compatibility.
+
+## See Also
+
+- [SusFactor Backend Selection](./susfactor#backend-selection-v080) — the `SusFactorProvider` trait follows the same abstraction pattern as `EmbeddingProvider`, applied to classifier backends.
