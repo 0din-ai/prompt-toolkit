@@ -41,8 +41,8 @@ There are two inference backends:
 
 | Backend | Class (Python) | Class (TS/Rust) | Dependencies | Notes |
 |---|---|---|---|---|
-| **PyTorch** | `SusFactorClassifier` | — | `torch`, `transformers` | Python only |
 | **ONNX Runtime** | `SusFactorOnnxClassifier` | `OnnxSusFactor` | `onnxruntime` (+ `transformers` for tokenizer) | All three languages; ~3–5× faster on CPU than PyTorch path |
+| **PyTorch** | `SusFactorClassifier` | — | `torch`, `transformers` | Python only |
 
 The Rust and TypeScript SDKs only expose the ONNX backend. The Python SDK exposes both, with `SusFactorOnnxClassifier` preferred for production use.
 
@@ -56,7 +56,7 @@ The Rust and TypeScript SDKs only expose the ONNX backend. The Python SDK expose
 | **Use case** | Similarity / deduplication | Jailbreak / injection detection |
 | **Requires embedding** | Yes | No (baked into model) |
 | **Cross-language parity** | Yes (identical signatures) | Yes (within float tolerance) |
-| **Model** | V0 (OpenAI) or V1 (ONNX) | susfactor-e5-large |
+| **Model** | V1 (ONNX) | susfactor-e5-large |
 
 You can use both together — generate an LSH signature for deduplication *and* run SusFactor for threat classification on the same prompt.
 
@@ -193,6 +193,9 @@ Each `SusFactorResult` in `chunks` has:
 
 ### Example — long prompt
 
+<Tabs groupId="language">
+  <TabItem value="python" label="Python">
+
 ```python
 result = await clf.classify(long_prompt)
 
@@ -205,6 +208,9 @@ for i, chunk in enumerate(result.chunks):
     print(f"Chunk {i}: score={chunk.score:.3f} label={chunk.label}")
 ```
 
+  </TabItem>
+  <TabItem value="typescript" label="TypeScript">
+
 ```typescript
 const result = await clf.classify(longPrompt);
 
@@ -214,6 +220,9 @@ result.chunks.forEach((chunk, i) => {
   console.log(`Chunk ${i}: score=${chunk.score.toFixed(3)} label=${chunk.label}`);
 });
 ```
+
+  </TabItem>
+  <TabItem value="rust" label="Rust">
 
 ```rust
 let result = clf.classify(&long_prompt).await?;
@@ -227,6 +236,9 @@ for (i, chunk) in result.chunks.iter().enumerate() {
 }
 ```
 
+  </TabItem>
+</Tabs>
+
 ---
 
 ## Decision Threshold
@@ -236,11 +248,35 @@ The threshold controls the boundary between `safe` and `suspicious`. The default
 - **Lower threshold** (e.g. `0.3`) → more sensitive, more false positives
 - **Higher threshold** (e.g. `0.7`) → less sensitive, more false negatives
 
+<Tabs groupId="language">
+  <TabItem value="python" label="Python">
+
 ```python
 clf = await SusFactorOnnxClassifier.new(cache, threshold=0.7)
 result = await clf.classify("some prompt")
 # result.chunks[0].label based on score >= 0.7; result.is_suspicious for overall gate
 ```
+
+  </TabItem>
+  <TabItem value="typescript" label="TypeScript">
+
+```typescript
+const clf = await SusFactorClassifier.create(cache, { threshold: 0.7 });
+const result = await clf.classify('some prompt');
+// result.chunks[0].label based on score >= 0.7; result.isSuspicious for overall gate
+```
+
+  </TabItem>
+  <TabItem value="rust" label="Rust">
+
+```rust
+let clf = OnnxSusFactor::new(&cache, None, None, Some(0.7)).await?;
+let result = clf.classify("some prompt").await?;
+// result.chunks[0].label based on score >= 0.7; result.is_suspicious for overall gate
+```
+
+  </TabItem>
+</Tabs>
 
 For high-security environments, a lower threshold is recommended. For contexts where false positives are costly, raise the threshold.
 
@@ -317,7 +353,13 @@ use odin_prompt_toolkit::susfactor::VertexSusFactor;
 let clf = VertexSusFactor::new(
     &cache,
     "https://us-central1-aiplatform.googleapis.com/v1/projects/my-project/locations/us-central1/endpoints/1234:rawPredict".to_string(),
-    None, None, None, None, None, None,
+    None,  // model — defaults to "0dinai/susfactor-e5-large"
+    None,  // source — defaults to "0dinai/susfactor-e5-large-onnx"
+    None,  // threshold — defaults to 0.5
+    None,  // project — inferred from ADC
+    None,  // location — inferred from endpoint URL
+    None,  // timeout_ms — defaults to 30,000ms
+    None,  // max_retries — defaults to 2
 ).await?;
 let result = clf.classify("your prompt").await?;
 ```
