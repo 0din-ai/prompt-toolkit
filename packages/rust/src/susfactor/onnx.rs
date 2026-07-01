@@ -55,13 +55,13 @@ pub type SusFactorClassifier = OnnxSusFactor;
 
 impl OnnxSusFactor {
     /// Canonical model identifier reported in results (shared across SDKs).
-    pub const DEFAULT_MODEL: &'static str = "0dinai/susfactor-e5-large";
+    pub const DEFAULT_MODEL: &'static str = common::DEFAULT_MODEL;
 
     /// HuggingFace repo holding the ONNX export downloaded at runtime.
-    pub const DEFAULT_ONNX_REPO: &'static str = "0dinai/susfactor-e5-large-onnx";
+    pub const DEFAULT_ONNX_REPO: &'static str = common::DEFAULT_ONNX_REPO;
 
     /// Default decision threshold.
-    pub const DEFAULT_THRESHOLD: f32 = 0.5;
+    pub const DEFAULT_THRESHOLD: f32 = common::DEFAULT_THRESHOLD;
 
     /// Maximum sequence length supported by the model.
     pub const MAX_SEQUENCE_LENGTH: usize = 512;
@@ -194,7 +194,8 @@ impl OnnxSusFactor {
             .to_owned();
 
         let flat: Vec<f32> = logits.iter().copied().collect();
-        common::validate_logits(flat)
+        common::validate_logits(&flat)?;
+        Ok(flat)
     }
 
     /// Classify a prompt of any length.

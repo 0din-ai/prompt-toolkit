@@ -15,6 +15,19 @@ use crate::susfactor::types::{
     MAX_CONTENT_TOKENS,
 };
 
+// ---------------------------------------------------------------------------
+// Shared constants
+// ---------------------------------------------------------------------------
+
+/// Canonical model identifier reported in results (shared across SDKs).
+pub const DEFAULT_MODEL: &str = "0dinai/susfactor-e5-large";
+
+/// HuggingFace repo holding the ONNX export / tokenizer downloaded at runtime.
+pub const DEFAULT_ONNX_REPO: &str = "0dinai/susfactor-e5-large-onnx";
+
+/// Default decision threshold.
+pub const DEFAULT_THRESHOLD: f32 = 0.5;
+
 /// Softmax over a 2-logit slice, returning P(class 1) = suspicious.
 pub fn suspicious_prob(logits: &[f32]) -> f32 {
     debug_assert!(logits.len() >= 2);
@@ -82,19 +95,43 @@ pub fn chunk_token_ids(ids: &[i64]) -> Vec<Vec<i64>> {
     chunks
 }
 
-/// Validate and flatten a model's raw logits output.
+/// Split token-ID and attention-mask sequences into overlapping chunks using
+/// identical stride/overlap windows.
 ///
-/// The classifier head emits `logits[1, 2]`; a flattened view must contain at
-/// least two elements. Both backends route their raw output through this so the
+/// Returns `Vec<(id_chunk, mask_chunk)>` where each pair covers the same
+/// token range. The chunking logic mirrors [`chunk_token_ids`] exactly; this
+/// function exists so the mask is never reconstructed from scratch inside a
+/// chunk handler (which would be wrong once padding is added).
+pub fn chunk_token_ids_with_mask(ids: &[i64], mask: &[i64]) -> Vec<(Vec<i64>, Vec<i64>)> {
+    if ids.len() <= MAX_CONTENT_TOKENS {
+        return vec![(ids.to_vec(), mask.to_vec())];
+    }
+    let mut chunks = Vec::new();
+    let mut start = 0;
+    loop {
+        let end = (start + MAX_CONTENT_TOKENS).min(ids.len());
+        chunks.push((ids[start..end].to_vec(), mask[start..end].to_vec()));
+        if end == ids.len() {
+            break;
+        }
+        start += CHUNK_STRIDE;
+    }
+    chunks
+}
+
+/// Validate a model's raw logits slice.
+///
+/// The classifier head emits `logits[1, 2]`; the slice must contain at least
+/// two elements. Both backends route their raw output through this so the
 /// "unexpected output shape" error is identical.
-pub fn validate_logits(flat: Vec<f32>) -> Result<Vec<f32>> {
+pub fn validate_logits(flat: &[f32]) -> Result<()> {
     if flat.len() < 2 {
         return Err(SigError::Model(format!(
             "Unexpected SusFactor output shape; got {} elements, expected >= 2",
             flat.len()
         )));
     }
-    Ok(flat)
+    Ok(())
 }
 
 /// Assemble a single [`SusFactorResult`] from raw logits, applying the shared
@@ -153,9 +190,9 @@ mod tests {
 
     #[test]
     fn validate_logits_rejects_short_output() {
-        assert!(validate_logits(vec![1.0]).is_err());
-        assert!(validate_logits(vec![]).is_err());
-        assert!(validate_logits(vec![1.0, 2.0]).is_ok());
+        assert!(validate_logits(&[1.0]).is_err());
+        assert!(validate_logits(&[]).is_err());
+        assert!(validate_logits(&[1.0, 2.0]).is_ok());
     }
 
     #[test]
@@ -265,5 +302,50 @@ mod tests {
         let chunks = chunk_token_ids(&[]);
         assert_eq!(chunks.len(), 1);
         assert!(chunks[0].is_empty());
+    }
+
+    #[test]
+    fn chunk_token_ids_with_mask_short_produces_one_pair() {
+        let ids: Vec<i64> = (0..100).map(|i| i as i64).collect();
+        let mask: Vec<i64> = vec![1i64; 100];
+        let chunks = chunk_token_ids_with_mask(&ids, &mask);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0].0, ids);
+        assert_eq!(chunks[0].1, mask);
+    }
+
+    #[test]
+    fn chunk_token_ids_with_mask_produces_same_count_as_ids_only() {
+        let n = MAX_CONTENT_TOKENS * 3;
+        let ids: Vec<i64> = (0..n as i64).collect();
+        let mask: Vec<i64> = vec![1i64; n];
+        let paired = chunk_token_ids_with_mask(&ids, &mask);
+        let ids_only = chunk_token_ids(&ids);
+        assert_eq!(paired.len(), ids_only.len());
+        for (i, ((pid, pmask), pid_only)) in paired.iter().zip(ids_only.iter()).enumerate() {
+            assert_eq!(pid, pid_only, "chunk {i}: id mismatch");
+            assert_eq!(
+                pmask.len(),
+                pid.len(),
+                "chunk {i}: mask length != id length"
+            );
+        }
+    }
+
+    #[test]
+    fn chunk_token_ids_with_mask_windows_match_ids() {
+        let n = MAX_CONTENT_TOKENS + 1;
+        let ids: Vec<i64> = (0..n as i64).collect();
+        let mask: Vec<i64> = (0..n as i64)
+            .map(|i| if i % 2 == 0 { 1 } else { 0 })
+            .collect();
+        let chunks = chunk_token_ids_with_mask(&ids, &mask);
+        assert_eq!(chunks.len(), 2);
+        // First chunk: ids[0..MAX] / mask[0..MAX]
+        assert_eq!(chunks[0].0, &ids[..MAX_CONTENT_TOKENS]);
+        assert_eq!(chunks[0].1, &mask[..MAX_CONTENT_TOKENS]);
+        // Second chunk starts at CHUNK_STRIDE
+        assert_eq!(chunks[1].0, &ids[CHUNK_STRIDE..]);
+        assert_eq!(chunks[1].1, &mask[CHUNK_STRIDE..]);
     }
 }
