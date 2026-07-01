@@ -43,7 +43,7 @@ impl SusFactorResult {
     }
 }
 
-/// Return type of [`SusFactorClassifier::classify`] for prompts of any length.
+/// Return type of [`crate::susfactor::SusFactorProvider::classify`] for prompts of any length.
 ///
 /// Prompts within [`MAX_CONTENT_TOKENS`] (510 tokens) produce exactly one
 /// chunk. Longer prompts are split automatically and produce one entry per
@@ -56,7 +56,9 @@ impl SusFactorResult {
 /// independent model inference. Callers that need one number for display
 /// (dashboards, logs) should decide explicitly which value they want:
 ///
-/// ```rust
+/// ```no_run
+/// # use odin_prompt_toolkit::susfactor::{ChunkedSusFactorResult, SusFactorResult};
+/// # let result: ChunkedSusFactorResult = unimplemented!();
 /// // Highest suspicion score across all chunks (most conservative):
 /// let max_score = result.chunks.iter().map(|c| c.score).fold(f32::MIN, f32::max);
 ///
