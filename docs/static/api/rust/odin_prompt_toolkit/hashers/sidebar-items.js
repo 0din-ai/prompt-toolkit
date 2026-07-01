@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_default_cm_lsh","gen_hyperplanes","get_hasher"],"struct":["Calibrator","DualHash","HybridCMLSH","HybridParams","ITQParams","SimHashLsh"]};
