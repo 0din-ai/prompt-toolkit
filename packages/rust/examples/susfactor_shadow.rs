@@ -43,17 +43,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     });
 
-    let endpoint_url =
-        std::env::var("HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT").unwrap_or_else(|_| {
-            eprintln!(
-                "error: HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT is not set.\n\
+    let endpoint_url = std::env::var("HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT").unwrap_or_else(|_| {
+        eprintln!(
+            "error: HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT is not set.\n\
                  Set it to the full Vertex AI rawPredict URL, e.g.:\n\
                  \texport HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=\\\n\
                  \t  https://us-central1-aiplatform.googleapis.com/v1/projects/\\\n\
                  \t  <PROJECT>/locations/us-central1/endpoints/<ENDPOINT_ID>:rawPredict"
-            );
-            std::process::exit(1);
-        });
+        );
+        std::process::exit(1);
+    });
 
     // ── Build both backends ──────────────────────────────────────────────────
     println!("Loading ONNX backend from: {model_dir}");
@@ -98,7 +97,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         (long_prompt.as_str(), "safe"),
     ];
 
-    println!("Shadow-mode classification of {} prompts...\n", prompts.len());
+    println!(
+        "Shadow-mode classification of {} prompts...\n",
+        prompts.len()
+    );
 
     // ── Classify and report divergence ───────────────────────────────────────
     let mut overall_max_delta: f32 = 0.0;
@@ -174,7 +176,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── Summary ──────────────────────────────────────────────────────────────
     println!("─────────────────────────────────────────────────────────");
     println!("Overall max delta:    {overall_max_delta:.6}");
-    println!("Prompts with mismatch: {overall_mismatch_count}/{}", prompts.len());
+    println!(
+        "Prompts with mismatch: {overall_mismatch_count}/{}",
+        prompts.len()
+    );
 
     if overall_mismatch_count > 0 {
         println!("❌  Mismatches detected — do NOT cut over to Vertex yet.");
