@@ -103,3 +103,13 @@ required-features = []
 name = "extract_susfactor_goldens"
 path = "examples/extract_susfactor_goldens.rs"
 required-features = ["susfactor"]
+
+[[example]]
+name = "susfactor_vertex"
+path = "examples/susfactor_vertex.rs"
+required-features = ["susfactor-vertex"]
+
+[[example]]
+name = "susfactor_shadow"
+path = "examples/susfactor_shadow.rs"
+required-features = ["susfactor", "susfactor-vertex"]
