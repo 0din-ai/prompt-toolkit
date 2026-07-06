@@ -7,7 +7,7 @@
 //!
 //! ```sh
 //! export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json
-//! export HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=https://us-central1-aiplatform.googleapis.com/v1/projects/moz-fx-0din-nonprod/locations/us-central1/endpoints/8813043643217608704:rawPredict
+//! export HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{REGION}/endpoints/{ENDPOINT_ID}:rawPredict
 //!
 //! cargo run --example susfactor_vertex --features susfactor-vertex
 //! ```
