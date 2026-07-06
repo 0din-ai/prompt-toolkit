@@ -38,17 +38,16 @@ const TEST_PROMPTS: &[(&str, &str)] = &[
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── Resolve endpoint URL from environment ────────────────────────────────
-    let endpoint_url =
-        std::env::var("HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT").unwrap_or_else(|_| {
-            eprintln!(
-                "error: HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT is not set.\n\
+    let endpoint_url = std::env::var("HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT").unwrap_or_else(|_| {
+        eprintln!(
+            "error: HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT is not set.\n\
                  Set it to the full Vertex AI rawPredict URL, e.g.:\n\
                  \texport HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=\\\n\
                  \t  https://us-central1-aiplatform.googleapis.com/v1/projects/\\\n\
                  \t  <PROJECT>/locations/us-central1/endpoints/<ENDPOINT_ID>:rawPredict"
-            );
-            std::process::exit(1);
-        });
+        );
+        std::process::exit(1);
+    });
 
     // ── Build classifier ─────────────────────────────────────────────────────
     println!("Connecting to Vertex AI endpoint...");
@@ -64,7 +63,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None, // request_timeout: default 30 s
     )
     .await?;
-    println!("Classifier ready. Running {} prompts...\n", TEST_PROMPTS.len());
+    println!(
+        "Classifier ready. Running {} prompts...\n",
+        TEST_PROMPTS.len()
+    );
 
     // ── Classify each prompt and print results ───────────────────────────────
     let mut matched = 0usize;
@@ -98,7 +100,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // ── Summary ──────────────────────────────────────────────────────────────
-    println!("{matched}/{} results matched expected labels", TEST_PROMPTS.len());
+    println!(
+        "{matched}/{} results matched expected labels",
+        TEST_PROMPTS.len()
+    );
 
     Ok(())
 }
