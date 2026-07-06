@@ -12,7 +12,7 @@
 //! ```sh
 //! export SUSFACTOR_MODEL_DIR=/path/to/cache/susfactor-v1
 //! export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json
-//! export HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=https://us-central1-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/us-central1/endpoints/{ENDPOINT_ID}:rawPredict
+//! export HEIMDALL_VERTEX_SUSFACTOR_ENDPOINT=https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{REGION}/endpoints/{ENDPOINT_ID}:rawPredict
 //!
 //! cargo run --example susfactor_shadow --features susfactor,susfactor-vertex --release
 //! ```
