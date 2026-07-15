@@ -8,14 +8,19 @@ on:
         required: true
         type: string
 
+permissions: {}
+
 jobs:
   bump-and-tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # push commit + tag
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Explicitly persisting credentials — the "Push commit and tag"
+          # step below needs the checked-out credential to push directly.
+          persist-credentials: true
           # Use a PAT or the default GITHUB_TOKEN.
           # GITHUB_TOKEN pushes are blocked from triggering downstream
           # tag-triggered workflows by default; a PAT avoids that restriction.
@@ -27,14 +32,16 @@ jobs:
           fetch-depth: 0
 
       - name: Validate version format
+        env:
+          VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="$VERSION_INPUT"
           if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
             echo "❌ Invalid version format: $VERSION"
             echo "Expected semantic version, e.g. 0.4.0 or 1.0.0-beta.1"
             exit 1
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Check version is newer than latest tag
         run: |
