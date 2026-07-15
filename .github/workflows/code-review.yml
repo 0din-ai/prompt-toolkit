@@ -4,21 +4,27 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
+permissions: {}
+
 jobs:
   review:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     permissions:
+      # upstream stephengolub/code-reviewer's documented setup requests these
+      # four scopes; id-token is not observed to be consumed by the action's
+      # steps directly but is kept for parity with its recommended block
       id-token: write
-      contents: read
-      pull-requests: write
-      issues: read
+      contents: read # checkout the PR branch for diff context
+      pull-requests: write # post/update the review summary comment on the PR
+      issues: read # acceptance_criteria_source: github_issue reads linked issues
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          persist-credentials: false
           fetch-depth: 0
 
-      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # v1
+      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
         with:
           model: anthropic/claude-sonnet-4-6
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

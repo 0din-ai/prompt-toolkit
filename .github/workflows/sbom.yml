@@ -1,0 +1,27 @@
+name: SBOM
+
+# Attaches a CycloneDX-JSON SBOM to every published GitHub Release, covering
+# whichever packaged ecosystems ship in that release's artifact set
+# (domain-model spec: "SBOM release artifact").
+#
+# NOTE: the `release: published` trigger against ssdlc-sbom.yml is an
+# inferred/unconfirmed assumption — no example caller exists upstream in
+# mozilla/ssdlc-actions at the time this workflow was written (design.md D5,
+# proposal.md Open Question 5). It is verified safe on our end regardless,
+# since release.yml's `softprops/action-gh-release` call uses `draft: false`,
+# so the `published` event fires correctly for every release this repo cuts.
+# Treat the first real release through this workflow as a smoke test.
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  sbom:
+    permissions:
+      contents: write # needed for anchore/sbom-action's upload-release-assets in ssdlc-sbom.yml
+    uses: mozilla/ssdlc-actions/.github/workflows/ssdlc-sbom.yml@d355de9a0cb79e0be2599696064231ee49aebb92 # main @ 2026-07-15
+    with:
+      sbom_name: prompt-toolkit-${{ github.ref_name }}
