@@ -127,7 +127,7 @@ jobs:
           cp dist/*.tar.gz /tmp/odin-prompt-toolkit-python-${VERSION}/
           cp packages/python/INSTALL.md /tmp/odin-prompt-toolkit-python-${VERSION}/ 2>/dev/null || true
           cd /tmp && zip -r odin-prompt-toolkit-python-${VERSION}.zip odin-prompt-toolkit-python-${VERSION}/
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: python-dist
           path: |
@@ -159,7 +159,7 @@ jobs:
           manylinux: ${{ matrix.target.manylinux }}
           target: ${{ matrix.target.arch }}
           working-directory: packages/python-native
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-linux-${{ matrix.target.arch }}
           path: packages/python-native/dist/*.whl
@@ -185,7 +185,7 @@ jobs:
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
           target: ${{ matrix.target.arch }}-apple-darwin
           working-directory: packages/python-native
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-macos-${{ matrix.target.arch }}
           path: packages/python-native/dist/*.whl
@@ -206,7 +206,7 @@ jobs:
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13
           target: x86_64-pc-windows-msvc
           working-directory: packages/python-native
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-windows-x86_64
           path: packages/python-native/dist/*.whl
@@ -226,7 +226,7 @@ jobs:
           command: sdist
           args: --out dist
           working-directory: packages/python-native
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: native-sdist
           path: packages/python-native/dist/*.tar.gz
@@ -253,7 +253,7 @@ jobs:
           cp dist/odin-prompt-toolkit-${VERSION}.crate /tmp/odin-prompt-toolkit-rust-${VERSION}/
           cp packages/rust/README.md /tmp/odin-prompt-toolkit-rust-${VERSION}/
           cd /tmp && zip -r odin-prompt-toolkit-rust-${VERSION}.zip odin-prompt-toolkit-rust-${VERSION}/
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rust-dist
           path: |
@@ -290,7 +290,7 @@ jobs:
           cp dist/*.tgz /tmp/odin-prompt-toolkit-typescript-${VERSION}/
           cp packages/typescript/README.md /tmp/odin-prompt-toolkit-typescript-${VERSION}/
           cd /tmp && zip -r odin-prompt-toolkit-typescript-${VERSION}.zip odin-prompt-toolkit-typescript-${VERSION}/
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: typescript-dist
           path: |
@@ -406,7 +406,7 @@ jobs:
             --output-dir . \
             --zip
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: deliverable-tarball
           path: |
@@ -414,7 +414,7 @@ jobs:
             deliverable/odin-prompt-toolkit-deliverable-*.tar.gz.sha256
           retention-days: 90
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: offline-bundle
           path: |
