@@ -18,7 +18,17 @@ const config: Config = {
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: {
+      removeLegacyPostBuildHeadAttribute: true,
+      useCssCascadeLayers: true,
+      siteStorageNamespacing: true,
+      // Keep legacy MDX1-compat parsing: existing docs use `{#heading-id}`
+      // comment syntax that strict MDX (the new v4 default) can't parse.
+      mdx1CompatDisabledByDefault: false,
+      // Docusaurus Faster (Rspack) requires the @docusaurus/faster package,
+      // which is not installed here — stay on the webpack bundler for now.
+      fasterByDefault: false,
+    },
   },
 
   // Set the production url of your site here

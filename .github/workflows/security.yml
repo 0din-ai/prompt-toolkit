@@ -53,8 +53,13 @@ jobs:
 
       - name: Run Semgrep (blocking on findings)
         run: |
+          # --config auto requires metrics on to resolve rules from Semgrep's
+          # registry; we run with --metrics=off (privacy), so use the same
+          # explicit rulesets mozilla/ssdlc-actions' own Semgrep step uses.
           semgrep scan \
-            --config auto \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --config p/security-audit \
             --error \
             --metrics=off
 
@@ -139,6 +144,8 @@ jobs:
     steps:
       - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
         with:
-          go-version-input: "1.22"
+          # Toolchain used to install/run the govulncheck scanner tool itself;
+          # independent of packages/go/go.mod's own `go 1.22` module directive.
+          go-version-input: "1.25"
           work-dir: packages/go
           go-package: ./...
