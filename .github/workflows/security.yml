@@ -1,0 +1,151 @@
+name: Security
+
+# SOC 2 §1.8 merge gates: SAST + dependency-vulnerability scanning across all
+# four language ecosystems in this repo. See openspec/changes/soc2-github-workflow-fixes/
+# for the design rationale (design.md D2/D3).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # mozilla/ssdlc-actions reusable workflow: zizmor (Actions-workflow static
+  # analysis) + its own bundled Semgrep. NOTE: ssdlc's Semgrep step always
+  # exits 0 on private repos (`|| true`) — it is advisory only, not a merge
+  # gate. The real blocking SAST gate is the standalone `semgrep` job below.
+  # SHA resolved against mozilla/ssdlc-actions@main on 2026-07-15 (gh CLI
+  # unavailable in this environment; resolved via `git ls-remote`).
+  # ────────────────────────────────────────────────────────────────────────────
+  ssdlc-code-security-analysis:
+    permissions:
+      contents: read
+      actions: read
+    uses: mozilla/ssdlc-actions/.github/workflows/code-security-analysis-private-repo.yml@d355de9a0cb79e0be2599696064231ee49aebb92 # main @ 2026-07-15
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Blocking Semgrep — the real SAST merge gate (design.md D2). Runs
+  # independently of ssdlc's non-blocking pass above.
+  #
+  # Follow-up: file an ask with mozilla/ssdlc-actions for a `fail_on_findings`
+  # input on their reusable workflow so this duplicate run can be dropped.
+  # ────────────────────────────────────────────────────────────────────────────
+  semgrep:
+    name: Semgrep (blocking)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (blocking on findings)
+        run: |
+          # --config auto requires metrics on to resolve rules from Semgrep's
+          # registry; we run with --metrics=off (privacy), so use the same
+          # explicit rulesets mozilla/ssdlc-actions' own Semgrep step uses.
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --config p/security-audit \
+            --error \
+            --metrics=off
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Dependency-vulnerability scanning — one merge gate per ecosystem (design.md D3)
+  # ────────────────────────────────────────────────────────────────────────────
+  rust-audit:
+    name: Rust dependency audit (${{ matrix.working-directory }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    strategy:
+      matrix:
+        working-directory:
+          - packages/rust
+          - packages/python-native
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ${{ matrix.working-directory }}
+
+  python-audit:
+    name: Python dependency audit (pip-audit)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Install package + dev deps into a venv
+        working-directory: packages/python
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -e ".[dev]"
+
+      - uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
+        with:
+          virtual-environment: packages/python/.venv
+
+  typescript-audit:
+    name: TypeScript dependency audit (npm audit) — ${{ matrix.working-directory }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        working-directory:
+          - packages/typescript
+          - docs
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.working-directory }}/package-lock.json
+
+      - name: npm audit
+        working-directory: ${{ matrix.working-directory }}
+        run: npm audit --audit-level=high
+
+  go-audit:
+    name: Go dependency audit (govulncheck)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+        with:
+          # Toolchain used to install/run the govulncheck scanner tool itself;
+          # independent of packages/go/go.mod's own `go 1.22` module directive.
+          go-version-input: "1.25"
+          work-dir: packages/go
+          go-package: ./...

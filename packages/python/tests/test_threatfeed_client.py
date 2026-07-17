@@ -1,8 +1,11 @@
 """Tests for the threat feed API client."""
 
 
+from contextlib import asynccontextmanager
+
 import pytest
-from aioresponses import aioresponses as mock_aiohttp
+from aiohttp import web
+from aiohttp.test_utils import TestServer
 
 from odin_prompt_toolkit.error import ThreatFeedApiError
 from odin_prompt_toolkit.threatfeed.client import ThreatFeedClient
@@ -13,6 +16,9 @@ from odin_prompt_toolkit.threatfeed.client import ThreatFeedClient
 
 BASE_URL = "https://test.0din.ai"
 TOKEN = "test-token-abc123"
+
+THREATFEED_PATH = "/api/v1/threatfeed"
+FETCH_ONE_PATH = "/api/v1/threatfeed/{uuid}"
 
 
 def make_entry(
@@ -53,6 +59,88 @@ def page_response(entries: list, page: int = 1, total_pages: int = 1) -> dict:
         "total_count": len(entries),
         "threat_feeds": entries,
     }
+
+
+# ---------------------------------------------------------------------------
+# Real aiohttp server helpers (replaces aioresponses URL mocking)
+#
+# aioresponses is incompatible with aiohttp>=3.14 (it never adapted to the
+# `stream_writer` kwarg aiohttp added to ClientResponse.__init__). Instead of
+# mocking at the transport layer, these tests spin up a genuine aiohttp
+# server on loopback and point the client under test at it, using aiohttp's
+# own first-party test utilities.
+# ---------------------------------------------------------------------------
+
+
+@asynccontextmanager
+async def threatfeed_server(*routes: tuple):
+    """Start a real aiohttp server exposing the given (method, path, handler) routes.
+
+    Yields the base URL the ThreatFeedClient should be pointed at.
+    """
+    app = web.Application()
+    for method, path, handler in routes:
+        app.router.add_route(method, path, handler)
+
+    server = TestServer(app)
+    await server.start_server()
+    try:
+        yield str(server.make_url("")).rstrip("/")
+    finally:
+        await server.close()
+
+
+def _threatfeed_handler(
+    *,
+    per_page: int = 100,
+    since: str | None = None,
+    pages: dict[int, dict] | None = None,
+    status: int | None = None,
+    body: str | None = None,
+):
+    """Build a GET handler for /api/v1/threatfeed.
+
+    Validates the query string matches exactly what the client is expected
+    to send (page/per_page/optional since) — the same strict URL matching
+    aioresponses performed. A mismatch responds 400, which the client
+    surfaces as a ThreatFeedApiError, so a successful call still proves the
+    expected query params were sent (or omitted).
+    """
+
+    async def handler(request: web.Request) -> web.Response:
+        page = int(request.query.get("page", "0"))
+        expected = {"page": str(page), "per_page": str(per_page)}
+        if since:
+            expected["q[updated_at_gteq]"] = since
+        if dict(request.query) != expected:
+            return web.Response(status=400, text="unexpected query params")
+
+        if status is not None:
+            return web.Response(status=status, text=body or "")
+
+        assert pages is not None
+        return web.json_response(pages[page])
+
+    return handler
+
+
+def _fetch_one_handler(
+    *,
+    entries_by_uuid: dict[str, dict] | None = None,
+    status: int | None = None,
+    body: str | None = None,
+):
+    """Build a GET handler for /api/v1/threatfeed/{uuid}."""
+
+    async def handler(request: web.Request) -> web.Response:
+        if status is not None:
+            return web.Response(status=status, text=body or "")
+
+        assert entries_by_uuid is not None
+        uuid = request.match_info["uuid"]
+        return web.json_response(entries_by_uuid[uuid])
+
+    return handler
 
 
 # ---------------------------------------------------------------------------
@@ -112,26 +200,14 @@ class TestThreatFeedClientConstructor:
 # ---------------------------------------------------------------------------
 
 
-def _url_with_params(page: int = 1, per_page: int = 100, since: str | None = None) -> str:
-    """Build the exact URL that the client will request (params merged in)."""
-    url = f"{BASE_URL}/api/v1/threatfeed?page={page}&per_page={per_page}"
-    if since:
-        from urllib.parse import quote
-        url += f"&q%5Bupdated_at_gteq%5D={quote(since, safe='')}"
-    return url
-
-
 class TestFetchAll:
     @pytest.mark.asyncio
     async def test_single_page(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
         entries = [make_entry("aaa"), make_entry("bbb")]
+        handler = _threatfeed_handler(pages={1: page_response(entries)})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload=page_response(entries),
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             result = await client.fetch_all()
 
         assert len(result) == 2
@@ -140,19 +216,18 @@ class TestFetchAll:
 
     @pytest.mark.asyncio
     async def test_pagination_fetches_all_pages(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL, per_page=2)
         page1 = [make_entry("p1e1"), make_entry("p1e2")]
         page2 = [make_entry("p2e1")]
+        handler = _threatfeed_handler(
+            per_page=2,
+            pages={
+                1: page_response(page1, page=1, total_pages=2),
+                2: page_response(page2, page=2, total_pages=2),
+            },
+        )
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(page=1, per_page=2),
-                payload=page_response(page1, page=1, total_pages=2),
-            )
-            m.get(
-                _url_with_params(page=2, per_page=2),
-                payload=page_response(page2, page=2, total_pages=2),
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url, per_page=2)
             result = await client.fetch_all()
 
         assert len(result) == 3
@@ -164,13 +239,10 @@ class TestFetchAll:
     @pytest.mark.asyncio
     async def test_auth_header_no_bearer_prefix(self):
         """API token must be sent as-is, without 'Bearer ' prefix."""
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
+        handler = _threatfeed_handler(pages={1: page_response([])})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload=page_response([]),
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             await client.fetch_all()
 
         # Verify the token stored on the client is raw (no Bearer prefix)
@@ -179,27 +251,22 @@ class TestFetchAll:
 
     @pytest.mark.asyncio
     async def test_empty_response(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
+        handler = _threatfeed_handler(
+            pages={1: {"page": 1, "total_pages": 1, "total_count": 0, "threat_feeds": []}}
+        )
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload={"page": 1, "total_pages": 1, "total_count": 0, "threat_feeds": []},
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             result = await client.fetch_all()
 
         assert result == []
 
     @pytest.mark.asyncio
     async def test_401_raises_api_error(self):
-        client = ThreatFeedClient(api_token="bad-token", base_url=BASE_URL)
+        handler = _threatfeed_handler(status=401, body="Unauthorized")
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                status=401,
-                body="Unauthorized",
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token="bad-token", base_url=base_url)
             with pytest.raises(ThreatFeedApiError) as exc_info:
                 await client.fetch_all()
 
@@ -208,14 +275,10 @@ class TestFetchAll:
 
     @pytest.mark.asyncio
     async def test_500_raises_api_error(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
+        handler = _threatfeed_handler(status=500, body="Internal Server Error")
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                status=500,
-                body="Internal Server Error",
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             with pytest.raises(ThreatFeedApiError) as exc_info:
                 await client.fetch_all()
 
@@ -224,16 +287,14 @@ class TestFetchAll:
     @pytest.mark.asyncio
     async def test_incremental_since_param_included(self):
         """q[updated_at_gteq] must be included when since is provided."""
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
         since = "2025-03-01T00:00:00Z"
+        handler = _threatfeed_handler(since=since, pages={1: page_response([])})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(since=since),
-                payload=page_response([]),
-            )
-            # If the URL didn't match (since param missing), aioresponses raises
-            # ClientConnectionError, so a successful call proves the param was sent.
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
+            # If the request didn't include the since param, the handler's
+            # exact query match fails and the client raises ThreatFeedApiError,
+            # so a successful call proves the param was sent.
             result = await client.fetch_all(since=since)
 
         assert result == []
@@ -241,22 +302,19 @@ class TestFetchAll:
     @pytest.mark.asyncio
     async def test_no_since_param_when_not_provided(self):
         """q[updated_at_gteq] must NOT appear when since is None."""
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
+        handler = _threatfeed_handler(pages={1: page_response([])})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload=page_response([]),
-            )
-            # Exact URL match (no since param) — any extra params would cause a
-            # ClientConnectionError, proving the client omitted updated_at_gteq.
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
+            # Exact query match (no since param) — any extra params would
+            # cause a ThreatFeedApiError, proving the client omitted
+            # updated_at_gteq.
             result = await client.fetch_all()
 
         assert result == []
 
     @pytest.mark.asyncio
     async def test_parses_detection_signatures(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
         entry = make_entry(
             "aaa",
             v1_sig="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
@@ -264,12 +322,10 @@ class TestFetchAll:
         entry["detection_signatures"].append(
             {"version": "v0", "signature": "1111111111111111111111111111111111111111111111111111111111111111"}
         )
+        handler = _threatfeed_handler(pages={1: page_response([entry])})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload=page_response([entry]),
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             result = await client.fetch_all()
 
         assert len(result) == 1
@@ -281,14 +337,11 @@ class TestFetchAll:
 
     @pytest.mark.asyncio
     async def test_entry_with_no_signatures(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
         entry = make_entry("aaa", v1_sig=None)
+        handler = _threatfeed_handler(pages={1: page_response([entry])})
 
-        with mock_aiohttp() as m:
-            m.get(
-                _url_with_params(),
-                payload=page_response([entry]),
-            )
+        async with threatfeed_server(("GET", THREATFEED_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             result = await client.fetch_all()
 
         assert len(result) == 1
@@ -304,14 +357,11 @@ class TestFetchOne:
     @pytest.mark.asyncio
     async def test_fetch_one_success(self):
         uuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
         entry = make_entry(uuid)
+        handler = _fetch_one_handler(entries_by_uuid={uuid: entry})
 
-        with mock_aiohttp() as m:
-            m.get(
-                f"{BASE_URL}/api/v1/threatfeed/{uuid}",
-                payload=entry,
-            )
+        async with threatfeed_server(("GET", FETCH_ONE_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             result = await client.fetch_one(uuid)
 
         assert result.uuid == uuid
@@ -319,14 +369,10 @@ class TestFetchOne:
 
     @pytest.mark.asyncio
     async def test_fetch_one_404_raises(self):
-        client = ThreatFeedClient(api_token=TOKEN, base_url=BASE_URL)
+        handler = _fetch_one_handler(status=404, body="Not Found")
 
-        with mock_aiohttp() as m:
-            m.get(
-                f"{BASE_URL}/api/v1/threatfeed/nonexistent",
-                status=404,
-                body="Not Found",
-            )
+        async with threatfeed_server(("GET", FETCH_ONE_PATH, handler)) as base_url:
+            client = ThreatFeedClient(api_token=TOKEN, base_url=base_url)
             with pytest.raises(ThreatFeedApiError) as exc_info:
                 await client.fetch_one("nonexistent")
 

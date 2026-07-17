@@ -4,21 +4,49 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
+permissions: {}
+
 jobs:
   review:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     permissions:
+      # upstream stephengolub/code-reviewer's documented setup requests these
+      # four scopes; id-token is not observed to be consumed by the action's
+      # steps directly but is kept for parity with its recommended block
       id-token: write
-      contents: read
-      pull-requests: write
-      issues: read
+      contents: read # checkout the PR branch for diff context
+      pull-requests: write # post/update the review summary comment on the PR
+      issues: read # acceptance_criteria_source: github_issue reads linked issues
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          # Explicitly persisting credentials — stephengolub/code-reviewer
+          # runs its own `git fetch` calls after checkout and needs the
+          # checked-out credential to do so (same exception as bump-release.yml).
+          persist-credentials: true
           fetch-depth: 0
 
-      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # v1
+      # ANTHROPIC_API_KEY will never be provisioned as a repo secret
+      # (confirmed with @stephengolub, owner of the code-reviewer action
+      # below). The `secrets` context isn't a permitted context in any `if:`
+      # expression (job- or step-level — see GitHub's context-availability
+      # docs), so the presence check has to happen in a step and be handed
+      # off via an output, rather than testing `secrets` directly in `if:`.
+      - name: Check for Anthropic API key
+        id: check-key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "has-key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-key=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
+        # Skip cleanly instead of letting this step fail red without the key.
+        if: steps.check-key.outputs.has-key == 'true'
         with:
           model: anthropic/claude-sonnet-4-6
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
