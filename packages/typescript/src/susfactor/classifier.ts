@@ -139,9 +139,8 @@ export class SusFactorClassifier {
 
     let ort: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       ort = require("onnxruntime-node");
-    } catch (error) {
+    } catch {
       throw new SusFactorError(
         "SusFactor requires the 'onnxruntime-node' package. " +
           "Install with: npm install onnxruntime-node",
@@ -151,11 +150,10 @@ export class SusFactorClassifier {
     let AutoTokenizer: any;
     let hfEnv: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const hf = require("@huggingface/transformers");
       AutoTokenizer = hf.AutoTokenizer;
       hfEnv = hf.env;
-    } catch (error) {
+    } catch {
       throw new SusFactorError(
         "SusFactor requires the '@huggingface/transformers' package. " +
           "Install with: npm install @huggingface/transformers",
@@ -225,7 +223,6 @@ export class SusFactorClassifier {
 
     const idChunks = chunkTokenIds(allIds);
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const ort = require("onnxruntime-node");
 
     const scoreChunk = async (chunkIds: bigint[]): Promise<SusFactorResult> => {

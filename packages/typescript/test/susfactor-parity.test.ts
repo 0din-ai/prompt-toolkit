@@ -145,9 +145,7 @@ async function runParityCheck() {
     process.exit(1);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ModelCache } = require('../src/providers/model-cache');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { SusFactorClassifier } = require('../src/susfactor/classifier');
 
   const cache = new ModelCache(MODEL_DIR);
