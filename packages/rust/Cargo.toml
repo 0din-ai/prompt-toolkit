@@ -15,7 +15,7 @@ onnx = ["dep:ort", "dep:ndarray", "dep:tokenizers", "dep:dirs", "dep:reqwest", "
 susfactor = ["onnx"]
 # Remote Vertex AI serving backend for SusFactor. Deliberately excludes ort/ndarray
 # so it compiles without the in-pod inference runtime (see spec §7).
-susfactor-vertex = ["dep:gcp_auth", "dep:reqwest", "dep:tokenizers", "dep:dirs", "dep:futures-util", "reqwest?/json", "reqwest?/stream"]
+susfactor-vertex = ["dep:gcp_auth", "dep:reqwest", "dep:reqwest-middleware", "dep:reqwest-tracing", "dep:tokenizers", "dep:dirs", "dep:futures-util", "reqwest?/json", "reqwest?/stream"]
 cm-lsh = []  # CM-LSH support (no extra deps, uses existing lsh.rs internals)
 threatfeed = ["dep:reqwest", "reqwest?/json", "dep:dirs", "dep:chrono", "dep:urlencoding"]
 
@@ -42,6 +42,11 @@ dirs = { version = "5.0", optional = true }
 # SusFactor Vertex feature: GCP OAuth2 access tokens (ADC + GKE Workload Identity)
 gcp_auth = { version = "0.12", optional = true }
 
+# SusFactor Vertex feature: wraps the reqwest::Client with a CLIENT-kind tracing
+# span per rawPredict call (bridged to OTel/Elastic APM by downstream consumers).
+reqwest-middleware = { version = "0.4", features = ["json"], optional = true }
+reqwest-tracing = { version = "0.5", optional = true }
+
 # Threat feed feature
 chrono = { version = "0.4", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
@@ -53,6 +58,7 @@ tempfile = "3.26"
 rand = "0.8"
 mockito = "1.4"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry"] }
 
 [[example]]
 name = "generate_vectors"

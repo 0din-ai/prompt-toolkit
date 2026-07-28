@@ -65,7 +65,7 @@ struct InferOutput {
 /// shared [`super::common`] helpers so results are identical to
 /// [`super::onnx::OnnxSusFactor`] modulo network latency.
 pub struct VertexSusFactor {
-    client: reqwest::Client,
+    client: reqwest_middleware::ClientWithMiddleware,
     endpoint_url: String,
     tokenizer: Arc<tokenizers::Tokenizer>,
     model_name: String,
@@ -148,11 +148,7 @@ impl VertexSusFactor {
             .await
             .map_err(|e| SigError::Provider(format!("GCP auth initialisation failed: {e}")))?;
 
-        let client = reqwest::Client::builder()
-            .connect_timeout(connect_timeout)
-            .timeout(request_timeout)
-            .build()
-            .map_err(|e| SigError::Provider(format!("Failed to create HTTP client: {e}")))?;
+        let client = Self::build_traced_client(connect_timeout, request_timeout)?;
 
         Ok(Self {
             client,
@@ -163,6 +159,34 @@ impl VertexSusFactor {
             auth,
             max_concurrent_chunks,
         })
+    }
+
+    /// Build the `reqwest::Client` used for `rawPredict` calls, wrapped with a
+    /// tracing middleware that emits a CLIENT-kind span per request (method,
+    /// `url.full`, `server.address`, response status/error) so calls show up
+    /// in downstream OpenTelemetry/Elastic APM pipelines.
+    ///
+    /// Trace-context propagation is disabled: Vertex is an external Google
+    /// endpoint that won't honor W3C `traceparent` headers, and internal
+    /// trace IDs should not be leaked to it.
+    fn build_traced_client(
+        connect_timeout: Duration,
+        request_timeout: Duration,
+    ) -> Result<reqwest_middleware::ClientWithMiddleware> {
+        let inner = reqwest::Client::builder()
+            .connect_timeout(connect_timeout)
+            .timeout(request_timeout)
+            .build()
+            .map_err(|e| SigError::Provider(format!("Failed to create HTTP client: {e}")))?;
+
+        Ok(reqwest_middleware::ClientBuilder::new(inner)
+            .with_init(reqwest_middleware::Extension(
+                reqwest_tracing::DisableOtelPropagation,
+            ))
+            .with(reqwest_tracing::TracingMiddleware::<
+                reqwest_tracing::SpanBackendWithUrl,
+            >::new())
+            .build())
     }
 }
 
@@ -303,7 +327,89 @@ mod tests {
     use super::*;
     use crate::error::SigError;
     use crate::susfactor::types::LABEL_SUSPICIOUS;
-    use std::sync::Arc;
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+    use tracing::field::{Field, Visit};
+    use tracing::instrument::WithSubscriber;
+    use tracing::span::{Attributes, Id, Record};
+    use tracing::Subscriber;
+    use tracing_subscriber::layer::{Context, Layer, SubscriberExt};
+    use tracing_subscriber::registry::LookupSpan;
+
+    // -----------------------------------------------------------------------
+    // Minimal span-capture harness used to assert that the Vertex HTTP call
+    // emits a tracing span with the expected CLIENT-kind attributes, without
+    // pulling in an OpenTelemetry SDK or exporter for the test itself.
+    // -----------------------------------------------------------------------
+
+    #[derive(Default)]
+    struct FieldMap(HashMap<String, String>);
+
+    impl Visit for FieldMap {
+        fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+            self.0
+                .insert(field.name().to_string(), format!("{value:?}"));
+        }
+
+        fn record_str(&mut self, field: &Field, value: &str) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+
+        fn record_u64(&mut self, field: &Field, value: u64) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+
+        fn record_i64(&mut self, field: &Field, value: i64) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+    }
+
+    struct CapturedSpan {
+        name: String,
+        fields: HashMap<String, String>,
+    }
+
+    #[derive(Clone, Default)]
+    struct SpanCaptureLayer {
+        captured: Arc<Mutex<Vec<CapturedSpan>>>,
+    }
+
+    impl<S> Layer<S> for SpanCaptureLayer
+    where
+        S: Subscriber + for<'a> LookupSpan<'a>,
+    {
+        fn on_new_span(&self, attrs: &Attributes<'_>, id: &Id, ctx: Context<'_, S>) {
+            let mut fields = FieldMap::default();
+            attrs.record(&mut fields);
+            if let Some(span) = ctx.span(id) {
+                span.extensions_mut().insert(fields);
+            }
+        }
+
+        fn on_record(&self, id: &Id, values: &Record<'_>, ctx: Context<'_, S>) {
+            if let Some(span) = ctx.span(id) {
+                let mut ext = span.extensions_mut();
+                if let Some(fields) = ext.get_mut::<FieldMap>() {
+                    values.record(fields);
+                }
+            }
+        }
+
+        fn on_close(&self, id: Id, ctx: Context<'_, S>) {
+            if let Some(span) = ctx.span(&id) {
+                let name = span.name().to_string();
+                let fields = span
+                    .extensions()
+                    .get::<FieldMap>()
+                    .map(|f| f.0.clone())
+                    .unwrap_or_default();
+                self.captured
+                    .lock()
+                    .unwrap()
+                    .push(CapturedSpan { name, fields });
+            }
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Test-only VertexSusFactor builder that bypasses the ModelCache and
@@ -380,10 +486,11 @@ mod tests {
     fn build_vertex(server_url: &str, threshold: f32) -> VertexSusFactor {
         let tokenizer = load_test_tokenizer();
         VertexSusFactor {
-            client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(10))
-                .build()
-                .unwrap(),
+            client: VertexSusFactor::build_traced_client(
+                Duration::from_secs(10),
+                Duration::from_secs(10),
+            )
+            .unwrap(),
             endpoint_url: format!("{server_url}/rawPredict"),
             tokenizer,
             model_name: VertexSusFactor::DEFAULT_MODEL.to_string(),
@@ -391,6 +498,101 @@ mod tests {
             auth: Arc::new(FakeTokenProvider),
             max_concurrent_chunks: 4,
         }
+    }
+
+    /// `tracing` caches whether a given span callsite is "interesting"
+    /// process-wide, based on whichever subscriber is active the first time
+    /// that callsite fires. Other tests in this module call `classify()`
+    /// under the ambient (no-op) default, which would otherwise cache the
+    /// reqwest-tracing span callsite as permanently uninteresting before our
+    /// test-local capturing subscriber ever gets a chance to see it. Installing
+    /// a permissive global default once, before any test runs, guarantees the
+    /// callsite is always marked interesting so per-test thread-local
+    /// dispatches (see `with_subscriber` below) actually receive callbacks.
+    fn ensure_global_subscriber_installed() {
+        static ONCE: std::sync::Once = std::sync::Once::new();
+        ONCE.call_once(|| {
+            let _ = tracing::subscriber::set_global_default(tracing_subscriber::registry());
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 0 — rawPredict call emits a CLIENT-kind tracing span with standard
+    // HTTP semantic attributes (method, url.full, server.address, response
+    // status). This is the observable contract that lets downstream
+    // consumers (heimdall) bridge these spans to OpenTelemetry/Elastic APM.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn rawpredict_call_emits_client_span_with_http_semantics() {
+        ensure_global_subscriber_installed();
+
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("POST", "/rawPredict")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{"outputs":[{"name":"logits","shape":[1,2],"datatype":"FP32","data":[-1.5,2.3]}]}"#,
+            )
+            .create_async()
+            .await;
+
+        let captured = Arc::new(Mutex::new(Vec::new()));
+        let layer = SpanCaptureLayer {
+            captured: Arc::clone(&captured),
+        };
+        let subscriber = tracing_subscriber::registry().with(layer);
+        let dispatch = tracing::Dispatch::new(subscriber);
+
+        let clf = build_vertex(&server.url(), 0.5);
+        clf.classify("hello world")
+            .with_subscriber(dispatch)
+            .await
+            .expect("classify must succeed");
+
+        let captured = captured.lock().unwrap();
+        let http_span = captured
+            .iter()
+            .find(|s| s.name == "HTTP request")
+            .unwrap_or_else(|| {
+                panic!(
+                    "expected a span named \"HTTP request\", got spans: {:?}",
+                    captured.iter().map(|s| &s.name).collect::<Vec<_>>()
+                )
+            });
+
+        assert_eq!(
+            http_span
+                .fields
+                .get("http.request.method")
+                .map(String::as_str),
+            Some("POST"),
+            "span fields: {:?}",
+            http_span.fields
+        );
+        assert_eq!(
+            http_span.fields.get("otel.kind").map(String::as_str),
+            Some("client"),
+            "span fields: {:?}",
+            http_span.fields
+        );
+        assert_eq!(
+            http_span
+                .fields
+                .get("http.response.status_code")
+                .map(String::as_str),
+            Some("200"),
+            "span fields: {:?}",
+            http_span.fields
+        );
+        let url_full = http_span
+            .fields
+            .get("url.full")
+            .unwrap_or_else(|| panic!("expected url.full field, got: {:?}", http_span.fields));
+        assert!(
+            url_full.ends_with("/rawPredict"),
+            "url.full should target the rawPredict endpoint, got: {url_full}"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -600,10 +802,11 @@ mod tests {
     async fn refused_connection_returns_provider_error() {
         // Port 1 is well-known to be refused on all platforms.
         let clf = VertexSusFactor {
-            client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(5))
-                .build()
-                .unwrap(),
+            client: VertexSusFactor::build_traced_client(
+                Duration::from_secs(5),
+                Duration::from_secs(5),
+            )
+            .unwrap(),
             endpoint_url: "http://127.0.0.1:1/rawPredict".to_string(),
             tokenizer: load_test_tokenizer(),
             model_name: VertexSusFactor::DEFAULT_MODEL.to_string(),
