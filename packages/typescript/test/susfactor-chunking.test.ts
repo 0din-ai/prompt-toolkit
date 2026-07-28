@@ -273,7 +273,6 @@ describe("SusFactorClassifier.classify (mocked — chunking behaviour)", () => {
 const MODEL_CACHE_DIR = process.env.SUSFACTOR_MODEL_DIR;
 const { ModelCache: _GateModelCache } = (() => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require("../src/providers/model-cache");
   } catch {
     return { ModelCache: null };
@@ -287,7 +286,6 @@ const MODEL_AVAILABLE = Boolean(
 const describeIfModel = MODEL_AVAILABLE ? describe : describe.skip;
 
 describeIfModel("SusFactorClassifier.classify (live model)", () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { ModelCache } = require("../src/providers/model-cache");
 
   it("short prompt: classify() produces one chunk", async () => {
