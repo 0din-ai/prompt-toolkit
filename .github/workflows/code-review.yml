@@ -44,7 +44,7 @@ jobs:
             echo "has-key=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
+      - uses: stephengolub/code-reviewer@10b75b9fa1f7ac274297d9eb46ab9f80e726a5a5 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
         # Skip cleanly instead of letting this step fail red without the key.
         if: steps.check-key.outputs.has-key == 'true'
         with:
