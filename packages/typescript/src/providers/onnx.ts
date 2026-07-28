@@ -85,12 +85,12 @@ export class OnnxProvider implements EmbeddingProvider {
     // Dynamically import onnxruntime-node
     let ort: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       ort = require('onnxruntime-node');
     } catch (error) {
       throw new Error(
         "ONNX provider requires the 'onnxruntime-node' package. " +
-          'Install with: npm install onnxruntime-node'
+          'Install with: npm install onnxruntime-node',
+        { cause: error }
       );
     }
 
@@ -105,14 +105,14 @@ export class OnnxProvider implements EmbeddingProvider {
     let AutoTokenizer: any;
     let hfEnv: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const hf = require('@huggingface/transformers');
       AutoTokenizer = hf.AutoTokenizer;
       hfEnv = hf.env;
     } catch (error) {
       throw new Error(
         "ONNX provider requires the '@huggingface/transformers' package. " +
-          'Install with: npm install @huggingface/transformers'
+          'Install with: npm install @huggingface/transformers',
+        { cause: error }
       );
     }
 
@@ -182,7 +182,7 @@ export class OnnxProvider implements EmbeddingProvider {
     const seqLen = inputIdsData.length;
 
     // Create ONNX tensors
-    const ort = require('onnxruntime-node'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const ort = require('onnxruntime-node');
     const inputIdsTensor = new ort.Tensor('int64', inputIdsData, [1, seqLen]);
     const attentionMaskTensor = new ort.Tensor('int64', attentionMaskData, [1, seqLen]);
     const tokenTypeIdsTensor = new ort.Tensor('int64', tokenTypeIds, [1, seqLen]);

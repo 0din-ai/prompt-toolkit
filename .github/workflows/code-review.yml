@@ -19,7 +19,7 @@ jobs:
       pull-requests: write # post/update the review summary comment on the PR
       issues: read # acceptance_criteria_source: github_issue reads linked issues
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Explicitly persisting credentials — stephengolub/code-reviewer
           # runs its own `git fetch` calls after checkout and needs the
@@ -44,7 +44,7 @@ jobs:
             echo "has-key=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: stephengolub/code-reviewer@3a21d10a8572e2b0c21e449c88f64e7bb487b104 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
+      - uses: stephengolub/code-reviewer@10b75b9fa1f7ac274297d9eb46ab9f80e726a5a5 # pinned prior to v1 tag moving upstream; coordinate with @stephengolub before advancing
         # Skip cleanly instead of letting this step fail red without the key.
         if: steps.check-key.outputs.has-key == 'true'
         with:

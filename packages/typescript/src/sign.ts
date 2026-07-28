@@ -168,7 +168,8 @@ async function createProviderForVersion(
       if (error.code === 'MODULE_NOT_FOUND') {
         throw new Error(
           "V1 signatures require the ONNX provider. " +
-          "Install with: npm install onnxruntime-node"
+          "Install with: npm install onnxruntime-node",
+          { cause: error }
         );
       }
       throw error;
@@ -189,7 +190,8 @@ async function createProviderForVersion(
       if (error.code === 'MODULE_NOT_FOUND') {
         throw new Error(
           "V0 signatures require the OpenAI provider. " +
-          "Install with: npm install openai"
+          "Install with: npm install openai",
+          { cause: error }
         );
       }
       throw error;

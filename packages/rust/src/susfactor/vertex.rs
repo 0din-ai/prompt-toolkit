@@ -272,10 +272,16 @@ impl SusFactorProvider for VertexSusFactor {
                             .await
                             .unwrap_or_else(|_| "<unreadable body>".to_string());
                         let truncated = if body_text.len() > VertexSusFactor::MAX_ERROR_BODY {
-                            format!(
-                                "{}… (truncated)",
-                                &body_text[..VertexSusFactor::MAX_ERROR_BODY]
-                            )
+                            // Byte-index slicing panics if MAX_ERROR_BODY falls
+                            // inside a multi-byte codepoint; walk char
+                            // boundaries instead so non-ASCII error bodies
+                            // (e.g. Vertex errors in other languages) can't
+                            // crash the error-handling path itself.
+                            let safe_prefix: String = body_text
+                                .chars()
+                                .take(VertexSusFactor::MAX_ERROR_BODY)
+                                .collect();
+                            format!("{safe_prefix}… (truncated)")
                         } else {
                             body_text
                         };
@@ -443,7 +449,7 @@ mod tests {
     }
 
     /// Load a real tokenizer once per process (cached on disk after the first run).
-    fn load_test_tokenizer() -> Arc<tokenizers::Tokenizer> {
+    async fn load_test_tokenizer() -> Arc<tokenizers::Tokenizer> {
         // Try the cached path first.
         let cache_dir = dirs::cache_dir()
             .unwrap_or_else(|| std::path::PathBuf::from("/tmp"))
@@ -459,18 +465,23 @@ mod tests {
             return Arc::new(tok);
         }
 
-        // Fall back: download synchronously via reqwest blocking (no external
-        // binary dependency).
+        // Fall back: download via the async reqwest client. Using the
+        // blocking client here would panic ("Cannot drop a runtime in a
+        // context where blocking is not allowed") because every caller of
+        // this helper runs inside a `#[tokio::test]` async body already.
         let url =
             "https://huggingface.co/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json";
-        let bytes = reqwest::blocking::get(url)
-            .and_then(|r| r.bytes())
-            .unwrap_or_else(|e| {
-                eprintln!(
-                    "load_test_tokenizer: download failed ({e}); skipping network-dependent tests"
-                );
-                std::process::exit(0);
-            });
+        let bytes = async {
+            let response = reqwest::get(url).await?;
+            response.bytes().await
+        }
+        .await
+        .unwrap_or_else(|e| {
+            panic!(
+                "load_test_tokenizer: failed to download tokenizer fixture from {url} ({e}); \
+                 this test requires network access on first run to populate the on-disk cache"
+            );
+        });
 
         // Write to cache so subsequent runs skip the download.
         if let Some(parent) = cache_dir.parent() {
@@ -483,8 +494,8 @@ mod tests {
         Arc::new(tok)
     }
 
-    fn build_vertex(server_url: &str, threshold: f32) -> VertexSusFactor {
-        let tokenizer = load_test_tokenizer();
+    async fn build_vertex(server_url: &str, threshold: f32) -> VertexSusFactor {
+        let tokenizer = load_test_tokenizer().await;
         VertexSusFactor {
             client: VertexSusFactor::build_traced_client(
                 Duration::from_secs(10),
@@ -529,6 +540,11 @@ mod tests {
         let mut server = mockito::Server::new_async().await;
         let _mock = server
             .mock("POST", "/rawPredict")
+            // DisableOtelPropagation must keep W3C trace-context headers from
+            // leaking to Vertex, an external Google endpoint. Requiring the
+            // header be absent means the mock only matches (and `classify`
+            // only succeeds) when no `traceparent` header was sent.
+            .match_header("traceparent", mockito::Matcher::Missing)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(
@@ -544,7 +560,7 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(layer);
         let dispatch = tracing::Dispatch::new(subscriber);
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         clf.classify("hello world")
             .with_subscriber(dispatch)
             .await
@@ -611,7 +627,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         let result = clf
             .classify("hello world")
             .await
@@ -653,7 +669,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
 
         // Repeat a word enough times to exceed MAX_CONTENT_TOKENS after tokenization.
         // Each token is roughly one word; 1100 words guarantees > 1020 tokens.
@@ -692,7 +708,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         let result = clf.classify("test").await.expect("classify must succeed");
 
         assert_eq!(result.chunks.len(), 1);
@@ -722,7 +738,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         let err = clf.classify("test").await.expect_err("must return error");
 
         match &err {
@@ -730,6 +746,44 @@ mod tests {
                 assert!(
                     msg.contains("500") || msg.contains("Vertex AI"),
                     "error message should contain '500' or 'Vertex AI', got: {msg}"
+                );
+            }
+            other => panic!("expected SigError::Provider, got {other:?}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 4b — HTTP error body with multi-byte UTF-8 straddling the
+    // truncation boundary must not panic on a non-char-boundary byte slice.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn http_error_body_with_multibyte_utf8_at_truncation_boundary_does_not_panic() {
+        // 511 ASCII bytes followed by a 3-byte UTF-8 character ('中') means the
+        // character spans bytes [511, 514), so byte offset 512 (MAX_ERROR_BODY)
+        // falls inside it — `&body_text[..512]` panics on current code.
+        let body = format!("{}{}", "a".repeat(511), "中".repeat(20));
+        assert!(
+            body.len() > VertexSusFactor::MAX_ERROR_BODY,
+            "fixture must exceed MAX_ERROR_BODY to exercise the truncation path"
+        );
+
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("POST", "/rawPredict")
+            .with_status(500)
+            .with_header("content-type", "application/json")
+            .with_body(&body)
+            .create_async()
+            .await;
+
+        let clf = build_vertex(&server.url(), 0.5).await;
+        let err = clf.classify("test").await.expect_err("must return error");
+
+        match &err {
+            SigError::Provider(msg) => {
+                assert!(
+                    msg.contains("truncated"),
+                    "expected truncated error message, got: {msg}"
                 );
             }
             other => panic!("expected SigError::Provider, got {other:?}"),
@@ -750,7 +804,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         let err = clf.classify("test").await.expect_err("must return error");
 
         match &err {
@@ -780,7 +834,7 @@ mod tests {
             .create_async()
             .await;
 
-        let clf = build_vertex(&server.url(), 0.5);
+        let clf = build_vertex(&server.url(), 0.5).await;
         let result = clf
             .classify("test")
             .await
@@ -808,7 +862,7 @@ mod tests {
             )
             .unwrap(),
             endpoint_url: "http://127.0.0.1:1/rawPredict".to_string(),
-            tokenizer: load_test_tokenizer(),
+            tokenizer: load_test_tokenizer().await,
             model_name: VertexSusFactor::DEFAULT_MODEL.to_string(),
             threshold: 0.5,
             auth: Arc::new(FakeTokenProvider),
