@@ -54,7 +54,6 @@ export class OpenAIProvider implements EmbeddingProvider {
 
     // Dynamically import OpenAI
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { OpenAI } = require('openai');
       this.client = new OpenAI({
         apiKey: options.apiKey,
@@ -62,7 +61,8 @@ export class OpenAIProvider implements EmbeddingProvider {
       });
     } catch (error) {
       throw new Error(
-        "OpenAI provider requires the 'openai' package. Install with: npm install openai"
+        "OpenAI provider requires the 'openai' package. Install with: npm install openai",
+        { cause: error }
       );
     }
   }
