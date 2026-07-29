@@ -141,7 +141,7 @@ dependencies = [
 
 [[package]]
 name = "odin-prompt-toolkit"
-version = "0.3.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "odin-prompt-toolkit-python"
-version = "0.3.0"
+version = "0.8.0"
 dependencies = [
  "odin-prompt-toolkit",
  "pyo3",
