@@ -1395,7 +1395,7 @@ dependencies = [
  "mockito",
  "ndarray",
  "ort",
- "rand 0.9.5",
+ "rand 0.10.2",
  "reqwest",
  "reqwest-middleware",
  "reqwest-tracing",
