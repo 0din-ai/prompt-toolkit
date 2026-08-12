@@ -163,4 +163,4 @@ Using the toolkit in production? Open a PR to add your project here.
 
 ## License
 
-MIT
+Apache License 2.0

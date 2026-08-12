@@ -147,4 +147,4 @@ ruff check odin_prompt_toolkit/ tests/
 
 ## License
 
-MIT
+Apache License 2.0

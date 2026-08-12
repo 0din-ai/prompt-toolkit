@@ -194,4 +194,4 @@ npm run format
 
 ## License
 
-MIT
+Apache License 2.0
