@@ -693,7 +693,7 @@ conn.execute("PRAGMA journal_mode=WAL")
 
 **Current**: F1 of 0.752 (acceptable for candidate generation)
 
-**Goal**: F1 > 0.90 (as cited in 0DIN-1021)
+**Goal**: F1 > 0.90
 
 **Approaches**:
 - Increase LSH bands (16 → 32)

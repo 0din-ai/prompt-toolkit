@@ -2,7 +2,7 @@
 //!
 //! Measures the throughput of LSH signature generation in the Rust SDK.
 //! This demonstrates the performance difference between pure-Python and
-//! native implementations for the signature capabilities showcase (0DIN-1029).
+//! native implementations for the signature capabilities showcase.
 //!
 //! Usage:
 //!   cargo run --release --example benchmark_signatures -- --count 10000

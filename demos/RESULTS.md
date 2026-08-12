@@ -1,5 +1,5 @@
 # Why Signatures Instead of Embeddings?
-### Benchmark Results — 0DIN-1029
+### Benchmark Results
 
 *Run date: 2026-02-26 · Dataset: 3,714 real jailbreak prompts · Hardware: local MacBook (CPU only)*
 
@@ -318,7 +318,7 @@ Note: Python SDK achieves ~9 sigs/sec on the same hardware (631× slower)
       A 50K–100K item dataset would reveal the algorithmic scaling gap more
       clearly. Can synthesize from existing prompts or pull from prod.
 - [ ] **Accuracy tuning** — F1 of 0.752 is acceptable for candidate generation but below
-      the 0.90+ cited in 0DIN-1021. Increasing LSH bands (16→32) or bits (256→512)
+      the 0.90+ cited in [ticket]. Increasing LSH bands (16→32) or bits (256→512)
       should improve recall with modest latency trade-off.
 - [ ] **Benchmark script is reproducible** — `demos/showcase.py` is committed to
       `odin-prompt-toolkit`. Anyone with the threat feed JSON can reproduce these numbers.

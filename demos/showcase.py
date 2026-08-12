@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Signature Capabilities Showcase — 0DIN-1029
+"""Signature Capabilities Showcase
 
 Answers the question: "Why signatures instead of embeddings?"
 
@@ -1586,7 +1586,7 @@ async def main() -> None:
         bold(cyan("  ╔══════════════════════════════════════════════════════════════╗"))
     )
     print(
-        bold(cyan("  ║      0DIN Signature Capabilities Showcase  (0DIN-1029)      ║"))
+        bold(cyan("  ║      0DIN Signature Capabilities Showcase                   ║"))
     )
     print(
         bold(cyan("  ║   Why signatures beat embeddings for similarity lookup       ║"))

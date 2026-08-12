@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - Unreleased
 
-Production-grade concurrency hardening for `OnnxProvider` (0DIN-1555). Adopts
+Production-grade concurrency hardening for `OnnxProvider`. Adopts
 Heimdall's proven ONNX Runtime provider into the SDK.
 
 ### Changed

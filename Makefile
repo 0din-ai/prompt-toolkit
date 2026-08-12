@@ -117,7 +117,7 @@ package-typescript: ## Build and pack TypeScript npm tarball
 
 ##@ Deliverable
 
-deliverable: package-python ## Build design partner deliverable tarball (0DIN-1114)
+deliverable: package-python ## Build design partner deliverable tarball
 	@echo ""
 	@echo "$(CYAN)Building design partner deliverable...$(RESET)"
 	@if [ ! -f deliverable/build-tarball.sh ]; then \
@@ -426,7 +426,7 @@ version: ## Display version information
 	@echo "  Python:     $(shell cd packages/python && python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "0.1.0")"
 	@echo "  TypeScript: $(shell cd packages/typescript && node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")"
 
-##@ Showcase (0DIN-1029)
+##@ Showcase
 
 showcase-install: ## Install showcase benchmark dependencies
 	@echo "$(CYAN)Installing showcase dependencies...$(RESET)"

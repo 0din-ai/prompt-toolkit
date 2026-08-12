@@ -3,7 +3,7 @@
 //! Spawns `concurrency` worker tasks, each issuing `iterations` embedding
 //! requests against a single shared [`OnnxProvider`], and reports p50 / p95
 //! latency and throughput. Mirrors the intent of Heimdall's `prompt-load-test.js`
-//! at the SDK level — use it to demonstrate the 0DIN-1555 acceptance criteria:
+//! at the SDK level — use it to demonstrate the [ticket] acceptance criteria:
 //! that a session pool lets multiple inferences run concurrently (and that
 //! `spawn_blocking` keeps the async runtime responsive under load).
 //!
