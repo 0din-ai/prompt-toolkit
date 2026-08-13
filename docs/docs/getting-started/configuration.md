@@ -59,7 +59,7 @@ config = LshConfig(families=5, bits=512, bands=32)
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { LshConfig } from '@0din/odin-prompt-toolkit';
+import { LshConfig } from '@0din/prompt-toolkit';
 
 // Use defaults (pass undefined or omit config)
 const config = { families: 3, bits: 256, bands: 16 };
@@ -275,7 +275,7 @@ provider = OpenAIProvider(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
+import { OpenAIProvider } from '@0din/prompt-toolkit/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -335,7 +335,7 @@ provider = await OnnxProvider.new(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(
@@ -490,7 +490,7 @@ for i, family in enumerate(families):
 **Installation:**
 ```bash
 # With native acceleration
-pip install odin-prompt-toolkit
+pip install 0din-prompt-toolkit
 
 # Verify native is available
 python -c "from odin_prompt_toolkit import NATIVE_AVAILABLE; print(NATIVE_AVAILABLE)"

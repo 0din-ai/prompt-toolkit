@@ -39,10 +39,10 @@ With native acceleration, signature generation adds only **0.6% overhead** on to
 
 ```bash
 # From PyPI (when published)
-pip install 'odin-prompt-toolkit[native]'
+pip install '0din-prompt-toolkit[native]'
 
 # From Git
-pip install 'git+https://github.com/0din-ai/prompt-toolkit.git#subdirectory=packages/python&egg=odin-prompt-toolkit[native]'
+pip install 'git+https://github.com/0din-ai/prompt-toolkit.git#subdirectory=packages/python&egg=0din-prompt-toolkit[native]'
 
 # Local development
 cd packages/python
@@ -57,7 +57,7 @@ The `[native]` extra installs:
 
 ```bash
 # Basic installation without native acceleration
-pip install odin-prompt-toolkit
+pip install 0din-prompt-toolkit
 ```
 
 The SDK will work fine without the native extension, but signature generation will be ~592× slower.
@@ -66,7 +66,7 @@ The SDK will work fine without the native extension, but signature generation wi
 
 ```bash
 # Install everything including native acceleration
-pip install 'odin-prompt-toolkit[all]'
+pip install '0din-prompt-toolkit[all]'
 ```
 
 Includes: `native`, `openai`, `onnx`, `cm-lsh` extras.
@@ -265,7 +265,7 @@ At large scale, the native extension is the difference between **minutes and day
 
 **Solution 1**: Install the native extra:
 ```bash
-pip install 'odin-prompt-toolkit[native]'
+pip install '0din-prompt-toolkit[native]'
 ```
 
 **Solution 2**: Rebuild the extension manually:
@@ -316,8 +316,8 @@ print(f"simhash_lsh module: {lsh.simhash_lsh.__module__}")
 ```
 
 If `NATIVE_AVAILABLE` is `False`:
-1. Check if `pip list | grep odin-prompt-toolkit-native` shows the package
-2. Reinstall with `pip install --force-reinstall 'odin-prompt-toolkit[native]'`
+1. Check if `pip list | grep 0din-prompt-toolkit-native` shows the package
+2. Reinstall with `pip install --force-reinstall '0din-prompt-toolkit[native]'`
 3. Check for import errors: `python -c "import odin_prompt_toolkit_native"`
 
 ### Different Results: Native vs Pure Python
@@ -449,7 +449,7 @@ Compile the Rust core to WebAssembly for:
 
 **Recommended Installation**:
 ```bash
-pip install 'odin-prompt-toolkit[native,onnx]'  # Native acceleration + local embeddings
+pip install '0din-prompt-toolkit[native,onnx]'  # Native acceleration + local embeddings
 ```
 
 **Performance Verification**:

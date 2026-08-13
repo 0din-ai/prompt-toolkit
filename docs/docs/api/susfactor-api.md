@@ -274,10 +274,10 @@ One entry per chunk in `ShadowDivergence.chunks`.
 
 ```bash
 # ONNX backend (recommended — no torch at inference time)
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # PyTorch backend
-pip install "odin-prompt-toolkit[susfactor] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[susfactor] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### `SusFactorOnnxClassifier` (recommended)
@@ -453,8 +453,8 @@ LABEL_SUSPICIOUS    // "suspicious"
 ### Example
 
 ```typescript
-import { SusFactorClassifier, susFactor } from '@0din/odin-prompt-toolkit/susfactor';
-import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
+import { SusFactorClassifier, susFactor } from '@0din/prompt-toolkit/susfactor';
+import { ModelCache } from '@0din/prompt-toolkit/providers';
 
 // Reusable classifier (preferred for multiple calls)
 const clf = await SusFactorClassifier.create(new ModelCache(), {
@@ -484,7 +484,7 @@ All three languages raise/return a dedicated error type on failure:
 |---|---|---|
 | Rust | `SigError::Model(...)` | `odin_prompt_toolkit::error` |
 | Python | `SusFactorError` | `odin_prompt_toolkit.error` |
-| TypeScript | `SusFactorError` | `@0din/odin-prompt-toolkit/error` |
+| TypeScript | `SusFactorError` | `@0din/prompt-toolkit/error` |
 
 Common failure modes:
 - Model files not found in cache (download first)

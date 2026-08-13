@@ -55,32 +55,32 @@ cargo build
 Install via pip with git dependency:
 
 ```bash
-pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Optional Dependencies
 
 ```bash
 # Core LSH only (no embeddings)
-pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With OpenAI support
-pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[openai] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With ONNX support (V1 embeddings + SusFactor ONNX backend)
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With CM-LSH support
-pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With SusFactor (PyTorch backend)
-pip install "odin-prompt-toolkit[susfactor] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[susfactor] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With Threat Feed integration
-pip install "odin-prompt-toolkit[threatfeed] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[threatfeed] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # All features
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Requirements
@@ -117,7 +117,7 @@ yarn add "github:0din-ai/prompt-toolkit#main"
 ### Verify Installation
 
 ```typescript
-import { simhashLshMulti } from '@0din/odin-prompt-toolkit';
+import { simhashLshMulti } from '@0din/prompt-toolkit';
 console.log('odin-prompt-toolkit installed successfully');
 ```
 

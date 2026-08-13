@@ -289,7 +289,7 @@ print(f"Similarity: {similarity:.3f}")  # e.g., 0.847
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
+import { createDefaultCmLsh } from '@0din/prompt-toolkit';
 
 // Create CM-LSH hasher (1024-dim embeddings)
 const hasher = createDefaultCmLsh(384, 0);
@@ -338,8 +338,8 @@ for i, h1 in enumerate(hashes):
 | Language | Status | Installation |
 |----------|--------|-------------|
 | **Rust** | ✅ Available | `odin-prompt-toolkit = { version = "0.1", features = ["cm-lsh"] }` |
-| **Python** | ✅ Available | `pip install 'odin-prompt-toolkit[cm-lsh]'` |
-| **TypeScript** | ✅ Available | `npm install @0din/odin-prompt-toolkit` (included by default) |
+| **Python** | ✅ Available | `pip install '0din-prompt-toolkit[cm-lsh]'` |
+| **TypeScript** | ✅ Available | `npm install @0din/prompt-toolkit` (included by default) |
 
 ---
 

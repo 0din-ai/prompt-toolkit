@@ -160,7 +160,7 @@ async def _create_provider_for_version(
         except ImportError as e:
             raise ImportError(
                 "V1 signatures require the ONNX provider. "
-                "Install with: pip install 'odin-prompt-toolkit[onnx]'"
+                "Install with: pip install '0din-prompt-toolkit[onnx]'"
             ) from e
 
         cache = ModelCache()

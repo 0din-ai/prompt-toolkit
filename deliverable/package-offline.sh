@@ -11,8 +11,8 @@
 #
 # Options:
 #   --version VERSION        SDK version (default: read from packages/python/pyproject.toml)
-#   --pure-wheel PATH        Path to odin_prompt_toolkit-*.whl  (default: auto-detect in packages/python/dist/)
-#   --native-wheel PATH      Path to odin_prompt_toolkit_native-*.whl  (optional)
+#   --pure-wheel PATH        Path to 0din_prompt_toolkit-*.whl  (default: auto-detect in packages/python/dist/)
+#   --native-wheel PATH      Path to 0din_prompt_toolkit_native-*.whl  (optional)
 #   --model-source PATH      Local directory containing model v1 files  (default: download from HuggingFace)
 #   --output-dir PATH        Where to write the bundle directory  (default: current directory)
 #   --zip                    Also create a .zip archive of the bundle
@@ -27,8 +27,8 @@
 #   verify.py               ← post-install smoke test
 #   README.txt              ← quick-start instructions
 #   sdk/
-#     odin_prompt_toolkit-{VERSION}-py3-none-any.whl
-#     odin_prompt_toolkit_native-{VERSION}-{platform}.whl  (if provided)
+#     0din_prompt_toolkit-{VERSION}-py3-none-any.whl
+#     0din_prompt_toolkit_native-{VERSION}-{platform}.whl  (if provided)
 #   model/
 #     v1/
 #       onnx/model.onnx          (~235 MB)
@@ -111,7 +111,7 @@ log_info "Step 1/5: Locating SDK wheel..."
 
 if [[ -z "$PURE_WHEEL" ]]; then
     PYTHON_DIST="${REPO_ROOT}/packages/python/dist"
-    PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" 2>/dev/null | head -1)
+    PURE_WHEEL=$(find "$PYTHON_DIST" -name "0din_prompt_toolkit-${VERSION}-py3-none-any.whl" 2>/dev/null | head -1)
     if [[ -z "$PURE_WHEEL" ]]; then
         die "Pure Python wheel not found in ${PYTHON_DIST}.\n       Run 'make package-python' first, or pass --pure-wheel PATH."
     fi

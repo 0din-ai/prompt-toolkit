@@ -118,7 +118,7 @@ install_sdk() {
     info "Installing 0DIN Prompt Toolkit..."
     
     # Find the pure Python wheel
-    PURE_WHEEL=$(find sdk/ -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
+    PURE_WHEEL=$(find sdk/ -name "0din_prompt_toolkit-*-py3-none-any.whl" | head -1)
     if [[ -z "$PURE_WHEEL" ]]; then
         error "Pure Python wheel not found in sdk/"
     fi
@@ -131,15 +131,15 @@ install_sdk() {
     PYTHON_TAG="cp$(python3 -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
     
     if [[ "$PLATFORM" == "linux" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_x86_64.whl"
+        NATIVE_PATTERN="0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_x86_64.whl"
     elif [[ "$PLATFORM" == "linux" && "$ARCH_NORMALIZED" == "aarch64" ]]; then
-        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_aarch64.whl"
+        NATIVE_PATTERN="0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-manylinux*_aarch64.whl"
     elif [[ "$PLATFORM" == "macos" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_x86_64.whl"
+        NATIVE_PATTERN="0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_x86_64.whl"
     elif [[ "$PLATFORM" == "macos" && "$ARCH_NORMALIZED" == "aarch64" ]]; then
-        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_arm64.whl"
+        NATIVE_PATTERN="0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-macosx*_arm64.whl"
     elif [[ "$PLATFORM" == "windows" && "$ARCH_NORMALIZED" == "x86_64" ]]; then
-        NATIVE_PATTERN="odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-win_amd64.whl"
+        NATIVE_PATTERN="0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-win_amd64.whl"
     else
         info "No native wheel available for $PLATFORM $ARCH_NORMALIZED (using pure Python)"
         return

@@ -335,7 +335,7 @@ jobs:
           echo "======================================"
 
           # Pure Python wheel (path includes full runner path prefix)
-          PURE_WHEEL=$(find artifacts/python-dist -name "odin_prompt_toolkit-*-py3-none-any.whl" | head -1)
+          PURE_WHEEL=$(find artifacts/python-dist -name "0din_prompt_toolkit-*-py3-none-any.whl" | head -1)
           if [[ -z "$PURE_WHEEL" ]]; then
             echo "ERROR: Pure Python wheel not found in artifact" && exit 1
           fi
@@ -395,7 +395,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           NATIVE_WHEEL=$(find packages/python-native/dist \
-            -name "odin_prompt_toolkit_native-${VERSION}-*-manylinux*_x86_64.whl" \
+            -name "0din_prompt_toolkit_native-${VERSION}-*-manylinux*_x86_64.whl" \
             | sort -V | tail -1)
 
           cd deliverable
@@ -521,8 +521,8 @@ jobs:
       - name: Collect distributions
         run: |
           mkdir -p dist
-          find python-dist -name 'odin_prompt_toolkit-*.whl'    -exec cp {} dist/ \;
-          find python-dist -name 'odin_prompt_toolkit-*.tar.gz' -exec cp {} dist/ \;
+          find python-dist -name '0din_prompt_toolkit-*.whl'    -exec cp {} dist/ \;
+          find python-dist -name '0din_prompt_toolkit-*.tar.gz' -exec cp {} dist/ \;
           echo "Uploading:" && ls -lh dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
@@ -543,8 +543,8 @@ jobs:
       - name: Collect native wheels + sdist
         run: |
           mkdir -p dist
-          find native-artifacts -name 'odin_prompt_toolkit_native-*.whl'    -exec cp {} dist/ \;
-          find native-artifacts -name 'odin_prompt_toolkit_native-*.tar.gz' -exec cp {} dist/ \;
+          find native-artifacts -name '0din_prompt_toolkit_native-*.whl'    -exec cp {} dist/ \;
+          find native-artifacts -name '0din_prompt_toolkit_native-*.tar.gz' -exec cp {} dist/ \;
           echo "Uploading:" && ls -lh dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:

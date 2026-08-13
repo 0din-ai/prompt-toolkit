@@ -3,9 +3,9 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "odin-prompt-toolkit-native"
+name = "0din-prompt-toolkit-native"
 version = "0.8.0"
-description = "Native Rust acceleration for odin-prompt-toolkit"
+description = "Native Rust acceleration for 0din-prompt-toolkit"
 authors = [{ name = "0din Team" }]
 requires-python = ">=3.10"
 classifiers = [

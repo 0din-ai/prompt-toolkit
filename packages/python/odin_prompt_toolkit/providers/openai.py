@@ -11,7 +11,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "OpenAI provider requires the 'openai' package. "
-        "Install with: pip install 'odin-prompt-toolkit[openai]'"
+        "Install with: pip install '0din-prompt-toolkit[openai]'"
     ) from e
 
 

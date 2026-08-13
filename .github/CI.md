@@ -160,8 +160,8 @@ environment, so a maintainer must approve it before anything ships.
 
 | Job | Package | Registry |
 |-----|---------|----------|
-| `publish-pypi` | `odin-prompt-toolkit` | PyPI |
-| `publish-pypi-native` | `odin-prompt-toolkit-native` | PyPI |
+| `publish-pypi` | `0din-prompt-toolkit` | PyPI |
+| `publish-pypi-native` | `0din-prompt-toolkit-native` | PyPI |
 | `publish-crates` | `odin-prompt-toolkit` | crates.io |
 | `publish-npm` | `@0din/prompt-toolkit` | npm |
 | `publish-go` | `github.com/0din-ai/prompt-toolkit/packages/go` | Go module proxy |

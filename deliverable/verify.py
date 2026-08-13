@@ -63,7 +63,7 @@ def verify_native_acceleration() -> Optional[bool]:
         else:
             print_warning("Native acceleration not available (using pure Python)")
             print_warning("  Install native wheels for better performance:")
-            print_warning("  pip install odin-prompt-toolkit-native")
+            print_warning("  pip install 0din-prompt-toolkit-native")
             return False
     except ImportError:
         print_warning("Could not check native acceleration status")

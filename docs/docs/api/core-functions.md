@@ -166,7 +166,7 @@ function normalizeVector(vector: number[]): number[]
 
 **Example:**
 ```typescript
-import { normalizeVector } from '@0din/odin-prompt-toolkit';
+import { normalizeVector } from '@0din/prompt-toolkit';
 
 const vector = [3.0, 4.0];  // magnitude = 5
 const normalized = normalizeVector(vector);
@@ -248,7 +248,7 @@ function hammingDistanceHex(hexA: string, hexB: string): number
 
 **Example:**
 ```typescript
-import { hammingDistanceHex } from '@0din/odin-prompt-toolkit';
+import { hammingDistanceHex } from '@0din/prompt-toolkit';
 
 const sigA = "8d000000ac854dae";
 const sigB = "8d000000ac854daf";
@@ -329,7 +329,7 @@ function cosineFromHamming(hammingDistance: number, bits: number): number
 
 **Example:**
 ```typescript
-import { hammingDistanceHex, cosineFromHamming } from '@0din/odin-prompt-toolkit';
+import { hammingDistanceHex, cosineFromHamming } from '@0din/prompt-toolkit';
 
 const distance = hammingDistanceHex("8d00...", "8d01...");
 const similarity = cosineFromHamming(distance, 256);
@@ -412,7 +412,7 @@ function computeEmbeddingSha256(normalizedEmbedding: number[]): string
 
 **Example:**
 ```typescript
-import { normalizeVector, computeEmbeddingSha256 } from '@0din/odin-prompt-toolkit';
+import { normalizeVector, computeEmbeddingSha256 } from '@0din/prompt-toolkit';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);

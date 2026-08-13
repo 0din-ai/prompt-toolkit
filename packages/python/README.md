@@ -10,22 +10,22 @@ This is the Python implementation of the odin-prompt-toolkit algorithm, also ava
 
 ```bash
 # Basic installation (pure Python)
-pip install git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python
+pip install git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python
 
 # With native Rust acceleration (653× faster signature generation!)
-pip install "odin-prompt-toolkit[native] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+pip install "0din-prompt-toolkit[native] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With OpenAI support
-pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+pip install "0din-prompt-toolkit[openai] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With ONNX support (local embeddings)
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+pip install "0din-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With CM-LSH (Confidence Matrix LSH)
-pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+pip install "0din-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # All features (including native acceleration)
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+pip install "0din-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Performance: Native vs Pure Python

@@ -212,8 +212,8 @@ async def index_corpus(texts: list[str]):
 
 ```typescript
 import { Pool } from 'pg';
-import { signText, SignatureVersion, parseSignatureString } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, SignatureVersion, parseSignatureString } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 async function indexDocument(
   pool: Pool,

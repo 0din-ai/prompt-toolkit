@@ -28,7 +28,7 @@ You need a 0DIN API token. The client reads it from:
 ### Install
 
 ```bash
-pip install "odin-prompt-toolkit[threatfeed] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[threatfeed] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### Full Example
@@ -155,13 +155,13 @@ npm install github:0din-ai/prompt-toolkit#main
 ### Full Example
 
 ```typescript
-import { signText, SignatureVersion } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, SignatureVersion } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 import {
   ThreatFeedClient,
   ThreatFeedCache,
   compareToThreatfeed,
-} from '@0din/odin-prompt-toolkit/threatfeed';
+} from '@0din/prompt-toolkit/threatfeed';
 
 // --- One-time setup ---
 const client = new ThreatFeedClient({ apiToken: 'your-token' });

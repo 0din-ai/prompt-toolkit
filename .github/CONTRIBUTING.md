@@ -13,7 +13,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/0din-ai/odin-prompt-toolkit.git
+git clone https://github.com/0din-ai/prompt-toolkit.git
 cd prompt-toolkit
 
 # Install dependencies for all languages
