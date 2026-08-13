@@ -523,6 +523,10 @@ jobs:
           mkdir -p dist
           find python-dist -name '0din_prompt_toolkit-*.whl'    -exec cp {} dist/ \;
           find python-dist -name '0din_prompt_toolkit-*.tar.gz' -exec cp {} dist/ \;
+          if [ -z "$(ls -A dist)" ]; then
+            echo "ERROR: no 0din_prompt_toolkit distributions found in the python-dist artifact" >&2
+            exit 1
+          fi
           echo "Uploading:" && ls -lh dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
@@ -549,6 +553,10 @@ jobs:
           mkdir -p dist
           find native-artifacts -name '0din_prompt_toolkit_native-*.whl'    -exec cp {} dist/ \;
           find native-artifacts -name '0din_prompt_toolkit_native-*.tar.gz' -exec cp {} dist/ \;
+          if [ -z "$(ls -A dist)" ]; then
+            echo "ERROR: no 0din_prompt_toolkit_native distributions found in the native-* artifacts" >&2
+            exit 1
+          fi
           echo "Uploading:" && ls -lh dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
@@ -598,7 +606,7 @@ jobs:
           package-manager-cache: false
       - name: Upgrade npm for trusted publishing
         # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10.x.
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11
       - name: Install and build
         working-directory: packages/typescript
         run: |
