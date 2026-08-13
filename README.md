@@ -11,7 +11,7 @@ Multi-language SDK for AI prompt similarity detection — LSH signatures, jailbr
 | **LSH Signatures** | SimHash locality-sensitive hashing — 256-bit signatures for fast prompt similarity |
 | **SusFactor Classifier** | ONNX-backed jailbreak/prompt-injection classifier (score 0–1) |
 | **Threat Feed** | Compare signatures against live 0DIN threat intelligence feeds |
-| **Native Acceleration** | PyO3 Rust extension for Python — 627× faster LSH computation |
+| **Native Acceleration** | PyO3 Rust extension for Python — up to ~600× faster LSH computation |
 
 ## Packages
 

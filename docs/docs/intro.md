@@ -38,7 +38,7 @@ Use it to:
 - 🛡️ **Threat intelligence** — Sync and query the 0DIN threat feed of known adversarial prompts
 - 🌍 **Cross-language** — Identical signatures and parity scores across Rust, Python, TypeScript, and Go
 - 📦 **No API required** — Local ONNX models for both embeddings (V1) and classification
-- 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (627× speedup)
+- 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (up to ~600× speedup)
 - 🧪 **Battle-tested** — 400+ tests across 4 languages
 
 ---
