@@ -50,7 +50,7 @@ susfactor = [
     "transformers>=4.0.0",
 ]
 native = [
-    "odin-prompt-toolkit-native>=0.1.0",  # Rust acceleration (~627× speedup) - not published yet
+    "odin-prompt-toolkit-native>=0.1.0",  # Rust acceleration (~627× speedup)
 ]
 dev = [
     "pytest>=7.4.0",
