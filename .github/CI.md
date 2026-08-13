@@ -168,12 +168,17 @@ environment, so a maintainer must approve it before anything ships.
 
 ### One-time setup (required before the first automated publish)
 
-1. **Protected environment.** Settings → Environments → create `release` and add
-   at least one required reviewer. Without this the approval gate does nothing.
-2. **PyPI** (both packages). Add a *trusted publisher* on pypi.org:
-   owner `0din-ai`, repo `prompt-toolkit`, workflow `release.yml`, environment
-   `release`. A *pending publisher* covers the very first upload, so no manual
-   bootstrap is needed.
+1. **Protected environments.** Settings → Environments → create `release` **and**
+   `release-native`, each with at least one required reviewer. Without these the
+   approval gate does nothing. (Two PyPI environments are required — see below.)
+2. **PyPI** (two publishers, on pypi.org). Both use owner `0din-ai`, repo
+   `prompt-toolkit`, workflow `release.yml`. They need **different environments**
+   because PyPI keys a *pending* publisher on (owner, repo, workflow, environment)
+   and rejects two not-yet-existing projects sharing an identical tuple:
+   - `0din-prompt-toolkit` → environment `release`
+   - `0din-prompt-toolkit-native` → environment `release-native`
+
+   A *pending publisher* covers the very first upload, so no manual bootstrap is needed.
 3. **crates.io.** Publish `odin-prompt-toolkit` once manually
    (`cd packages/rust && cargo publish`), then link this repo + `release.yml`
    as a trusted publisher in the crate settings. OIDC cannot create the first

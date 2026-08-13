@@ -528,11 +528,15 @@ jobs:
         with:
           packages-dir: dist/
 
-  # Publish native (Rust-accelerated) wheels to PyPI
+  # Publish native (Rust-accelerated) wheels to PyPI.
+  # Uses a distinct environment from publish-pypi: PyPI keys pending trusted
+  # publishers on (owner, repo, workflow, environment) and rejects two
+  # not-yet-existing projects sharing an identical tuple. `release-native`
+  # keeps this publisher's tuple unique from the pure package's `release`.
   publish-pypi-native:
     needs: [release]
     runs-on: ubuntu-latest
-    environment: release
+    environment: release-native
     permissions:
       id-token: write   # PyPI trusted publishing (OIDC)
     steps:
