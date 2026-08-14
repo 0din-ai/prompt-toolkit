@@ -3,7 +3,7 @@
 
 *Run date: 2026-02-26 · Dataset: 3,714 real jailbreak prompts · Hardware: local MacBook (CPU only)*
 
-**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install odin-prompt-toolkit[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
+**✨ NEW (v0.1.1+)**: Native Rust acceleration available! Install with `pip install 0din-prompt-toolkit[native]` for **~592× faster signature generation** (transparent fallback to pure Python if unavailable).
 
 ---
 
@@ -83,8 +83,8 @@ For the full 3,714-prompt dataset:
 **With native Rust acceleration (default in v0.1.1+)**: Signature generation adds only **0.6% overhead** on top of embedding generation. The pure Python fallback adds ~38% overhead, but is
 only needed if the native Rust extension fails to build. This is a **one-time ingest cost** — queries don't regenerate signatures, they do O(log n) band lookups.
 
-**Native acceleration** (available via `pip install odin-prompt-toolkit[native]`):
-- Installs the `odin-prompt-toolkit-native` PyO3 extension (Rust bindings)
+**Native acceleration** (available via `pip install 0din-prompt-toolkit[native]`):
+- Installs the `0din-prompt-toolkit-native` PyO3 extension (Rust bindings)
 - Provides **~592× speedup** for signature generation (5,332 vs 85 sigs/sec)
 - Transparent: same Python API, automatically used if installed
 - Bit-identical results to pure Python (verified via canonical test vectors)
