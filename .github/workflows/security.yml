@@ -140,7 +140,7 @@ jobs:
         # latest; advisories cover <=2.0.2). Build-time only — Docusaurus reads
         # image dimensions during the static site build over first-party images.
         # Remove the allowlist entries once image-size ships a patched release.
-        run: npx --yes audit-ci@^7 --high --allowlist GHSA-w3rx-r6r6-pgpr GHSA-5p2g-fcmc-qvqq
+        run: npx --yes audit-ci@7.1.0 --high --allowlist GHSA-w3rx-r6r6-pgpr GHSA-5p2g-fcmc-qvqq
 
   go-audit:
     name: Go dependency audit (govulncheck)
