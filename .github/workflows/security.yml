@@ -132,9 +132,13 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ matrix.working-directory }}/package-lock.json
 
-      - name: npm audit
+      - name: npm audit (audit-ci)
         working-directory: ${{ matrix.working-directory }}
-        run: npm audit --audit-level=high
+        # audit-ci wraps `npm audit` so specific unfixable transitive advisories
+        # can be allowlisted with a documented justification (see the
+        # audit-ci.jsonc in each working-directory). Fails on any non-allowlisted
+        # high/critical advisory, preserving the prior --audit-level=high gate.
+        run: npx --yes audit-ci@7.1.0 --config audit-ci.jsonc
 
   go-audit:
     name: Go dependency audit (govulncheck)
