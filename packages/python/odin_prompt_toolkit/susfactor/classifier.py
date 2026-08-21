@@ -317,6 +317,7 @@ class SusFactorClassifier:
                 start_ms=(chunk_start - wall_start) * 1000,
                 duration_ms=timing_ms,
                 chunk_index=index,
+                token_count=chunk_len,
             )
             return result, inference_span
 
@@ -342,6 +343,7 @@ class SusFactorClassifier:
             is_suspicious=is_suspicious,
             total_timing_ms=(_time.time() - wall_start) * 1000,
             spans=spans,
+            total_tokens=len(all_ids),
         )
 
     async def close(self) -> None:

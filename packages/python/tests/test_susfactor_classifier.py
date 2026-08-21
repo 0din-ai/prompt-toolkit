@@ -170,6 +170,10 @@ class TestClassifyWithFakes:
         inference = [s for s in result.spans if s.name == "inference"]
         assert len(inference) == 1
         assert inference[0].chunk_index == 0
+        # total_tokens is the full tokenized length; the single inference span's
+        # token_count is that chunk's sequence length (positive).
+        assert result.total_tokens > 0
+        assert inference[0].token_count == result.total_tokens
 
     async def test_multi_chunk_span_waterfall(self):
         """A prompt spanning multiple chunks emits one inference span per chunk."""
@@ -184,6 +188,13 @@ class TestClassifyWithFakes:
         inference = [s for s in result.spans if s.name == "inference"]
         assert len(inference) == len(result.chunks)
         assert [s.chunk_index for s in inference] == list(range(len(result.chunks)))
+        # total_tokens is the full tokenized length (1200 forced above).
+        assert result.total_tokens == 1200
+        # Each inference span carries its chunk's sequence length, all positive,
+        # and they cover the full sequence (chunks overlap, so sum >= total).
+        token_counts = [s.token_count for s in inference]
+        assert all(isinstance(tc, int) and tc > 0 for tc in token_counts)
+        assert max(token_counts) <= result.total_tokens
 
 
 @pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires torch")

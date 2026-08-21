@@ -85,12 +85,18 @@ fn print_waterfall(result: &ChunkedSusFactorResult) {
         result.is_suspicious,
         result.total_timing_ms
     );
+    println!("submitted tokens: {}", result.total_tokens);
     println!("{:-<width$}", "", width = 22 + BAR_WIDTH);
 
     for span in &result.spans {
         let label = match span.chunk_index {
             Some(i) => format!("{}[{}]", span.name, i),
             None => span.name.clone(),
+        };
+        // Per-chunk token count is present only on inference spans.
+        let tok = match span.token_count {
+            Some(n) => format!("{n:>4} tok"),
+            None => String::new(),
         };
 
         // Position the bar by start offset; size it by duration. Both are scaled
@@ -111,12 +117,13 @@ fn print_waterfall(result: &ChunkedSusFactorResult) {
         bar.push_str(&"#".repeat(bar_len.max(1)));
 
         println!(
-            "{label:<12} {start:>7.2} {bar:<width$} {dur:>7.2} ms",
+            "{label:<12} {start:>7.2} {bar:<width$} {dur:>7.2} ms {tok}",
             label = label,
             start = span.start_ms,
             bar = bar,
             width = BAR_WIDTH,
             dur = span.duration_ms,
+            tok = tok,
         );
     }
 

@@ -184,6 +184,7 @@ type ChunkedSusFactorResult struct {
     Chunks        []SusFactorResult // one per chunk, in order
     IsSuspicious  bool              // true if ANY chunk is suspicious — use for security gating
     TotalTimingMs float64           // wall-clock time across all chunks
+    TotalTokens   int               // length of the full tokenized input sequence (before chunking)
     Spans         []PhaseSpan       // lifecycle phase timings: tokenize, chunk, inference..., reduce
 }
 
@@ -200,6 +201,7 @@ type PhaseSpan struct {
     StartMs    float64 // offset from the call's wall-clock start, in ms
     DurationMs float64 // wall time of this phase, in ms
     ChunkIndex *int    // 0-based chunk index; non-nil only on "inference" spans
+    TokenCount *int    // tokens fed to this chunk's inference; non-nil only on "inference" spans
 }
 ```
 

@@ -124,7 +124,7 @@ export class SusFactorClassifier {
       /** Base URL override for tests (e.g. local mock server). */
       baseUrl?: string;
       /** Progress callback forwarded to {@link ModelCache.downloadModel}. */
-      onProgress?: GetModelOptions['onProgress'];
+      onProgress?: GetModelOptions["onProgress"];
     } = {},
   ): Promise<SusFactorClassifier> {
     const modelName = options.model || DEFAULT_MODEL;
@@ -282,6 +282,7 @@ export class SusFactorClassifier {
         startMs: offset(chunkStart),
         durationMs: result.timingMs,
         chunkIndex: index,
+        tokenCount: chunkLen,
       };
       return { result, span };
     };
@@ -307,6 +308,7 @@ export class SusFactorClassifier {
       isSuspicious,
       totalTimingMs,
       spans: [tokenizeSpan, chunkSpan, ...inferenceSpans, reduceSpan],
+      totalTokens: allIds.length,
     };
   }
 

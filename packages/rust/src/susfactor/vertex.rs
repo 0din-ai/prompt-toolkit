@@ -209,6 +209,7 @@ impl SusFactorProvider for VertexSusFactor {
             start_ms: common::offset_ms(tokenize_start, wall_start),
             duration_ms: common::elapsed_ms(tokenize_start),
             chunk_index: None,
+            token_count: None,
         };
 
         // Time chunking of the token stream.
@@ -219,6 +220,7 @@ impl SusFactorProvider for VertexSusFactor {
             start_ms: common::offset_ms(chunk_start_instant, wall_start),
             duration_ms: common::elapsed_ms(chunk_start_instant),
             chunk_index: None,
+            token_count: None,
         };
 
         let concurrency = self.max_concurrent_chunks;
@@ -336,6 +338,7 @@ impl SusFactorProvider for VertexSusFactor {
                             start_ms: common::offset_ms(chunk_start, wall_start),
                             duration_ms: result.timing_ms,
                             chunk_index: Some(i),
+                            token_count: Some(seq_len),
                         };
                         Ok::<_, SigError>((i, result, span))
                     }
@@ -364,10 +367,12 @@ impl SusFactorProvider for VertexSusFactor {
             start_ms: common::offset_ms(reduce_start, wall_start),
             duration_ms: common::elapsed_ms(reduce_start),
             chunk_index: None,
+            token_count: None,
         });
 
         Ok(common::reduce(
             chunk_results,
+            all_ids.len(),
             common::elapsed_ms(wall_start),
             spans,
         ))

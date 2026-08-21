@@ -191,6 +191,7 @@ mod tests {
                         timing_ms: 1.0,
                     }],
                     is_suspicious: label == "suspicious",
+                    total_tokens: 0,
                     total_timing_ms: 1.0,
                     spans: vec![],
                 }),

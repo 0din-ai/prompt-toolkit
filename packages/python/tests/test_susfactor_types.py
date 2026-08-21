@@ -26,10 +26,20 @@ def assert_span_shape(result: ChunkedSusFactorResult) -> None:
     assert indices == list(range(len(result.chunks)))
     assert len(set(indices)) == len(indices)
 
-    # Non-inference spans carry no chunk_index.
+    # Non-inference spans carry no chunk_index or token_count.
     for s in spans:
         if s.name != "inference":
             assert s.chunk_index is None
+            assert s.token_count is None
+
+    # total_tokens is a non-negative integer.
+    assert isinstance(result.total_tokens, int)
+    assert result.total_tokens >= 0
+
+    # Each inference span carries a positive token count (chunk seq length).
+    for s in inference:
+        assert isinstance(s.token_count, int)
+        assert s.token_count > 0
 
     # Durations finite/non-negative; start_ms non-negative.
     import math
@@ -111,11 +121,24 @@ def test_spans_waterfall_shape_and_ordering():
         chunks=[_result("safe"), _result("suspicious")],
         is_suspicious=True,
         total_timing_ms=10.0,
+        total_tokens=630,
         spans=[
             PhaseSpan(name="tokenize", start_ms=0.0, duration_ms=1.0),
             PhaseSpan(name="chunk", start_ms=1.0, duration_ms=0.5),
-            PhaseSpan(name="inference", start_ms=1.5, duration_ms=3.0, chunk_index=0),
-            PhaseSpan(name="inference", start_ms=1.6, duration_ms=3.2, chunk_index=1),
+            PhaseSpan(
+                name="inference",
+                start_ms=1.5,
+                duration_ms=3.0,
+                chunk_index=0,
+                token_count=510,
+            ),
+            PhaseSpan(
+                name="inference",
+                start_ms=1.6,
+                duration_ms=3.2,
+                chunk_index=1,
+                token_count=120,
+            ),
             PhaseSpan(name="reduce", start_ms=8.0, duration_ms=0.2),
         ],
     )

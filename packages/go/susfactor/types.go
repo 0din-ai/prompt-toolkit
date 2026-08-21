@@ -60,6 +60,10 @@ type PhaseSpan struct {
 	DurationMs float64
 	// ChunkIndex is the 0-based chunk index; non-nil only on "inference" spans.
 	ChunkIndex *int
+	// TokenCount is the number of tokens fed to this chunk's inference (the
+	// chunk sequence length used as seq_len for the tensor); non-nil only on
+	// "inference" spans, nil on tokenize/chunk/reduce.
+	TokenCount *int
 }
 
 // ChunkedSusFactorResult is the return type of Classify for any prompt length.
@@ -76,6 +80,10 @@ type ChunkedSusFactorResult struct {
 	IsSuspicious bool
 	// TotalTimingMs is the wall-clock time for all chunks in milliseconds.
 	TotalTimingMs float64
+	// TotalTokens is the length of the full tokenized input sequence (the
+	// same token-id array that is split into chunks), counted before/independent
+	// of chunking. Useful for explaining inference timing.
+	TotalTokens int
 	// Spans holds the ordered lifecycle phase timings for the call:
 	// one "tokenize" span, one "chunk" span, one "inference" span per
 	// chunk (in order, each carrying its ChunkIndex), and one "reduce"

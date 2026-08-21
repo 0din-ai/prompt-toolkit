@@ -62,12 +62,16 @@ class PhaseSpan:
         duration_ms: Wall time spent in this span, in milliseconds.
         chunk_index: 0-based chunk index; set only on ``"inference"`` spans and
             ``None`` on ``"tokenize"``, ``"chunk"``, and ``"reduce"`` spans.
+        token_count: Number of tokens fed to this chunk's inference (the chunk
+            sequence length). Set only on ``"inference"`` spans; ``None`` on
+            ``"tokenize"``, ``"chunk"``, and ``"reduce"`` spans.
     """
 
     name: str
     start_ms: float
     duration_ms: float
     chunk_index: int | None = None
+    token_count: int | None = None
 
 
 @dataclass
@@ -94,6 +98,8 @@ class ChunkedSusFactorResult:
             carrying its ``chunk_index``), then one ``"reduce"`` span. The
             gap between ``total_timing_ms`` and the summed span durations is
             intentional scheduling/join overhead.
+        total_tokens: Total number of tokens submitted to ``classify()`` — the
+            length of the full tokenized input sequence (before chunking).
 
     Displaying a single score:
         The previous API returned one ``score`` and ``label`` directly. With
@@ -115,6 +121,7 @@ class ChunkedSusFactorResult:
     is_suspicious: bool
     total_timing_ms: float
     spans: list[PhaseSpan] = field(default_factory=list)
+    total_tokens: int = 0
 
 
 def suspicious_prob(logits: list[float]) -> float:

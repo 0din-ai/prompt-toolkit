@@ -33,11 +33,19 @@ func assertSpanShape(t *testing.T, result ChunkedSusFactorResult) {
 		t.Errorf("last span name = %q, want \"reduce\"", last.Name)
 	}
 
-	// Non-inference spans must not carry a ChunkIndex.
+	// TotalTokens is a non-negative token count.
+	if result.TotalTokens < 0 {
+		t.Errorf("TotalTokens = %d, want >= 0", result.TotalTokens)
+	}
+
+	// Non-inference spans must not carry a ChunkIndex or TokenCount.
 	for _, name := range []string{"tokenize", "chunk", "reduce"} {
 		for _, s := range spans {
 			if s.Name == name && s.ChunkIndex != nil {
 				t.Errorf("%q span has non-nil ChunkIndex", name)
+			}
+			if s.Name == name && s.TokenCount != nil {
+				t.Errorf("%q span has non-nil TokenCount", name)
 			}
 		}
 	}
@@ -61,6 +69,11 @@ func assertSpanShape(t *testing.T, result ChunkedSusFactorResult) {
 			t.Errorf("duplicate ChunkIndex %d", *s.ChunkIndex)
 		}
 		seen[*s.ChunkIndex] = true
+		if s.TokenCount == nil {
+			t.Fatalf("inference span at position %d has nil TokenCount", i)
+		} else if *s.TokenCount <= 0 {
+			t.Errorf("inference span at position %d has TokenCount %d, want > 0", i, *s.TokenCount)
+		}
 	}
 	if inferenceCount != n {
 		t.Errorf("inference span count = %d, want %d (== chunk count)", inferenceCount, n)
@@ -93,16 +106,18 @@ func assembleResult(n int) ChunkedSusFactorResult {
 	)
 	for i := range n {
 		idx := i
+		tokenCount := 128 + i
 		chunks[i] = SusFactorResult{Score: 0.1, Label: LabelSafe, Model: DefaultModel, Threshold: DefaultThreshold, TimingMs: 1.0}
 		spans = append(spans, PhaseSpan{
 			Name:       "inference",
 			StartMs:    0.75 + float64(i),
 			DurationMs: 1.0,
 			ChunkIndex: &idx,
+			TokenCount: &tokenCount,
 		})
 	}
 	spans = append(spans, PhaseSpan{Name: "reduce", StartMs: 0.75 + float64(n), DurationMs: 0.1})
-	return ChunkedSusFactorResult{Chunks: chunks, IsSuspicious: false, TotalTimingMs: 2.5, Spans: spans}
+	return ChunkedSusFactorResult{Chunks: chunks, IsSuspicious: false, TotalTimingMs: 2.5, TotalTokens: 128 * n, Spans: spans}
 }
 
 func TestPhaseSpanShape(t *testing.T) {

@@ -64,6 +64,12 @@ export interface PhaseSpan {
   durationMs: number;
   /** 0-based chunk index; present only on `"inference"` spans. */
   chunkIndex?: number;
+  /**
+   * Number of tokens fed to this chunk's inference (the chunk sequence
+   * length). Present only on `"inference"` spans; absent on
+   * `tokenize`/`chunk`/`reduce`.
+   */
+  tokenCount?: number;
 }
 
 /**
@@ -117,4 +123,10 @@ export interface ChunkedSusFactorResult {
    * and the gap versus the summed spans is scheduling/join overhead.
    */
   spans: PhaseSpan[];
+  /**
+   * Total number of tokens submitted for classification: the length of the
+   * full tokenized input sequence (before chunking). Explains inference
+   * timing and how much of the prompt was scored.
+   */
+  totalTokens: number;
 }

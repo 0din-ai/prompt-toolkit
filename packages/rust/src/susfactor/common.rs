@@ -180,10 +180,12 @@ pub fn result_from_logits(
 
 /// Reduce per-chunk results into a [`ChunkedSusFactorResult`].
 ///
-/// `is_suspicious` is `true` if **any** chunk is suspicious. `spans` carries the
-/// ordered per-phase timing waterfall assembled by the caller.
+/// `is_suspicious` is `true` if **any** chunk is suspicious. `total_tokens` is
+/// the length of the full tokenized input sequence (before chunking). `spans`
+/// carries the ordered per-phase timing waterfall assembled by the caller.
 pub fn reduce(
     chunks: Vec<SusFactorResult>,
+    total_tokens: usize,
     total_timing_ms: f64,
     spans: Vec<PhaseSpan>,
 ) -> ChunkedSusFactorResult {
@@ -191,6 +193,7 @@ pub fn reduce(
     ChunkedSusFactorResult {
         chunks,
         is_suspicious,
+        total_tokens,
         total_timing_ms,
         spans,
     }
@@ -285,11 +288,12 @@ mod tests {
             timing_ms: 1.0,
         };
 
-        let all_safe = reduce(vec![make(LABEL_SAFE), make(LABEL_SAFE)], 2.0, vec![]);
+        let all_safe = reduce(vec![make(LABEL_SAFE), make(LABEL_SAFE)], 0, 2.0, vec![]);
         assert!(!all_safe.is_suspicious);
 
         let one_suspicious = reduce(
             vec![make(LABEL_SAFE), make(LABEL_SUSPICIOUS), make(LABEL_SAFE)],
+            0,
             3.0,
             vec![],
         );
@@ -315,12 +319,14 @@ mod tests {
                 start_ms: 0.0,
                 duration_ms: 0.5,
                 chunk_index: None,
+                token_count: None,
             },
             PhaseSpan {
                 name: PHASE_CHUNK.to_string(),
                 start_ms: 0.5,
                 duration_ms: 0.3,
                 chunk_index: None,
+                token_count: None,
             },
         ];
         for (i, c) in chunks.iter().enumerate() {
@@ -329,6 +335,7 @@ mod tests {
                 start_ms: 1.0 + i as f64,
                 duration_ms: c.timing_ms,
                 chunk_index: Some(i),
+                token_count: Some(510 - i),
             });
         }
         spans.push(PhaseSpan {
@@ -336,9 +343,10 @@ mod tests {
             start_ms: 10.0,
             duration_ms: 0.2,
             chunk_index: None,
+            token_count: None,
         });
 
-        let result = reduce(chunks, 12.0, spans);
+        let result = reduce(chunks, 1530, 12.0, spans);
         let spans = &result.spans;
 
         // Non-empty, correct bookends.
@@ -362,6 +370,18 @@ mod tests {
         // Only inference spans carry a chunk_index.
         for s in spans.iter().filter(|s| s.name != PHASE_INFERENCE) {
             assert!(s.chunk_index.is_none());
+        }
+
+        // total_tokens is a non-negative integer surfaced on the result.
+        let _: usize = result.total_tokens;
+
+        // Every inference span carries a positive per-chunk token_count; all
+        // non-inference spans leave it unset.
+        for s in inference.iter() {
+            assert!(s.token_count.is_some_and(|n| n > 0));
+        }
+        for s in spans.iter().filter(|s| s.name != PHASE_INFERENCE) {
+            assert!(s.token_count.is_none());
         }
 
         // Durations finite/non-negative; start offsets non-negative.

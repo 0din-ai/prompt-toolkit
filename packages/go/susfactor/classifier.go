@@ -306,11 +306,13 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 			TimingMs:  timingMs,
 		}
 		idx := i
+		tokenCount := len(chunkIDs)
 		inferenceSpans[i] = PhaseSpan{
 			Name:       "inference",
 			StartMs:    ms(chunkStart.Sub(wallStart)),
 			DurationMs: timingMs,
 			ChunkIndex: &idx,
+			TokenCount: &tokenCount,
 		}
 	}
 
@@ -336,6 +338,7 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 		Chunks:        results,
 		IsSuspicious:  isSuspicious,
 		TotalTimingMs: ms(time.Since(wallStart)),
+		TotalTokens:   len(allIDs),
 		Spans:         spans,
 	}, nil
 }

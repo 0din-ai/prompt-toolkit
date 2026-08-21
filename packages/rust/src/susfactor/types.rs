@@ -60,6 +60,11 @@ pub struct PhaseSpan {
     /// 0-based chunk index; `Some` only on `"inference"` spans.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chunk_index: Option<usize>,
+    /// Number of tokens fed to this chunk's inference (the chunk sequence
+    /// length / `seq_len`). `Some` only on `"inference"` spans; `None` on
+    /// `tokenize`/`chunk`/`reduce`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_count: Option<usize>,
 }
 
 /// Return type of [`crate::susfactor::SusFactorProvider::classify`] for prompts of any length.
@@ -101,6 +106,12 @@ pub struct ChunkedSusFactorResult {
     /// considered suspicious if any portion of it is suspicious, regardless
     /// of how many chunks are safe.
     pub is_suspicious: bool,
+    /// Total number of tokens submitted for this call: the length of the full
+    /// tokenized input sequence (`[CLS]` + content + `[SEP]`) before chunking.
+    ///
+    /// This is the same sequence that is split into chunks, so for multi-chunk
+    /// prompts it exceeds any single chunk's `token_count` (chunks overlap).
+    pub total_tokens: usize,
     /// Total wall-clock time for all chunks, in milliseconds.
     pub total_timing_ms: f64,
     /// Ordered per-phase timing spans for this call, forming a waterfall:

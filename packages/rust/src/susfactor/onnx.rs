@@ -229,6 +229,7 @@ impl OnnxSusFactor {
             start_ms: common::offset_ms(tokenize_start, wall_start),
             duration_ms: common::elapsed_ms(tokenize_start),
             chunk_index: None,
+            token_count: None,
         };
 
         // Time chunking of the token stream.
@@ -239,6 +240,7 @@ impl OnnxSusFactor {
             start_ms: common::offset_ms(chunk_start_instant, wall_start),
             duration_ms: common::elapsed_ms(chunk_start_instant),
             chunk_index: None,
+            token_count: None,
         };
 
         let mut handles = Vec::with_capacity(chunks.len());
@@ -252,6 +254,7 @@ impl OnnxSusFactor {
                     // Capture the inference start INSIDE the task so overlapping
                     // execution is visible on the timeline.
                     let chunk_start = Instant::now();
+                    let seq_len = chunk_ids.len();
                     let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
                     let result = common::result_from_logits(
                         &logits,
@@ -264,6 +267,7 @@ impl OnnxSusFactor {
                         start_ms: common::offset_ms(chunk_start, wall_start),
                         duration_ms: result.timing_ms,
                         chunk_index: Some(i),
+                        token_count: Some(seq_len),
                     };
                     Ok((result, span))
                 },
@@ -291,10 +295,12 @@ impl OnnxSusFactor {
             start_ms: common::offset_ms(reduce_start, wall_start),
             duration_ms: common::elapsed_ms(reduce_start),
             chunk_index: None,
+            token_count: None,
         });
 
         Ok(common::reduce(
             chunk_results,
+            all_ids.len(),
             common::elapsed_ms(wall_start),
             spans,
         ))
