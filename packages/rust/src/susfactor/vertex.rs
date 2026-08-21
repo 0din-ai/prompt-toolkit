@@ -137,12 +137,10 @@ impl VertexSusFactor {
 
         // Load tokenizer only — no ONNX weights needed for the Vertex backend.
         let tokenizer_path = cache.get_tokenizer(&source).await?;
-        let tokenizer = tokio::task::spawn_blocking(move || {
-            tokenizers::Tokenizer::from_file(&tokenizer_path)
-                .map_err(|e| SigError::Model(format!("Failed to load SusFactor tokenizer: {e}")))
-        })
-        .await
-        .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))??;
+        let tokenizer =
+            tokio::task::spawn_blocking(move || common::load_tokenizer(&tokenizer_path))
+                .await
+                .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))??;
 
         let auth = gcp_auth::provider()
             .await

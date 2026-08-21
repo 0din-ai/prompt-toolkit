@@ -2,6 +2,7 @@ package susfactor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -192,7 +193,7 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		return nil, newError("create ONNX session: %v", err)
 	}
 
-	tk, err := tokenizers.FromFile(tokPath)
+	tk, err := loadTokenizerNoTruncation(tokPath)
 	if err != nil {
 		dynSession.Destroy()
 		return nil, newError("load tokenizer: %v", err)
@@ -204,6 +205,32 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		model:      cfg.model,
 		threshold:  cfg.threshold,
 	}, nil
+}
+
+// loadTokenizerNoTruncation loads a tokenizer from a tokenizer.json file with
+// any embedded truncation disabled.
+//
+// The bundled tokenizer.json sets truncation.max_length = 512, which would
+// silently cut every prompt to 512 tokens before chunking runs — bypassing
+// long-prompt chunking and dropping content past the limit. We tokenize the
+// full input and window it ourselves, so the truncation directive is stripped
+// from the tokenizer definition before it is loaded.
+func loadTokenizerNoTruncation(path string) (*tokenizers.Tokenizer, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+	if _, ok := doc["truncation"]; ok {
+		doc["truncation"] = json.RawMessage("null")
+		if raw, err = json.Marshal(doc); err != nil {
+			return nil, err
+		}
+	}
+	return tokenizers.FromBytes(raw)
 }
 
 // Classify scores a prompt of any length. Prompts within MaxContentTokens
