@@ -121,8 +121,8 @@ impl OnnxSusFactor {
                     .commit_from_file(&model_path)
                     .map_err(|e| format!("Failed to load SusFactor ONNX model: {e}"))?;
 
-                let tokenizer = tokenizers::Tokenizer::from_file(&tokenizer_path)
-                    .map_err(|e| format!("Failed to load SusFactor tokenizer: {e}"))?;
+                let tokenizer =
+                    common::load_tokenizer(&tokenizer_path).map_err(|e| e.to_string())?;
 
                 Ok((session, tokenizer))
             })

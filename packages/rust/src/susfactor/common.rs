@@ -70,6 +70,22 @@ pub fn tokenize_full(
     Ok((input_ids, attention_mask))
 }
 
+/// Load a SusFactor tokenizer with truncation disabled.
+///
+/// The bundled `tokenizer.json` embeds `truncation.max_length = 512`. Left in
+/// place, [`tokenizers::Tokenizer::encode`] silently cuts every prompt to 512
+/// tokens *before* [`chunk_token_ids`] runs — bypassing long-prompt chunking
+/// and dropping any content past the limit. We tokenize the full input and
+/// window it ourselves, so truncation must be cleared at load time.
+pub fn load_tokenizer(path: impl AsRef<std::path::Path>) -> Result<tokenizers::Tokenizer> {
+    let mut tokenizer = tokenizers::Tokenizer::from_file(path.as_ref())
+        .map_err(|e| SigError::Model(format!("Failed to load SusFactor tokenizer: {e}")))?;
+    tokenizer
+        .with_truncation(None)
+        .map_err(|e| SigError::Model(format!("Failed to clear tokenizer truncation: {e}")))?;
+    Ok(tokenizer)
+}
+
 /// Split a token-ID sequence into overlapping chunks of at most
 /// [`MAX_CONTENT_TOKENS`] tokens each.
 ///
@@ -193,6 +209,34 @@ mod tests {
         assert!(validate_logits(&[1.0]).is_err());
         assert!(validate_logits(&[]).is_err());
         assert!(validate_logits(&[1.0, 2.0]).is_ok());
+    }
+
+    /// Regression: the loaded tokenizer must NOT truncate long prompts, so that
+    /// long-prompt chunking actually runs. Model-gated (needs the real
+    /// tokenizer); skips when `SUSFACTOR_MODEL_DIR` is unset.
+    #[test]
+    fn load_tokenizer_disables_truncation_for_long_prompts() {
+        let Ok(model_dir) = std::env::var("SUSFACTOR_MODEL_DIR") else {
+            eprintln!("SUSFACTOR_MODEL_DIR unset; skipping truncation regression");
+            return;
+        };
+        let path = std::path::Path::new(&model_dir).join("tokenizer.json");
+        let tokenizer = load_tokenizer(&path).expect("load tokenizer");
+        // Well over the model's 512-token window.
+        let long = "The quarterly business review covered revenue and churn. ".repeat(150);
+        let enc = tokenizer.encode(long.as_str(), true).expect("encode");
+        let ids: Vec<i64> = enc.get_ids().iter().map(|&i| i as i64).collect();
+        assert!(
+            ids.len() > MAX_CONTENT_TOKENS,
+            "truncation not disabled: got {} tokens (<= {MAX_CONTENT_TOKENS})",
+            ids.len()
+        );
+        let chunks = chunk_token_ids(&ids);
+        assert!(
+            chunks.len() > 2,
+            "expected >2 chunks for a long prompt, got {}",
+            chunks.len()
+        );
     }
 
     #[test]
