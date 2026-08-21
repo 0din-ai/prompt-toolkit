@@ -82,6 +82,9 @@ func TestSusFactorParityGoldens(t *testing.T) {
 				t.Fatal("no chunks returned")
 			}
 
+			// Real-path lifecycle spans: validate shape/ordering.
+			assertSpanShape(t, result)
+
 			// rust_score records chunk[0] score for both single- and multi-chunk
 			// prompts. Validate chunk[0] score against the reference, then check
 			// the overall IsSuspicious flag (any-chunk rule).

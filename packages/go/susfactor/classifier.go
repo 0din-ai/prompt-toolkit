@@ -250,16 +250,31 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 
 	wallStart := time.Now()
 
+	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000.0 }
+
 	// Tokenize full text, no truncation, with special tokens ([CLS]/[SEP]).
+	tokenizeStart := time.Now()
 	enc := c.tokenizer.EncodeWithOptions(text, true,
 		tokenizers.WithReturnAttentionMask(),
 	)
 	allIDs := u32ToI64(enc.IDs)
 	allMask := u32ToI64(enc.AttentionMask)
+	tokenizeSpan := PhaseSpan{
+		Name:       "tokenize",
+		StartMs:    ms(tokenizeStart.Sub(wallStart)),
+		DurationMs: ms(time.Since(tokenizeStart)),
+	}
 
+	chunkStartPhase := time.Now()
 	idChunks := ChunkTokenIDs(allIDs)
+	chunkSpan := PhaseSpan{
+		Name:       "chunk",
+		StartMs:    ms(chunkStartPhase.Sub(wallStart)),
+		DurationMs: ms(time.Since(chunkStartPhase)),
+	}
 
 	results := make([]SusFactorResult, len(idChunks))
+	inferenceSpans := make([]PhaseSpan, len(idChunks))
 	for i, chunkIDs := range idChunks {
 		select {
 		case <-ctx.Done():
@@ -282,15 +297,26 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 
 		score := SuspiciousProb(logits)
 		label := LabelForScore(score, c.threshold)
+		timingMs := ms(time.Since(chunkStart))
 		results[i] = SusFactorResult{
 			Score:     score,
 			Label:     label,
 			Model:     c.model,
 			Threshold: c.threshold,
-			TimingMs:  float64(time.Since(chunkStart).Microseconds()) / 1000.0,
+			TimingMs:  timingMs,
+		}
+		idx := i
+		tokenCount := len(chunkIDs)
+		inferenceSpans[i] = PhaseSpan{
+			Name:       "inference",
+			StartMs:    ms(chunkStart.Sub(wallStart)),
+			DurationMs: timingMs,
+			ChunkIndex: &idx,
+			TokenCount: &tokenCount,
 		}
 	}
 
+	reduceStart := time.Now()
 	isSuspicious := false
 	for _, r := range results {
 		if r.IsSuspicious() {
@@ -299,10 +325,21 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 		}
 	}
 
+	spans := make([]PhaseSpan, 0, len(inferenceSpans)+3)
+	spans = append(spans, tokenizeSpan, chunkSpan)
+	spans = append(spans, inferenceSpans...)
+	spans = append(spans, PhaseSpan{
+		Name:       "reduce",
+		StartMs:    ms(reduceStart.Sub(wallStart)),
+		DurationMs: ms(time.Since(reduceStart)),
+	})
+
 	return ChunkedSusFactorResult{
 		Chunks:        results,
 		IsSuspicious:  isSuspicious,
-		TotalTimingMs: float64(time.Since(wallStart).Microseconds()) / 1000.0,
+		TotalTimingMs: ms(time.Since(wallStart)),
+		TotalTokens:   len(allIDs),
+		Spans:         spans,
 	}, nil
 }
 

@@ -24,7 +24,7 @@ use crate::error::{Result, SigError};
 use crate::providers::ModelCache;
 use crate::susfactor::common;
 use crate::susfactor::provider::SusFactorProvider;
-use crate::susfactor::types::{ChunkedSusFactorResult, SusFactorResult};
+use crate::susfactor::types::{ChunkedSusFactorResult, PhaseSpan, SusFactorResult};
 
 // ---------------------------------------------------------------------------
 // Wire types
@@ -201,8 +201,27 @@ impl SusFactorProvider for VertexSusFactor {
     async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
         let wall_start = Instant::now();
 
+        // Time tokenization of the full text.
+        let tokenize_start = Instant::now();
         let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
+        let tokenize_span = PhaseSpan {
+            name: common::PHASE_TOKENIZE.to_string(),
+            start_ms: common::offset_ms(tokenize_start, wall_start),
+            duration_ms: common::elapsed_ms(tokenize_start),
+            chunk_index: None,
+            token_count: None,
+        };
+
+        // Time chunking of the token stream.
+        let chunk_start_instant = Instant::now();
         let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
+        let chunk_span = PhaseSpan {
+            name: common::PHASE_CHUNK.to_string(),
+            start_ms: common::offset_ms(chunk_start_instant, wall_start),
+            duration_ms: common::elapsed_ms(chunk_start_instant),
+            chunk_index: None,
+            token_count: None,
+        };
 
         let concurrency = self.max_concurrent_chunks;
 
@@ -215,110 +234,148 @@ impl SusFactorProvider for VertexSusFactor {
         let threshold = self.threshold;
 
         // Fan out chunk requests concurrently, bounded by max_concurrent_chunks.
-        // `Instant::now()` is captured inside `async move` so each chunk gets
-        // its own start timestamp rather than inheriting the stream-construction
-        // timestamp.
-        let results: Vec<SusFactorResult> =
-            futures_util::stream::iter(chunks.into_iter().map(|(chunk_ids, chunk_mask)| {
-                // Clone per-chunk so each future is self-contained.
-                let client = client.clone();
-                let endpoint_url = endpoint_url.clone();
-                let auth = Arc::clone(&auth);
-                let model_name = model_name.clone();
-                async move {
-                    let chunk_start = Instant::now();
-                    let seq_len = chunk_ids.len();
+        // Each future captures its chunk index and the wall-clock baseline
+        // (`Instant` is `Copy`) so its inference span records a real start
+        // offset. `Instant::now()` for `chunk_start` is captured inside the
+        // `async move` so overlap is visible on the timeline.
+        let mut collected: Vec<(usize, SusFactorResult, PhaseSpan)> =
+            futures_util::stream::iter(chunks.into_iter().enumerate().map(
+                |(i, (chunk_ids, chunk_mask))| {
+                    // Clone per-chunk so each future is self-contained.
+                    let client = client.clone();
+                    let endpoint_url = endpoint_url.clone();
+                    let auth = Arc::clone(&auth);
+                    let model_name = model_name.clone();
+                    async move {
+                        let chunk_start = Instant::now();
+                        let seq_len = chunk_ids.len();
 
-                    let body = InferRequest {
-                        inputs: vec![
-                            InferInput {
-                                name: "input_ids",
-                                shape: [1, seq_len],
-                                datatype: "INT64",
-                                data: chunk_ids,
-                            },
-                            InferInput {
-                                name: "attention_mask",
-                                shape: [1, seq_len],
-                                datatype: "INT64",
-                                data: chunk_mask,
-                            },
-                        ],
-                    };
+                        let body = InferRequest {
+                            inputs: vec![
+                                InferInput {
+                                    name: "input_ids",
+                                    shape: [1, seq_len],
+                                    datatype: "INT64",
+                                    data: chunk_ids,
+                                },
+                                InferInput {
+                                    name: "attention_mask",
+                                    shape: [1, seq_len],
+                                    datatype: "INT64",
+                                    data: chunk_mask,
+                                },
+                            ],
+                        };
 
-                    let token =
-                        auth.token(&[VertexSusFactor::VERTEX_SCOPE])
+                        let token =
+                            auth.token(&[VertexSusFactor::VERTEX_SCOPE])
+                                .await
+                                .map_err(|e| {
+                                    SigError::Provider(format!("Vertex AI token fetch failed: {e}"))
+                                })?;
+
+                        let response = client
+                            .post(&endpoint_url)
+                            .bearer_auth(token.as_str())
+                            .json(&body)
+                            .send()
                             .await
                             .map_err(|e| {
-                                SigError::Provider(format!("Vertex AI token fetch failed: {e}"))
+                                SigError::Provider(format!("Vertex AI request failed: {e}"))
                             })?;
 
-                    let response = client
-                        .post(&endpoint_url)
-                        .bearer_auth(token.as_str())
-                        .json(&body)
-                        .send()
-                        .await
-                        .map_err(|e| {
-                            SigError::Provider(format!("Vertex AI request failed: {e}"))
+                        if !response.status().is_success() {
+                            let status = response.status();
+                            let body_text = response
+                                .text()
+                                .await
+                                .unwrap_or_else(|_| "<unreadable body>".to_string());
+                            let truncated = if body_text.len() > VertexSusFactor::MAX_ERROR_BODY {
+                                // Byte-index slicing panics if MAX_ERROR_BODY falls
+                                // inside a multi-byte codepoint; walk char
+                                // boundaries instead so non-ASCII error bodies
+                                // (e.g. Vertex errors in other languages) can't
+                                // crash the error-handling path itself.
+                                let safe_prefix: String = body_text
+                                    .chars()
+                                    .take(VertexSusFactor::MAX_ERROR_BODY)
+                                    .collect();
+                                format!("{safe_prefix}… (truncated)")
+                            } else {
+                                body_text
+                            };
+                            return Err(SigError::Provider(format!(
+                                "Vertex AI returned HTTP {status}: {truncated}"
+                            )));
+                        }
+
+                        let infer: InferResponse = response.json().await.map_err(|e| {
+                            SigError::Provider(format!("Vertex AI response parse failed: {e}"))
                         })?;
 
-                    if !response.status().is_success() {
-                        let status = response.status();
-                        let body_text = response
-                            .text()
-                            .await
-                            .unwrap_or_else(|_| "<unreadable body>".to_string());
-                        let truncated = if body_text.len() > VertexSusFactor::MAX_ERROR_BODY {
-                            // Byte-index slicing panics if MAX_ERROR_BODY falls
-                            // inside a multi-byte codepoint; walk char
-                            // boundaries instead so non-ASCII error bodies
-                            // (e.g. Vertex errors in other languages) can't
-                            // crash the error-handling path itself.
-                            let safe_prefix: String = body_text
-                                .chars()
-                                .take(VertexSusFactor::MAX_ERROR_BODY)
-                                .collect();
-                            format!("{safe_prefix}… (truncated)")
-                        } else {
-                            body_text
+                        let output = infer
+                            .outputs
+                            .iter()
+                            .find(|o| o.name == "logits")
+                            .or_else(|| infer.outputs.first())
+                            .ok_or_else(|| {
+                                SigError::Model(
+                                    "Unexpected SusFactor output shape; got 0 elements, expected >= 2"
+                                        .to_string(),
+                                )
+                            })?;
+
+                        common::validate_logits(&output.data)?;
+
+                        let result = common::result_from_logits(
+                            &output.data,
+                            &model_name,
+                            threshold,
+                            common::elapsed_ms(chunk_start),
+                        );
+                        let span = PhaseSpan {
+                            name: common::PHASE_INFERENCE.to_string(),
+                            start_ms: common::offset_ms(chunk_start, wall_start),
+                            duration_ms: result.timing_ms,
+                            chunk_index: Some(i),
+                            token_count: Some(seq_len),
                         };
-                        return Err(SigError::Provider(format!(
-                            "Vertex AI returned HTTP {status}: {truncated}"
-                        )));
+                        Ok::<_, SigError>((i, result, span))
                     }
-
-                    let infer: InferResponse = response.json().await.map_err(|e| {
-                        SigError::Provider(format!("Vertex AI response parse failed: {e}"))
-                    })?;
-
-                    let output = infer
-                        .outputs
-                        .iter()
-                        .find(|o| o.name == "logits")
-                        .or_else(|| infer.outputs.first())
-                        .ok_or_else(|| {
-                            SigError::Model(
-                                "Unexpected SusFactor output shape; got 0 elements, expected >= 2"
-                                    .to_string(),
-                            )
-                        })?;
-
-                    common::validate_logits(&output.data)?;
-
-                    Ok(common::result_from_logits(
-                        &output.data,
-                        &model_name,
-                        threshold,
-                        common::elapsed_ms(chunk_start),
-                    ))
-                }
-            }))
+                },
+            ))
             .buffer_unordered(concurrency)
             .try_collect()
             .await?;
 
-        Ok(common::reduce(results, common::elapsed_ms(wall_start)))
+        // `buffer_unordered` may complete futures out of order; restore chunk
+        // order so both `chunks` and inference spans are deterministic.
+        collected.sort_by_key(|(i, _, _)| *i);
+
+        // Assemble the final result; time the reduction itself.
+        let reduce_start = Instant::now();
+        let mut chunk_results = Vec::with_capacity(collected.len());
+        let mut spans = Vec::with_capacity(collected.len() + 3);
+        spans.push(tokenize_span);
+        spans.push(chunk_span);
+        for (_, result, span) in collected {
+            chunk_results.push(result);
+            spans.push(span);
+        }
+        spans.push(PhaseSpan {
+            name: common::PHASE_REDUCE.to_string(),
+            start_ms: common::offset_ms(reduce_start, wall_start),
+            duration_ms: common::elapsed_ms(reduce_start),
+            chunk_index: None,
+            token_count: None,
+        });
+
+        Ok(common::reduce(
+            chunk_results,
+            all_ids.len(),
+            common::elapsed_ms(wall_start),
+            spans,
+        ))
     }
 }
 

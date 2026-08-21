@@ -165,4 +165,5 @@ export {
   type SusFactorOptions,
   type SusFactorLabel,
   type SusFactorResult,
+  type PhaseSpan,
 } from './susfactor';

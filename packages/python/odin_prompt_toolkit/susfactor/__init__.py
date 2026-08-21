@@ -35,6 +35,7 @@ from odin_prompt_toolkit.susfactor.types import (
     CHUNK_STRIDE,
     MAX_CONTENT_TOKENS,
     ChunkedSusFactorResult,
+    PhaseSpan,
     SusFactorResult,
 )
 
@@ -48,6 +49,7 @@ __all__ = [
     "CHUNK_STRIDE",
     "ChunkedSusFactorResult",
     "MAX_CONTENT_TOKENS",
+    "PhaseSpan",
     "SusFactorClassifier",
     "SusFactorOnnxClassifier",
     "SusFactorResult",

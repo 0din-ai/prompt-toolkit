@@ -34,7 +34,7 @@ use crate::error::{Result, SigError};
 use crate::providers::ModelCache;
 use crate::susfactor::common;
 use crate::susfactor::provider::SusFactorProvider;
-use crate::susfactor::types::{ChunkedSusFactorResult, SusFactorResult};
+use crate::susfactor::types::{ChunkedSusFactorResult, PhaseSpan, SusFactorResult};
 
 /// Classifies prompts as safe vs. suspicious using SusFactor over a local ONNX
 /// model.
@@ -221,40 +221,88 @@ impl OnnxSusFactor {
     pub async fn classify(&self, text: &str) -> Result<ChunkedSusFactorResult> {
         let wall_start = Instant::now();
 
+        // Time tokenization of the full text.
+        let tokenize_start = Instant::now();
         let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
+        let tokenize_span = PhaseSpan {
+            name: common::PHASE_TOKENIZE.to_string(),
+            start_ms: common::offset_ms(tokenize_start, wall_start),
+            duration_ms: common::elapsed_ms(tokenize_start),
+            chunk_index: None,
+            token_count: None,
+        };
+
+        // Time chunking of the token stream.
+        let chunk_start_instant = Instant::now();
         let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
+        let chunk_span = PhaseSpan {
+            name: common::PHASE_CHUNK.to_string(),
+            start_ms: common::offset_ms(chunk_start_instant, wall_start),
+            duration_ms: common::elapsed_ms(chunk_start_instant),
+            chunk_index: None,
+            token_count: None,
+        };
 
         let mut handles = Vec::with_capacity(chunks.len());
-        for (chunk_ids, chunk_mask) in chunks {
+        for (i, (chunk_ids, chunk_mask)) in chunks.into_iter().enumerate() {
             let session = Arc::clone(&self.session);
             let model_name = self.model_name.clone();
             let threshold = self.threshold;
 
             handles.push(tokio::task::spawn_blocking(
-                move || -> Result<SusFactorResult> {
+                move || -> Result<(SusFactorResult, PhaseSpan)> {
+                    // Capture the inference start INSIDE the task so overlapping
+                    // execution is visible on the timeline.
                     let chunk_start = Instant::now();
+                    let seq_len = chunk_ids.len();
                     let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
-                    Ok(common::result_from_logits(
+                    let result = common::result_from_logits(
                         &logits,
                         &model_name,
                         threshold,
                         common::elapsed_ms(chunk_start),
-                    ))
+                    );
+                    let span = PhaseSpan {
+                        name: common::PHASE_INFERENCE.to_string(),
+                        start_ms: common::offset_ms(chunk_start, wall_start),
+                        duration_ms: result.timing_ms,
+                        chunk_index: Some(i),
+                        token_count: Some(seq_len),
+                    };
+                    Ok((result, span))
                 },
             ));
         }
 
         let mut chunk_results = Vec::with_capacity(handles.len());
+        let mut inference_spans = Vec::with_capacity(handles.len());
         for handle in handles {
-            let result = handle
+            let (result, span) = handle
                 .await
-                .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))?;
-            chunk_results.push(result?);
+                .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))??;
+            chunk_results.push(result);
+            inference_spans.push(span);
         }
+
+        // Assemble the final result; time the reduction itself.
+        let reduce_start = Instant::now();
+        let mut spans = Vec::with_capacity(inference_spans.len() + 3);
+        spans.push(tokenize_span);
+        spans.push(chunk_span);
+        spans.append(&mut inference_spans);
+        spans.push(PhaseSpan {
+            name: common::PHASE_REDUCE.to_string(),
+            start_ms: common::offset_ms(reduce_start, wall_start),
+            duration_ms: common::elapsed_ms(reduce_start),
+            chunk_index: None,
+            token_count: None,
+        });
 
         Ok(common::reduce(
             chunk_results,
+            all_ids.len(),
             common::elapsed_ms(wall_start),
+            spans,
         ))
     }
 }

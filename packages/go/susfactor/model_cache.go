@@ -265,5 +265,3 @@ func (c *ModelCache) downloadFile(ctx context.Context, repoID, filename, hfToken
 func isExistErr(err error) bool {
 	return os.IsExist(err) || errors.Is(err, os.ErrExist)
 }
-
-
