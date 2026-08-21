@@ -1,0 +1,9 @@
+{
+  // SOC 2 §1.8 dependency-vulnerability merge gate for the TypeScript SDK.
+  // Fails on high + critical advisories, matching the previous
+  // `npm audit --audit-level=high` gate. No advisories are allowlisted here;
+  // add an entry only for a transitive advisory with no available fix, with a
+  // documented justification (see docs/audit-ci.jsonc for the pattern).
+  "high": true,
+  "allowlist": []
+}
