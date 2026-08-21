@@ -1,0 +1,161 @@
+.card {
+  --tokenize: #4c9be8;
+  --chunk: #2bb8a6;
+  --inference: #f2a13c;
+  --reduce: #8b95a1;
+  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin: 1.2rem 0;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 16px;
+}
+.tab {
+  background: transparent;
+  color: var(--ifm-color-emphasis-700);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.tab:hover {
+  border-color: var(--inference);
+  color: var(--ifm-font-color-base);
+}
+.tabActive {
+  background: var(--inference);
+  border-color: var(--inference);
+  color: #201203;
+  font-weight: 600;
+}
+.tabCustom {
+  color: var(--ifm-color-emphasis-500);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin: 0 0 16px;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.9rem;
+}
+.meta b {
+  color: var(--ifm-font-color-base);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.rowLabel {
+  fill: var(--ifm-font-color-base);
+  font-size: 13px;
+}
+.rowDur {
+  fill: var(--ifm-color-emphasis-600);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.axis {
+  fill: var(--ifm-color-emphasis-500);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.gridline {
+  stroke: var(--ifm-color-emphasis-200);
+  stroke-width: 1;
+}
+
+/* Phase colors apply to both <rect> bars and legend swatches. */
+.tokenize {
+  fill: var(--tokenize);
+  background: var(--tokenize);
+}
+.chunk {
+  fill: var(--chunk);
+  background: var(--chunk);
+}
+.inference {
+  fill: var(--inference);
+  background: var(--inference);
+}
+.reduce {
+  fill: var(--reduce);
+  background: var(--reduce);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 18px 0 0;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.82rem;
+}
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.note {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+.note b {
+  color: var(--ifm-font-color-base);
+}
+
+.details {
+  margin-top: 18px;
+}
+.details summary {
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-600);
+}
+.textarea {
+  width: 100%;
+  min-height: 150px;
+  margin-top: 10px;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  padding: 10px;
+  font: 12px/1.4 var(--ifm-font-family-monospace);
+}
+.button {
+  margin-top: 10px;
+  background: var(--inference);
+  color: #201203;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.err {
+  color: var(--ifm-color-danger);
+  margin-top: 8px;
+  min-height: 18px;
+}
