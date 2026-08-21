@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 # Label strings used by the SusFactor classifier.
@@ -48,6 +48,29 @@ class SusFactorResult:
 
 
 @dataclass
+class PhaseSpan:
+    """A timed phase of a single ``classify()`` call.
+
+    Spans form a waterfall over one call so callers can visualize where time is
+    spent (tokenize / chunk / per-chunk inference / reduce). All offsets are
+    measured against the single wall-clock baseline captured at the very start
+    of ``classify()``.
+
+    Attributes:
+        name: One of ``"tokenize"``, ``"chunk"``, ``"inference"``, ``"reduce"``.
+        start_ms: Offset in milliseconds from the call's wall-clock baseline.
+        duration_ms: Wall time spent in this span, in milliseconds.
+        chunk_index: 0-based chunk index; set only on ``"inference"`` spans and
+            ``None`` on ``"tokenize"``, ``"chunk"``, and ``"reduce"`` spans.
+    """
+
+    name: str
+    start_ms: float
+    duration_ms: float
+    chunk_index: int | None = None
+
+
+@dataclass
 class ChunkedSusFactorResult:
     """Return type of ``classify()`` for prompts of any length.
 
@@ -65,6 +88,12 @@ class ChunkedSusFactorResult:
             Use this field for security gating — a prompt is suspicious if
             any portion of it is suspicious.
         total_timing_ms: Wall-clock time for all chunks (parallel), in ms.
+        spans: Ordered per-phase timing waterfall for the call
+            (:class:`PhaseSpan`): one ``"tokenize"`` span, one ``"chunk"``
+            span, one ``"inference"`` span per chunk (in chunk order, each
+            carrying its ``chunk_index``), then one ``"reduce"`` span. The
+            gap between ``total_timing_ms`` and the summed span durations is
+            intentional scheduling/join overhead.
 
     Displaying a single score:
         The previous API returned one ``score`` and ``label`` directly. With
@@ -85,6 +114,7 @@ class ChunkedSusFactorResult:
     chunks: List[SusFactorResult]
     is_suspicious: bool
     total_timing_ms: float
+    spans: list[PhaseSpan] = field(default_factory=list)
 
 
 def suspicious_prob(logits: list[float]) -> float:

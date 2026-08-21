@@ -44,6 +44,7 @@ from .types import (
     MAX_CONTENT_TOKENS,
     MODEL_VERSION,
     ChunkedSusFactorResult,
+    PhaseSpan,
     SusFactorResult,
     label_for_score,
     suspicious_prob,
@@ -275,6 +276,7 @@ class SusFactorOnnxClassifier:
         wall_start = _time.time()
 
         # Tokenize the full text without truncation — we handle chunking ourselves.
+        tokenize_start = _time.time()
         inputs = self._tokenizer(
             text,
             padding=False,
@@ -283,13 +285,26 @@ class SusFactorOnnxClassifier:
         )
         all_ids: list[int] = inputs["input_ids"][0].tolist()
         all_mask: list[int] = inputs["attention_mask"][0].tolist()
+        tokenize_span = PhaseSpan(
+            name="tokenize",
+            start_ms=(tokenize_start - wall_start) * 1000,
+            duration_ms=(_time.time() - tokenize_start) * 1000,
+        )
 
         # Chunk on token IDs.
+        chunk_start_t = _time.time()
         id_chunks = self.chunk_token_ids(all_ids)
+        chunk_span = PhaseSpan(
+            name="chunk",
+            start_ms=(chunk_start_t - wall_start) * 1000,
+            duration_ms=(_time.time() - chunk_start_t) * 1000,
+        )
 
         # Build a coroutine per chunk that runs the ONNX session directly
         # (no extra tokenization — we pass pre-built token arrays).
-        async def _score_chunk(chunk_ids: list[int]) -> SusFactorResult:
+        async def _score_chunk(
+            index: int, chunk_ids: list[int]
+        ) -> tuple[SusFactorResult, PhaseSpan]:
             chunk_start = _time.time()
             chunk_len = len(chunk_ids)
             chunk_mask = all_mask[:chunk_len]
@@ -312,25 +327,46 @@ class SusFactorOnnxClassifier:
 
             score = suspicious_prob(logits.tolist())
             label = label_for_score(score, self._threshold)
-            return SusFactorResult(
+            timing_ms = (_time.time() - chunk_start) * 1000
+            result = SusFactorResult(
                 score=score,
                 label=label,
                 model=self._model_name,
                 threshold=self._threshold,
-                timing_ms=(_time.time() - chunk_start) * 1000,
+                timing_ms=timing_ms,
             )
+            # Captured inside the task so overlap between concurrent chunks is
+            # visible in the waterfall. duration_ms equals the chunk's timing_ms.
+            inference_span = PhaseSpan(
+                name="inference",
+                start_ms=(chunk_start - wall_start) * 1000,
+                duration_ms=timing_ms,
+                chunk_index=index,
+            )
+            return result, inference_span
 
-        chunk_results: list[SusFactorResult] = await asyncio.gather(
-            *[_score_chunk(chunk) for chunk in id_chunks]
+        # asyncio.gather preserves input order, so enumerate assigns chunk_index.
+        scored: list[tuple[SusFactorResult, PhaseSpan]] = await asyncio.gather(
+            *[_score_chunk(i, chunk) for i, chunk in enumerate(id_chunks)]
         )
 
+        reduce_start = _time.time()
+        chunk_results = [r for r, _ in scored]
+        inference_spans = [s for _, s in scored]
         is_suspicious = any(r.is_suspicious for r in chunk_results)
-        total_timing_ms = (_time.time() - wall_start) * 1000
-
+        spans = [tokenize_span, chunk_span, *inference_spans]
+        spans.append(
+            PhaseSpan(
+                name="reduce",
+                start_ms=(reduce_start - wall_start) * 1000,
+                duration_ms=(_time.time() - reduce_start) * 1000,
+            )
+        )
         return ChunkedSusFactorResult(
-            chunks=list(chunk_results),
+            chunks=chunk_results,
             is_suspicious=is_suspicious,
-            total_timing_ms=total_timing_ms,
+            total_timing_ms=(_time.time() - wall_start) * 1000,
+            spans=spans,
         )
 
     async def close(self) -> None:

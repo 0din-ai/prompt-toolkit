@@ -24,6 +24,7 @@ import {
   LABEL_SAFE,
   LABEL_SUSPICIOUS,
   MAX_CONTENT_TOKENS,
+  PhaseSpan,
   SusFactorLabel,
   SusFactorResult,
 } from "./types";
@@ -208,8 +209,10 @@ export class SusFactorClassifier {
    */
   async classify(text: string): Promise<ChunkedSusFactorResult> {
     const wallStart = Date.now();
+    const offset = (t: number): number => t - wallStart;
 
     // Tokenize the full text without truncation.
+    const tokenizeStart = Date.now();
     const encoded = this.tokenizer(text, {
       padding: false,
       truncation: false,
@@ -220,12 +223,26 @@ export class SusFactorClassifier {
     const allMask: bigint[] = Array.from(
       encoded.attention_mask.data as BigInt64Array,
     );
+    const tokenizeSpan: PhaseSpan = {
+      name: "tokenize",
+      startMs: offset(tokenizeStart),
+      durationMs: Date.now() - tokenizeStart,
+    };
 
+    const chunkPhaseStart = Date.now();
     const idChunks = chunkTokenIds(allIds);
+    const chunkSpan: PhaseSpan = {
+      name: "chunk",
+      startMs: offset(chunkPhaseStart),
+      durationMs: Date.now() - chunkPhaseStart,
+    };
 
     const ort = require("onnxruntime-node");
 
-    const scoreChunk = async (chunkIds: bigint[]): Promise<SusFactorResult> => {
+    const scoreChunk = async (
+      chunkIds: bigint[],
+      index: number,
+    ): Promise<{ result: SusFactorResult; span: PhaseSpan }> => {
       const chunkStart = Date.now();
       const chunkLen = chunkIds.length;
       const chunkMask = allMask.slice(0, chunkLen);
@@ -252,7 +269,7 @@ export class SusFactorClassifier {
       const score = softmaxSuspicious(logits);
       const label = labelForScore(score, this.decisionThreshold);
 
-      return {
+      const result: SusFactorResult = {
         score,
         label,
         isSuspicious: label === LABEL_SUSPICIOUS,
@@ -260,15 +277,36 @@ export class SusFactorClassifier {
         threshold: this.decisionThreshold,
         timingMs: Date.now() - chunkStart,
       };
+      const span: PhaseSpan = {
+        name: "inference",
+        startMs: offset(chunkStart),
+        durationMs: result.timingMs,
+        chunkIndex: index,
+      };
+      return { result, span };
     };
 
-    // Run all chunks in parallel.
-    const chunkResults = await Promise.all(idChunks.map(scoreChunk));
+    // Run all chunks in parallel; Promise.all preserves input order.
+    const scored = await Promise.all(
+      idChunks.map((chunkIds, index) => scoreChunk(chunkIds, index)),
+    );
+    const chunkResults = scored.map((s) => s.result);
+    const inferenceSpans = scored.map((s) => s.span);
+
+    const reduceStart = Date.now();
+    const isSuspicious = chunkResults.some((r) => r.isSuspicious);
+    const totalTimingMs = Date.now() - wallStart;
+    const reduceSpan: PhaseSpan = {
+      name: "reduce",
+      startMs: offset(reduceStart),
+      durationMs: Date.now() - reduceStart,
+    };
 
     return {
       chunks: chunkResults,
-      isSuspicious: chunkResults.some((r) => r.isSuspicious),
-      totalTimingMs: Date.now() - wallStart,
+      isSuspicious,
+      totalTimingMs,
+      spans: [tokenizeSpan, chunkSpan, ...inferenceSpans, reduceSpan],
     };
   }
 

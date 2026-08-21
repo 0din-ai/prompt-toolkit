@@ -192,6 +192,7 @@ mod tests {
                     }],
                     is_suspicious: label == "suspicious",
                     total_timing_ms: 1.0,
+                    spans: vec![],
                 }),
                 model_name: model.to_string(),
             }

@@ -14,6 +14,7 @@ import {
   CHUNK_STRIDE,
   MAX_CONTENT_TOKENS,
   ChunkedSusFactorResult,
+  PhaseSpan,
   SusFactorResult,
   LABEL_SAFE,
   LABEL_SUSPICIOUS,
@@ -126,6 +127,7 @@ describe("ChunkedSusFactorResult", () => {
       chunks: [makeResult(LABEL_SAFE), makeResult(LABEL_SAFE)],
       isSuspicious: false,
       totalTimingMs: 2,
+      spans: [],
     };
     expect(result.isSuspicious).toBe(false);
   });
@@ -139,6 +141,7 @@ describe("ChunkedSusFactorResult", () => {
       ],
       isSuspicious: true,
       totalTimingMs: 3,
+      spans: [],
     };
     expect(result.isSuspicious).toBe(true);
   });
@@ -148,6 +151,7 @@ describe("ChunkedSusFactorResult", () => {
       chunks: [makeResult(LABEL_SAFE), makeResult(LABEL_SUSPICIOUS)],
       isSuspicious: true,
       totalTimingMs: 1,
+      spans: [],
     };
     expect(result.chunks[0].label).toBe(LABEL_SAFE);
     expect(result.chunks[1].label).toBe(LABEL_SUSPICIOUS);
@@ -267,6 +271,67 @@ describe("SusFactorClassifier.classify (mocked — chunking behaviour)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Phase spans (waterfall) — shape/ordering only; durations are nondeterministic
+// ---------------------------------------------------------------------------
+
+function assertSpanShape(result: ChunkedSusFactorResult): void {
+  const spans: PhaseSpan[] = result.spans;
+  expect(spans.length).toBeGreaterThanOrEqual(3);
+  expect(spans[0].name).toBe("tokenize");
+  expect(spans[1].name).toBe("chunk");
+  expect(spans[spans.length - 1].name).toBe("reduce");
+
+  const inference = spans.filter((s) => s.name === "inference");
+  expect(inference.length).toBe(result.chunks.length);
+  inference.forEach((s, i) => {
+    expect(s.chunkIndex).toBe(i);
+  });
+
+  for (const s of spans) {
+    expect(Number.isFinite(s.startMs)).toBe(true);
+    expect(s.startMs).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(s.durationMs)).toBe(true);
+    expect(s.durationMs).toBeGreaterThanOrEqual(0);
+    if (s.name !== "inference") {
+      expect(s.chunkIndex).toBeUndefined();
+    }
+  }
+}
+
+describe("SusFactorClassifier.classify — phase spans", () => {
+  it("single chunk: tokenize, chunk, one inference (index 0), reduce", async () => {
+    const clf = new SusFactorClassifier(
+      fakeSession(false),
+      fakeTokenizerForLength(100),
+      "m",
+    );
+    const result = await clf.classify("short text");
+    expect(result.chunks.length).toBe(1);
+    assertSpanShape(result);
+    const inference = result.spans.filter((s) => s.name === "inference");
+    expect(inference.length).toBe(1);
+    expect(inference[0].chunkIndex).toBe(0);
+    // An inference span's duration is exactly that chunk's timingMs.
+    expect(inference[0].durationMs).toBe(result.chunks[0].timingMs);
+  });
+
+  it("multi chunk: one inference span per chunk, chunkIndex 0..n-1 in order", async () => {
+    const clf = new SusFactorClassifier(
+      fakeSession(false),
+      fakeTokenizerForLength(MAX_CONTENT_TOKENS * 3),
+      "m",
+    );
+    const result = await clf.classify("long prompt");
+    expect(result.chunks.length).toBeGreaterThan(1);
+    assertSpanShape(result);
+    const indices = result.spans
+      .filter((s) => s.name === "inference")
+      .map((s) => s.chunkIndex);
+    expect(indices).toEqual(result.chunks.map((_, i) => i));
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Model-gated integration tests
 // ---------------------------------------------------------------------------
 
@@ -292,6 +357,7 @@ describeIfModel("SusFactorClassifier.classify (live model)", () => {
     const cache = new ModelCache(MODEL_CACHE_DIR);
     const clf = await SusFactorClassifier.create(cache);
     const result = await clf.classify("What is the weather like today?");
+    assertSpanShape(result);
     expect(result.chunks.length).toBe(1);
     expect(result.chunks[0].score).toBeGreaterThanOrEqual(0);
     expect(result.isSuspicious).toBe(result.chunks[0].isSuspicious);
@@ -302,6 +368,7 @@ describeIfModel("SusFactorClassifier.classify (live model)", () => {
     const clf = await SusFactorClassifier.create(cache);
     const longSafe = "The weather today is quite pleasant. ".repeat(200);
     const result = await clf.classify(longSafe);
+    assertSpanShape(result);
 
     expect(result.chunks.length).toBeGreaterThan(1);
     for (const chunk of result.chunks) {

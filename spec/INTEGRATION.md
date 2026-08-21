@@ -102,6 +102,7 @@ Scores a prompt for jailbreak / prompt-injection risk using the Sus Factor ONNX 
 | `chunks` | `SusFactorResult[]` | One entry per chunk, in order. Short prompts: always one entry. |
 | `is_suspicious` / `isSuspicious` | bool | **Use this for security gating.** `true` if any chunk is suspicious. |
 | `total_timing_ms` / `totalTimingMs` | float | Wall-clock time for all chunks, in ms |
+| `spans` / `spans` | `PhaseSpan[]` | Ordered per-call phase timeline — see below. Lets callers visualize where time was spent in the call. |
 
 Each `SusFactorResult` chunk entry:
 
@@ -112,6 +113,17 @@ Each `SusFactorResult` chunk entry:
 | `model` | string | Model identifier |
 | `threshold` | float | Decision threshold used |
 | `timing_ms` | float | Inference time for this chunk |
+
+Each `spans` entry is a `PhaseSpan`:
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | Phase: `"tokenize"`, `"chunk"`, `"inference"` (one per chunk), or `"reduce"` |
+| `start_ms` / `startMs` | float | Offset from the call's start (a single wall-clock baseline), in ms |
+| `duration_ms` / `durationMs` | float | Wall time of this phase, in ms |
+| `chunk_index` / `chunkIndex` | int? | 0-based chunk index; present only on `"inference"` spans |
+
+Spans are ordered `tokenize`, `chunk`, `inference[0..n]`, `reduce`. Because chunks are dispatched concurrently, `inference` spans may overlap — read the timeline as a waterfall (by `start_ms`), not a stacked bar. An `inference` span's `duration_ms` equals that chunk's `timing_ms`. `total_timing_ms` is the whole-call envelope; the difference between it and the summed spans is the runtime's scheduling/join overhead. Durations are wall-clock measurements and therefore non-deterministic — they are not part of the golden test vectors.
 
 ### Example — short prompt (one chunk)
 
@@ -125,7 +137,13 @@ Each `SusFactorResult` chunk entry:
   "chunks": [
     { "score": 0.94, "label": "suspicious", "model": "0dinai/susfactor-e5-large", "threshold": 0.5, "timing_ms": 45.2 }
   ],
-  "total_timing_ms": 45.2
+  "total_timing_ms": 45.2,
+  "spans": [
+    { "name": "tokenize",  "start_ms": 0.0,  "duration_ms": 0.6 },
+    { "name": "chunk",     "start_ms": 0.6,  "duration_ms": 0.1 },
+    { "name": "inference", "start_ms": 0.7,  "duration_ms": 45.2, "chunk_index": 0 },
+    { "name": "reduce",    "start_ms": 45.9, "duration_ms": 0.1 }
+  ]
 }
 ```
 
@@ -140,7 +158,15 @@ Each `SusFactorResult` chunk entry:
     { "score": 0.03, "label": "safe",       "timing_ms": 43.8 },
     { "score": 0.91, "label": "suspicious", "timing_ms": 44.6 }
   ],
-  "total_timing_ms": 46.3
+  "total_timing_ms": 46.3,
+  "spans": [
+    { "name": "tokenize",  "start_ms": 0.0,  "duration_ms": 1.2 },
+    { "name": "chunk",     "start_ms": 1.2,  "duration_ms": 0.3 },
+    { "name": "inference", "start_ms": 1.5,  "duration_ms": 44.1, "chunk_index": 0 },
+    { "name": "inference", "start_ms": 1.6,  "duration_ms": 43.8, "chunk_index": 1 },
+    { "name": "inference", "start_ms": 1.7,  "duration_ms": 44.6, "chunk_index": 2 },
+    { "name": "reduce",    "start_ms": 46.2, "duration_ms": 0.1 }
+  ]
 }
 ```
 

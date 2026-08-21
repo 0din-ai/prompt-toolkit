@@ -50,6 +50,18 @@ func (r SusFactorResult) IsSuspicious() bool {
 	return r.Label == LabelSuspicious
 }
 
+// PhaseSpan is one timed phase in the lifecycle of a Classify call.
+type PhaseSpan struct {
+	// Name is the phase: "tokenize", "chunk", "inference", or "reduce".
+	Name string
+	// StartMs is the offset from the call's wall-clock start, in ms.
+	StartMs float64
+	// DurationMs is the wall time of this phase, in ms.
+	DurationMs float64
+	// ChunkIndex is the 0-based chunk index; non-nil only on "inference" spans.
+	ChunkIndex *int
+}
+
 // ChunkedSusFactorResult is the return type of Classify for any prompt length.
 //
 // Short prompts (≤ MaxContentTokens tokens) produce exactly one chunk.
@@ -64,4 +76,11 @@ type ChunkedSusFactorResult struct {
 	IsSuspicious bool
 	// TotalTimingMs is the wall-clock time for all chunks in milliseconds.
 	TotalTimingMs float64
+	// Spans holds the ordered lifecycle phase timings for the call:
+	// one "tokenize" span, one "chunk" span, one "inference" span per
+	// chunk (in order, each carrying its ChunkIndex), and one "reduce"
+	// span. StartMs values share the single wall-clock baseline captured
+	// at the start of the call. The gap between TotalTimingMs and the sum
+	// of span durations is scheduling/assembly overhead and is intentional.
+	Spans []PhaseSpan
 }

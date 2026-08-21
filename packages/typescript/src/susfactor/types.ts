@@ -48,6 +48,25 @@ export interface SusFactorResult {
 }
 
 /**
+ * One timed phase in the lifecycle of a {@link SusFactorClassifier.classify}
+ * call.
+ *
+ * All spans share a single wall-clock baseline (the call start). Because
+ * chunks are scored concurrently, `inference` spans may overlap — read the
+ * timeline as a waterfall by `startMs`, not a stacked bar.
+ */
+export interface PhaseSpan {
+  /** Phase name: `"tokenize"`, `"chunk"`, `"inference"`, or `"reduce"`. */
+  name: string;
+  /** Offset from the call's start (single baseline), in milliseconds. */
+  startMs: number;
+  /** Wall time of this phase, in milliseconds. */
+  durationMs: number;
+  /** 0-based chunk index; present only on `"inference"` spans. */
+  chunkIndex?: number;
+}
+
+/**
  * Return type of {@link SusFactorClassifier.classify} for prompts of any length.
  *
  * Prompts within {@link MAX_CONTENT_TOKENS} (510 tokens) produce exactly one
@@ -91,4 +110,11 @@ export interface ChunkedSusFactorResult {
   isSuspicious: boolean;
   /** Total wall-clock time for all chunks, in milliseconds. */
   totalTimingMs: number;
+  /**
+   * Ordered per-call phase timeline: `tokenize`, `chunk`, one `inference`
+   * span per chunk (carrying `chunkIndex`), then `reduce`. Concurrent
+   * inference spans may overlap; `totalTimingMs` is the whole-call envelope
+   * and the gap versus the summed spans is scheduling/join overhead.
+   */
+  spans: PhaseSpan[];
 }
