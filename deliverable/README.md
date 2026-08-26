@@ -399,8 +399,8 @@ For questions or issues with this deliverable package:
 **odin-prompt-toolkit v0.1.1** (2024-03-09)
 
 - Rust SDK: `odin-prompt-toolkit` v0.1.1
-- Python SDK: `odin-prompt-toolkit` v0.1.1
-- Python Native: `odin-prompt-toolkit-native` v0.1.1
+- Python SDK: `0din-prompt-toolkit` v0.1.1
+- Python Native: `0din-prompt-toolkit-native` v0.1.1
 - Model: `0dinai/jailbreak-embeddings-large-onnx` v1 (ONNX optimized, ~235MB)
 
 ## License

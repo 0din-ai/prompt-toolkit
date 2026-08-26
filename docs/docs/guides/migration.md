@@ -17,7 +17,7 @@ The odin-prompt-toolkit SDK consolidates three legacy implementations into a uni
 |---------------|----------|-------------|--------|
 | **heimdall-core** | Rust | `odin-prompt-toolkit` (crate) | Canonical implementation |
 | **thor** | TypeScript | `@0din/prompt-toolkit` (npm) | Feature parity |
-| **research/signature_cli** | Python | `odin-prompt-toolkit` (PyPI) | Feature parity + native acceleration |
+| **research/signature_cli** | Python | `0din-prompt-toolkit` (PyPI) | Feature parity + native acceleration |
 
 **Key improvements**:
 - ✅ Unified API across all languages
@@ -143,7 +143,7 @@ normalized = normalize_vector(vector)
 families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
 ```
 
-**After** (odin-prompt-toolkit PyPI package):
+**After** (0din-prompt-toolkit PyPI package):
 ```python
 from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 from odin_prompt_toolkit.types import LshConfig, SignatureVersion
@@ -821,7 +821,7 @@ assert parsed.version.value == 0
 ### Quick Migration Checklist
 
 **From legacy systems**:
-- [ ] Install new package (`odin-prompt-toolkit`, `@0din/prompt-toolkit`, or `odin-prompt-toolkit`)
+- [ ] Install new package (`odin-prompt-toolkit`, `@0din/prompt-toolkit`, or `0din-prompt-toolkit`)
 - [ ] Update imports (remove relative paths, use package name)
 - [ ] Update signature format (add `0din-v1:` prefix)
 - [ ] Update function calls (keyword args in Python)
@@ -840,7 +840,7 @@ assert parsed.version.value == 0
 **Key Takeaways**:
 1. ✅ **Legacy → SDK migration is straightforward** (mostly import path changes)
 2. ⚠️ **V0 → V1 migration requires full regeneration** (incompatible embedding spaces)
-3. ✅ **Native Rust acceleration makes Python 592× faster** (install `odin-prompt-toolkit[native]`)
+3. ✅ **Native Rust acceleration makes Python 592× faster** (install `0din-prompt-toolkit[native]`)
 4. ✅ **All implementations validated** (109 tests, bit-identical signatures)
 5. ✅ **Rollback plan available** (keep backups, use version control)
 

@@ -18,10 +18,10 @@ Multi-language SDK for AI prompt similarity detection — LSH signatures, jailbr
 | Language | Package | Tests | Path |
 |---|---|---|---|
 | Rust | `odin-prompt-toolkit` v0.5.0 | 69 passing | [packages/rust/](packages/rust/) |
-| Python | `odin-prompt-toolkit` | 183 passing | [packages/python/](packages/python/) |
+| Python | `0din-prompt-toolkit` | 183 passing | [packages/python/](packages/python/) |
 | TypeScript | `@0din/prompt-toolkit` | 132 passing | [packages/typescript/](packages/typescript/) |
 | Go | `github.com/0din-ai/prompt-toolkit/packages/go` | 27+ passing | [packages/go/](packages/go/) |
-| Python Native | `odin-prompt-toolkit-native` | — | [packages/python-native/](packages/python-native/) |
+| Python Native | `0din-prompt-toolkit-native` | — | [packages/python-native/](packages/python-native/) |
 
 ## Installation
 

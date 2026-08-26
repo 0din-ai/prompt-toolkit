@@ -500,7 +500,7 @@ jobs:
   #
   # One-time registry setup (see .github/CI.md § Publishing):
   #   • PyPI:   add a trusted publisher (pending publisher works for the first
-  #             upload) for both odin-prompt-toolkit and odin-prompt-toolkit-native.
+  #             upload) for both 0din-prompt-toolkit and 0din-prompt-toolkit-native.
   #   • crates.io / npm: publish v0.x once manually, then link this repo +
   #             workflow (release.yml) as a trusted publisher. OIDC cannot create
   #             the very first version on either registry.

@@ -246,7 +246,7 @@ Signatures are generated using **SimHash via Random Hyperplane LSH** — a deter
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
 | Rust | `odin-prompt-toolkit` v0.6.0 | ✅ Ready | 69 passing |
-| Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
+| Python | `0din-prompt-toolkit` | ✅ Ready | 183 passing |
 | TypeScript | `@0din/prompt-toolkit` | ✅ Ready | 146 passing |
 | Go | `github.com/0din-ai/prompt-toolkit/packages/go` | ✅ Ready (SusFactor) | 27+ passing |
 

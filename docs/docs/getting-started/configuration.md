@@ -146,7 +146,7 @@ Single-process, single-thread benchmarks. Concurrency, batch size, and hardware 
 | **Python (pure)** | Pure Python | 111ms | ~9/s | Fallback only; not for production |
 | **Go** | — | — | — | Go SDK is SusFactor-only; LSH not implemented |
 
-**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration.md)).
+**Python native acceleration** (`0din-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration.md)).
 
 ---
 

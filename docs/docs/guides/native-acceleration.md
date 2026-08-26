@@ -8,7 +8,7 @@ The Python SDK includes optional native Rust acceleration that makes signature g
 
 ## Overview
 
-The Python package supports native Rust acceleration through the `odin-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
+The Python package supports native Rust acceleration through the `0din-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
 
 - **Same API**: No code changes required
 - **Transparent fallback**: If native extension unavailable, falls back to pure Python

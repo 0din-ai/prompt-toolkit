@@ -1,6 +1,6 @@
-# odin-prompt-toolkit-native
+# 0din-prompt-toolkit-native
 
-Native Rust acceleration for the Python odin-prompt-toolkit SDK.
+Native Rust acceleration for the Python 0din-prompt-toolkit SDK.
 
 This package provides PyO3-based native extensions that accelerate the performance-critical LSH signature generation functions by ~627× compared to pure Python.
 
