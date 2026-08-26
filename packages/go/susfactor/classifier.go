@@ -2,6 +2,7 @@ package susfactor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -192,7 +193,7 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		return nil, newError("create ONNX session: %v", err)
 	}
 
-	tk, err := tokenizers.FromFile(tokPath)
+	tk, err := loadTokenizerNoTruncation(tokPath)
 	if err != nil {
 		dynSession.Destroy()
 		return nil, newError("load tokenizer: %v", err)
@@ -204,6 +205,32 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		model:      cfg.model,
 		threshold:  cfg.threshold,
 	}, nil
+}
+
+// loadTokenizerNoTruncation loads a tokenizer from a tokenizer.json file with
+// any embedded truncation disabled.
+//
+// The bundled tokenizer.json sets truncation.max_length = 512, which would
+// silently cut every prompt to 512 tokens before chunking runs — bypassing
+// long-prompt chunking and dropping content past the limit. We tokenize the
+// full input and window it ourselves, so the truncation directive is stripped
+// from the tokenizer definition before it is loaded.
+func loadTokenizerNoTruncation(path string) (*tokenizers.Tokenizer, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+	if _, ok := doc["truncation"]; ok {
+		doc["truncation"] = json.RawMessage("null")
+		if raw, err = json.Marshal(doc); err != nil {
+			return nil, err
+		}
+	}
+	return tokenizers.FromBytes(raw)
 }
 
 // Classify scores a prompt of any length. Prompts within MaxContentTokens
@@ -223,16 +250,31 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 
 	wallStart := time.Now()
 
+	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000.0 }
+
 	// Tokenize full text, no truncation, with special tokens ([CLS]/[SEP]).
+	tokenizeStart := time.Now()
 	enc := c.tokenizer.EncodeWithOptions(text, true,
 		tokenizers.WithReturnAttentionMask(),
 	)
 	allIDs := u32ToI64(enc.IDs)
 	allMask := u32ToI64(enc.AttentionMask)
+	tokenizeSpan := PhaseSpan{
+		Name:       "tokenize",
+		StartMs:    ms(tokenizeStart.Sub(wallStart)),
+		DurationMs: ms(time.Since(tokenizeStart)),
+	}
 
+	chunkStartPhase := time.Now()
 	idChunks := ChunkTokenIDs(allIDs)
+	chunkSpan := PhaseSpan{
+		Name:       "chunk",
+		StartMs:    ms(chunkStartPhase.Sub(wallStart)),
+		DurationMs: ms(time.Since(chunkStartPhase)),
+	}
 
 	results := make([]SusFactorResult, len(idChunks))
+	inferenceSpans := make([]PhaseSpan, len(idChunks))
 	for i, chunkIDs := range idChunks {
 		select {
 		case <-ctx.Done():
@@ -255,15 +297,26 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 
 		score := SuspiciousProb(logits)
 		label := LabelForScore(score, c.threshold)
+		timingMs := ms(time.Since(chunkStart))
 		results[i] = SusFactorResult{
 			Score:     score,
 			Label:     label,
 			Model:     c.model,
 			Threshold: c.threshold,
-			TimingMs:  float64(time.Since(chunkStart).Microseconds()) / 1000.0,
+			TimingMs:  timingMs,
+		}
+		idx := i
+		tokenCount := len(chunkIDs)
+		inferenceSpans[i] = PhaseSpan{
+			Name:       "inference",
+			StartMs:    ms(chunkStart.Sub(wallStart)),
+			DurationMs: timingMs,
+			ChunkIndex: &idx,
+			TokenCount: &tokenCount,
 		}
 	}
 
+	reduceStart := time.Now()
 	isSuspicious := false
 	for _, r := range results {
 		if r.IsSuspicious() {
@@ -272,10 +325,21 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 		}
 	}
 
+	spans := make([]PhaseSpan, 0, len(inferenceSpans)+3)
+	spans = append(spans, tokenizeSpan, chunkSpan)
+	spans = append(spans, inferenceSpans...)
+	spans = append(spans, PhaseSpan{
+		Name:       "reduce",
+		StartMs:    ms(reduceStart.Sub(wallStart)),
+		DurationMs: ms(time.Since(reduceStart)),
+	})
+
 	return ChunkedSusFactorResult{
 		Chunks:        results,
 		IsSuspicious:  isSuspicious,
-		TotalTimingMs: float64(time.Since(wallStart).Microseconds()) / 1000.0,
+		TotalTimingMs: ms(time.Since(wallStart)),
+		TotalTokens:   len(allIDs),
+		Spans:         spans,
 	}, nil
 }
 

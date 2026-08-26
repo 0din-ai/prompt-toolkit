@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: mozilla/ssdlc-actions/.github/workflows/code-security-analysis-private-repo.yml@d355de9a0cb79e0be2599696064231ee49aebb92 # main @ 2026-07-15
+    uses: mozilla/ssdlc-actions/.github/workflows/code-security-analysis-private-repo.yml@9ecc28ba241cdaa0b207cc2c352c2faa954732f8 # main @ 2026-07-15
 
   # ────────────────────────────────────────────────────────────────────────────
   # Blocking Semgrep — the real SAST merge gate (design.md D2). Runs
@@ -132,15 +132,13 @@ jobs:
           cache: npm
           cache-dependency-path: ${{ matrix.working-directory }}/package-lock.json
 
-      - name: npm audit (blocking; allowlist tracks unfixable upstream advisories)
+      - name: npm audit (audit-ci)
         working-directory: ${{ matrix.working-directory }}
-        # Fails on any high/critical advisory EXCEPT the explicitly allowlisted
-        # ones below. image-size GHSA-w3rx-r6r6-pgpr & GHSA-5p2g-fcmc-qvqq: DoS in
-        # the ICNS/JXL/HEIF parsers, no upstream fix as of 2026-08-12 (2.0.2 is
-        # latest; advisories cover <=2.0.2). Build-time only — Docusaurus reads
-        # image dimensions during the static site build over first-party images.
-        # Remove the allowlist entries once image-size ships a patched release.
-        run: npx --yes audit-ci@7.1.0 --high --allowlist GHSA-w3rx-r6r6-pgpr GHSA-5p2g-fcmc-qvqq
+        # audit-ci wraps `npm audit` so specific unfixable transitive advisories
+        # can be allowlisted with a documented justification (see the
+        # audit-ci.jsonc in each working-directory). Fails on any non-allowlisted
+        # high/critical advisory, preserving the prior --audit-level=high gate.
+        run: npx --yes audit-ci@7.1.0 --config audit-ci.jsonc
 
   go-audit:
     name: Go dependency audit (govulncheck)

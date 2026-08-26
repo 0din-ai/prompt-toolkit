@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "0din-prompt-toolkit"
-version = "0.8.0"
+name = "odin-prompt-toolkit"
+version = "0.9.0"
 description = "Multi-language SDK for LSH signature generation for AI prompt similarity detection"
 readme = "README.md"
 requires-python = ">=3.10"

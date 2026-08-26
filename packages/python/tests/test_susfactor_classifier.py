@@ -43,6 +43,26 @@ class FakeTokenizer:
         )
 
 
+class FakeTokenizerN:
+    """Like FakeTokenizer but returns a configurable sequence length.
+
+    Used to force multi-chunk classification so the per-chunk inference spans
+    can be exercised.
+    """
+
+    def __init__(self, seq: int):
+        self.seq = seq
+
+    def __call__(self, texts, **kwargs):
+        import torch
+
+        batch = len(texts) if isinstance(texts, list) else 1
+        return _FakeTokenizerOutput(
+            input_ids=torch.ones((batch, self.seq), dtype=torch.long),
+            attention_mask=torch.ones((batch, self.seq), dtype=torch.long),
+        )
+
+
 class FakeEncoderOutput:
     def __init__(self, last_hidden_state):
         self.last_hidden_state = last_hidden_state
@@ -137,6 +157,44 @@ class TestClassifyWithFakes:
         clf = self._make(suspicious=True)
         result = await clf.classify("x")
         assert 0.0 <= result.chunks[0].score <= 1.0
+
+    async def test_single_chunk_span_waterfall(self):
+        """classify() emits a tokenize/chunk/inference/reduce waterfall."""
+        from test_susfactor_types import assert_span_shape
+
+        clf = self._make(suspicious=True)
+        result = await clf.classify("short prompt")
+        assert len(result.chunks) == 1
+        assert_span_shape(result)
+        # One inference span for the single chunk, indexed 0.
+        inference = [s for s in result.spans if s.name == "inference"]
+        assert len(inference) == 1
+        assert inference[0].chunk_index == 0
+        # total_tokens is the full tokenized length; the single inference span's
+        # token_count is that chunk's sequence length (positive).
+        assert result.total_tokens > 0
+        assert inference[0].token_count == result.total_tokens
+
+    async def test_multi_chunk_span_waterfall(self):
+        """A prompt spanning multiple chunks emits one inference span per chunk."""
+        from test_susfactor_types import assert_span_shape
+
+        clf = self._make(suspicious=False)
+        # Force >1 chunk (MAX_CONTENT_TOKENS is 510, stride 460).
+        clf._tokenizer = FakeTokenizerN(seq=1200)
+        result = await clf.classify("long prompt")
+        assert len(result.chunks) > 1
+        assert_span_shape(result)
+        inference = [s for s in result.spans if s.name == "inference"]
+        assert len(inference) == len(result.chunks)
+        assert [s.chunk_index for s in inference] == list(range(len(result.chunks)))
+        # total_tokens is the full tokenized length (1200 forced above).
+        assert result.total_tokens == 1200
+        # Each inference span carries its chunk's sequence length, all positive,
+        # and they cover the full sequence (chunks overlap, so sum >= total).
+        token_counts = [s.token_count for s in inference]
+        assert all(isinstance(tc, int) and tc > 0 for tc in token_counts)
+        assert max(token_counts) <= result.total_tokens
 
 
 @pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires torch")

@@ -1,0 +1,19 @@
+{
+  // SOC 2 §1.8 dependency-vulnerability merge gate for the Docusaurus site.
+  // Fails on high + critical advisories, matching the previous
+  // `npm audit --audit-level=high` gate — except entries in `allowlist`.
+  //
+  // Allowlisted advisories are documented, accepted risks. Each MUST be a
+  // transitive advisory with no available fix; re-review whenever the
+  // dependency tree changes.
+  "high": true,
+  "allowlist": [
+    // image-size (transitive via @docusaurus/mdx-loader). No patched release
+    // exists at any version as of 2026-08. DoS via infinite loops in the
+    // ICNS/JXL/HEIF parsers. image-size is used only at build time to read
+    // dimensions of the repo's own (trusted) markdown images, so the DoS
+    // surface is not reachable by untrusted input.
+    "GHSA-w3rx-r6r6-pgpr", // image-size ICNS parser infinite loop
+    "GHSA-5p2g-fcmc-qvqq" // image-size JXL/HEIF parser infinite loops
+  ]
+}

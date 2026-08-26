@@ -38,6 +38,7 @@ export {
 } from "./types";
 export type {
   ChunkedSusFactorResult,
+  PhaseSpan,
   SusFactorLabel,
   SusFactorResult,
 } from "./types";

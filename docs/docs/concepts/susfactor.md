@@ -64,6 +64,7 @@ You can use both together — generate an LSH signature for deduplication *and* 
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import SpansWaterfall from '@site/src/components/SpansWaterfall';
 
 <Tabs groupId="language">
   <TabItem value="rust" label="Rust">
@@ -179,6 +180,7 @@ Prompt tokens: [─────────────────────�
 | `chunks` | list of `SusFactorResult` | One result per chunk, in order |
 | `is_suspicious` | bool | `true` if **any** chunk is suspicious |
 | `total_timing_ms` | float | Wall-clock time across all chunks |
+| `spans` | list of `PhaseSpan` | Per-call phase timeline (see [Call lifecycle timing](#call-lifecycle-timing)) |
 
 Each `SusFactorResult` in `chunks` has:
 
@@ -238,6 +240,33 @@ for (i, chunk) in result.chunks.iter().enumerate() {
 
   </TabItem>
 </Tabs>
+
+---
+
+## Call lifecycle timing
+
+Every `classify()` call records a `spans` timeline on its result — the phases a
+call passes through and how long each takes, all measured against a single
+call-start baseline. Use it to see where wall-clock time actually goes in a
+call.
+
+The phases are `tokenize` (turn text into token IDs), `chunk` (split long
+inputs into overlapping windows), one `inference` span **per chunk** (the model
+forward pass), and `reduce` (assemble the result). Because chunks are scored
+concurrently, `inference` spans overlap — read the timeline as a waterfall by
+`start_ms`, not a stacked bar. `total_timing_ms` is the whole-call envelope; the
+gap between it and the summed spans is runtime scheduling/join overhead.
+
+Each span also carries a token count — `total_tokens` on the result (tokens
+submitted) and `token_count` on each `inference` span (that chunk's tokens) — so
+you can tie latency to input size. The tabs below are real captures (ONNX
+backend, CPU) at increasing prompt lengths: inference is essentially the whole
+call and scales with token count, while tokenizing, batching, and response
+assembly stay sub-millisecond. The longest tab is a 1,348-token prompt that
+splits into three overlapping chunks. Paste your own `spans` JSON to render a
+different call.
+
+<SpansWaterfall />
 
 ---
 

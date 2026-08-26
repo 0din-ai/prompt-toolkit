@@ -43,6 +43,30 @@ impl SusFactorResult {
     }
 }
 
+/// A single timed phase of a SusFactor [`crate::susfactor::SusFactorProvider::classify`]
+/// call, used to build a per-call timing waterfall.
+///
+/// All `start_ms` offsets are measured from one wall-clock baseline captured at
+/// the very start of the call, so spans can be laid out on a shared timeline.
+/// Because inference chunks may run concurrently, their spans can overlap.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct PhaseSpan {
+    /// Phase name: `"tokenize"` | `"chunk"` | `"inference"` | `"reduce"`.
+    pub name: String,
+    /// Offset from the call's wall-clock start, in milliseconds.
+    pub start_ms: f64,
+    /// Wall time of this phase, in milliseconds.
+    pub duration_ms: f64,
+    /// 0-based chunk index; `Some` only on `"inference"` spans.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chunk_index: Option<usize>,
+    /// Number of tokens fed to this chunk's inference (the chunk sequence
+    /// length / `seq_len`). `Some` only on `"inference"` spans; `None` on
+    /// `tokenize`/`chunk`/`reduce`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_count: Option<usize>,
+}
+
 /// Return type of [`crate::susfactor::SusFactorProvider::classify`] for prompts of any length.
 ///
 /// Prompts within [`MAX_CONTENT_TOKENS`] (510 tokens) produce exactly one
@@ -82,6 +106,21 @@ pub struct ChunkedSusFactorResult {
     /// considered suspicious if any portion of it is suspicious, regardless
     /// of how many chunks are safe.
     pub is_suspicious: bool,
+    /// Total number of tokens submitted for this call: the length of the full
+    /// tokenized input sequence (`[CLS]` + content + `[SEP]`) before chunking.
+    ///
+    /// This is the same sequence that is split into chunks, so for multi-chunk
+    /// prompts it exceeds any single chunk's `token_count` (chunks overlap).
+    pub total_tokens: usize,
     /// Total wall-clock time for all chunks, in milliseconds.
     pub total_timing_ms: f64,
+    /// Ordered per-phase timing spans for this call, forming a waterfall:
+    /// `tokenize`, `chunk`, one `inference` span per chunk (in chunk order,
+    /// each carrying its `chunk_index`), then `reduce`.
+    ///
+    /// Spans share the single wall-clock baseline used for
+    /// [`Self::total_timing_ms`]. Inference spans may overlap when chunks run
+    /// concurrently, so the summed span durations intentionally do not equal
+    /// `total_timing_ms` (the gap is scheduling/join overhead).
+    pub spans: Vec<PhaseSpan>,
 }

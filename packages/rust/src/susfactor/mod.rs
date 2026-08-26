@@ -44,7 +44,7 @@ pub mod vertex;
 pub use common::{label_for_score, suspicious_prob};
 pub use provider::SusFactorProvider;
 pub use types::{
-    ChunkedSusFactorResult, SusFactorResult, CHUNK_OVERLAP, CHUNK_STRIDE, LABEL_SAFE,
+    ChunkedSusFactorResult, PhaseSpan, SusFactorResult, CHUNK_OVERLAP, CHUNK_STRIDE, LABEL_SAFE,
     LABEL_SUSPICIOUS, MAX_CONTENT_TOKENS,
 };
 

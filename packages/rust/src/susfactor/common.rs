@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use crate::error::{Result, SigError};
 use crate::susfactor::types::{
-    ChunkedSusFactorResult, SusFactorResult, CHUNK_STRIDE, LABEL_SAFE, LABEL_SUSPICIOUS,
+    ChunkedSusFactorResult, PhaseSpan, SusFactorResult, CHUNK_STRIDE, LABEL_SAFE, LABEL_SUSPICIOUS,
     MAX_CONTENT_TOKENS,
 };
 
@@ -27,6 +27,15 @@ pub const DEFAULT_ONNX_REPO: &str = "0dinai/susfactor-e5-large-onnx";
 
 /// Default decision threshold.
 pub const DEFAULT_THRESHOLD: f32 = 0.5;
+
+/// Phase name for the tokenization span.
+pub const PHASE_TOKENIZE: &str = "tokenize";
+/// Phase name for the chunking span.
+pub const PHASE_CHUNK: &str = "chunk";
+/// Phase name for a per-chunk inference span.
+pub const PHASE_INFERENCE: &str = "inference";
+/// Phase name for the result-assembly span.
+pub const PHASE_REDUCE: &str = "reduce";
 
 /// Softmax over a 2-logit slice, returning P(class 1) = suspicious.
 pub fn suspicious_prob(logits: &[f32]) -> f32 {
@@ -68,6 +77,22 @@ pub fn tokenize_full(
         .collect();
 
     Ok((input_ids, attention_mask))
+}
+
+/// Load a SusFactor tokenizer with truncation disabled.
+///
+/// The bundled `tokenizer.json` embeds `truncation.max_length = 512`. Left in
+/// place, [`tokenizers::Tokenizer::encode`] silently cuts every prompt to 512
+/// tokens *before* [`chunk_token_ids`] runs — bypassing long-prompt chunking
+/// and dropping any content past the limit. We tokenize the full input and
+/// window it ourselves, so truncation must be cleared at load time.
+pub fn load_tokenizer(path: impl AsRef<std::path::Path>) -> Result<tokenizers::Tokenizer> {
+    let mut tokenizer = tokenizers::Tokenizer::from_file(path.as_ref())
+        .map_err(|e| SigError::Model(format!("Failed to load SusFactor tokenizer: {e}")))?;
+    tokenizer
+        .with_truncation(None)
+        .map_err(|e| SigError::Model(format!("Failed to clear tokenizer truncation: {e}")))?;
+    Ok(tokenizer)
 }
 
 /// Split a token-ID sequence into overlapping chunks of at most
@@ -155,19 +180,36 @@ pub fn result_from_logits(
 
 /// Reduce per-chunk results into a [`ChunkedSusFactorResult`].
 ///
-/// `is_suspicious` is `true` if **any** chunk is suspicious.
-pub fn reduce(chunks: Vec<SusFactorResult>, total_timing_ms: f64) -> ChunkedSusFactorResult {
+/// `is_suspicious` is `true` if **any** chunk is suspicious. `total_tokens` is
+/// the length of the full tokenized input sequence (before chunking). `spans`
+/// carries the ordered per-phase timing waterfall assembled by the caller.
+pub fn reduce(
+    chunks: Vec<SusFactorResult>,
+    total_tokens: usize,
+    total_timing_ms: f64,
+    spans: Vec<PhaseSpan>,
+) -> ChunkedSusFactorResult {
     let is_suspicious = chunks.iter().any(|r| r.is_suspicious());
     ChunkedSusFactorResult {
         chunks,
         is_suspicious,
+        total_tokens,
         total_timing_ms,
+        spans,
     }
 }
 
 /// Convenience wrapper returning elapsed milliseconds since `start`.
 pub fn elapsed_ms(start: Instant) -> f64 {
     start.elapsed().as_secs_f64() * 1000.0
+}
+
+/// Milliseconds between the wall-clock baseline `wall` and a later `start`.
+///
+/// Used to compute each [`PhaseSpan::start_ms`] offset against the single
+/// baseline captured at the start of a classify call.
+pub fn offset_ms(start: Instant, wall: Instant) -> f64 {
+    start.duration_since(wall).as_secs_f64() * 1000.0
 }
 
 #[cfg(test)]
@@ -195,6 +237,34 @@ mod tests {
         assert!(validate_logits(&[1.0, 2.0]).is_ok());
     }
 
+    /// Regression: the loaded tokenizer must NOT truncate long prompts, so that
+    /// long-prompt chunking actually runs. Model-gated (needs the real
+    /// tokenizer); skips when `SUSFACTOR_MODEL_DIR` is unset.
+    #[test]
+    fn load_tokenizer_disables_truncation_for_long_prompts() {
+        let Ok(model_dir) = std::env::var("SUSFACTOR_MODEL_DIR") else {
+            eprintln!("SUSFACTOR_MODEL_DIR unset; skipping truncation regression");
+            return;
+        };
+        let path = std::path::Path::new(&model_dir).join("tokenizer.json");
+        let tokenizer = load_tokenizer(&path).expect("load tokenizer");
+        // Well over the model's 512-token window.
+        let long = "The quarterly business review covered revenue and churn. ".repeat(150);
+        let enc = tokenizer.encode(long.as_str(), true).expect("encode");
+        let ids: Vec<i64> = enc.get_ids().iter().map(|&i| i as i64).collect();
+        assert!(
+            ids.len() > MAX_CONTENT_TOKENS,
+            "truncation not disabled: got {} tokens (<= {MAX_CONTENT_TOKENS})",
+            ids.len()
+        );
+        let chunks = chunk_token_ids(&ids);
+        assert!(
+            chunks.len() > 2,
+            "expected >2 chunks for a long prompt, got {}",
+            chunks.len()
+        );
+    }
+
     #[test]
     fn result_from_logits_applies_softmax_and_label() {
         let r = result_from_logits(&[-5.0, 5.0], "m", 0.5, 1.0);
@@ -218,14 +288,107 @@ mod tests {
             timing_ms: 1.0,
         };
 
-        let all_safe = reduce(vec![make(LABEL_SAFE), make(LABEL_SAFE)], 2.0);
+        let all_safe = reduce(vec![make(LABEL_SAFE), make(LABEL_SAFE)], 0, 2.0, vec![]);
         assert!(!all_safe.is_suspicious);
 
         let one_suspicious = reduce(
             vec![make(LABEL_SAFE), make(LABEL_SUSPICIOUS), make(LABEL_SAFE)],
+            0,
             3.0,
+            vec![],
         );
         assert!(one_suspicious.is_suspicious);
+    }
+
+    #[test]
+    fn spans_waterfall_has_expected_shape_and_ordering() {
+        // Build a representative waterfall the way a backend does: one tokenize,
+        // one chunk, one inference span per chunk (in order), then one reduce.
+        let make = |i: usize| SusFactorResult {
+            score: 0.1,
+            label: LABEL_SAFE.to_string(),
+            model: "m".to_string(),
+            threshold: 0.5,
+            timing_ms: 1.0 + i as f64,
+        };
+        let chunks = vec![make(0), make(1), make(2)];
+
+        let mut spans = vec![
+            PhaseSpan {
+                name: PHASE_TOKENIZE.to_string(),
+                start_ms: 0.0,
+                duration_ms: 0.5,
+                chunk_index: None,
+                token_count: None,
+            },
+            PhaseSpan {
+                name: PHASE_CHUNK.to_string(),
+                start_ms: 0.5,
+                duration_ms: 0.3,
+                chunk_index: None,
+                token_count: None,
+            },
+        ];
+        for (i, c) in chunks.iter().enumerate() {
+            spans.push(PhaseSpan {
+                name: PHASE_INFERENCE.to_string(),
+                start_ms: 1.0 + i as f64,
+                duration_ms: c.timing_ms,
+                chunk_index: Some(i),
+                token_count: Some(510 - i),
+            });
+        }
+        spans.push(PhaseSpan {
+            name: PHASE_REDUCE.to_string(),
+            start_ms: 10.0,
+            duration_ms: 0.2,
+            chunk_index: None,
+            token_count: None,
+        });
+
+        let result = reduce(chunks, 1530, 12.0, spans);
+        let spans = &result.spans;
+
+        // Non-empty, correct bookends.
+        assert!(!spans.is_empty());
+        assert_eq!(spans.first().unwrap().name, PHASE_TOKENIZE);
+        assert_eq!(spans[1].name, PHASE_CHUNK);
+        assert_eq!(spans.last().unwrap().name, PHASE_REDUCE);
+
+        // Exactly len(chunks) inference spans, indices 0..n-1 each once.
+        let inference: Vec<&PhaseSpan> =
+            spans.iter().filter(|s| s.name == PHASE_INFERENCE).collect();
+        assert_eq!(inference.len(), result.chunks.len());
+        for (pos, s) in inference.iter().enumerate() {
+            assert_eq!(s.chunk_index, Some(pos));
+        }
+        let mut indices: Vec<usize> = inference.iter().map(|s| s.chunk_index.unwrap()).collect();
+        indices.sort_unstable();
+        indices.dedup();
+        assert_eq!(indices.len(), result.chunks.len());
+
+        // Only inference spans carry a chunk_index.
+        for s in spans.iter().filter(|s| s.name != PHASE_INFERENCE) {
+            assert!(s.chunk_index.is_none());
+        }
+
+        // total_tokens is a non-negative integer surfaced on the result.
+        let _: usize = result.total_tokens;
+
+        // Every inference span carries a positive per-chunk token_count; all
+        // non-inference spans leave it unset.
+        for s in inference.iter() {
+            assert!(s.token_count.is_some_and(|n| n > 0));
+        }
+        for s in spans.iter().filter(|s| s.name != PHASE_INFERENCE) {
+            assert!(s.token_count.is_none());
+        }
+
+        // Durations finite/non-negative; start offsets non-negative.
+        for s in spans {
+            assert!(s.duration_ms.is_finite() && s.duration_ms >= 0.0);
+            assert!(s.start_ms.is_finite() && s.start_ms >= 0.0);
+        }
     }
 
     // -----------------------------------------------------------------------

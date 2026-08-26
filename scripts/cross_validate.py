@@ -189,7 +189,7 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
     # inference path (see test file header), so this validates fixture loading
     # and skip logic. Full ONNX inference is validated by the Rust parity test.
     success, _ = run_command(
-        ["npm", "test", "--", "--testPathPattern=susfactor-parity"],
+        ["npm", "test", "--", "susfactor-parity"],
         root_dir / "packages" / "typescript",
         "TypeScript SusFactor parity",
         env=env,
