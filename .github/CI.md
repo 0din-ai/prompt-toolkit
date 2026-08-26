@@ -187,6 +187,14 @@ environment, so a maintainer must approve it before anything ships.
    then configure trusted publishing (repo `0din-ai/prompt-toolkit`, workflow
    `release.yml`) in the package settings. OIDC cannot create the first version.
    The job upgrades npm to ≥ 11.5.1 automatically (required for OIDC).
+5. **`RELEASE_TOKEN` (required for automated releases).** `bump-release.yml`
+   pushes the `vX.Y.Z` tag, but a tag pushed with the default `GITHUB_TOKEN`
+   does **not** trigger the tag-driven `release.yml` — GitHub blocks pushes made
+   with the workflow token from starting downstream workflows. Add a PAT with
+   `contents: write` (repo + workflow scope) as the `RELEASE_TOKEN` Actions
+   secret; `bump-release.yml` uses it in preference to `GITHUB_TOKEN` so the tag
+   push fires `release.yml`. Without it, `bump-release.yml` bumps and tags but
+   nothing publishes — you would have to push the tag manually to start the release.
 
 ### Go module note
 
