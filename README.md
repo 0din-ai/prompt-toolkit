@@ -25,7 +25,7 @@ Multi-language SDK for AI prompt similarity detection — LSH signatures, jailbr
 
 ## Installation
 
-> These packages are not published to public registries. Install via git dependency.
+> Registry publishing to PyPI, crates.io, and npm is configured via GitHub Actions and activates on the next tagged release. Until then, install from git:
 
 ### Rust
 
