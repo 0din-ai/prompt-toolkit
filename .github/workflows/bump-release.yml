@@ -82,6 +82,18 @@ jobs:
           # TypeScript
           sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/typescript/package.json
 
+          # Keep Cargo.lock in sync with the workspace-member versions bumped
+          # above. Otherwise `cargo publish` regenerates the lock at release
+          # time, dirtying the tree and failing publish-crates (see #120).
+          for lock in packages/rust/Cargo.lock packages/python-native/Cargo.lock; do
+            awk -v v="$VERSION" '
+              /^name = "odin-prompt-toolkit"$/ || /^name = "odin-prompt-toolkit-python"$/ {
+                print; getline; sub(/version = "[^"]*"/, "version = \"" v "\""); print; next
+              }
+              { print }
+            ' "$lock" > "$lock.tmp" && mv "$lock.tmp" "$lock"
+          done
+
       - name: Verify all versions match
         run: |
           RUST=$(grep '^version = ' packages/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
@@ -110,10 +122,12 @@ jobs:
 
           git add \
             packages/rust/Cargo.toml \
+            packages/rust/Cargo.lock \
             packages/python/pyproject.toml \
             packages/python/odin_prompt_toolkit/__init__.py \
             packages/python-native/pyproject.toml \
             packages/python-native/Cargo.toml \
+            packages/python-native/Cargo.lock \
             packages/typescript/package.json
 
           git commit -m "chore: bump version to $VERSION"
