@@ -33,7 +33,7 @@ from .types import (
     suspicious_prob,
 )
 
-_INSTALL_HINT = "pip install 'odin-prompt-toolkit[susfactor]'"
+_INSTALL_HINT = "pip install '0din-prompt-toolkit[susfactor]'"
 
 
 def _require_torch() -> Any:

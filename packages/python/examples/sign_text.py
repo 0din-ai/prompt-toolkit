@@ -32,7 +32,7 @@ async def onnx_example():
     except ImportError as e:
         print(f"Error: {e}")
         print("\nInstall ONNX dependencies with:")
-        print("  pip install 'odin-prompt-toolkit[onnx]'")
+        print("  pip install '0din-prompt-toolkit[onnx]'")
         return
 
     # Initialize model cache and ONNX provider
@@ -123,7 +123,7 @@ async def openai_example():
     except ImportError as e:
         print(f"Error: {e}")
         print("\nInstall OpenAI dependencies with:")
-        print("  pip install 'odin-prompt-toolkit[openai]'")
+        print("  pip install '0din-prompt-toolkit[openai]'")
         return
 
     print("1. Initializing OpenAI provider...")

@@ -107,7 +107,7 @@ class HybridCMLSH {
 
 **Example:**
 ```typescript
-import { HybridCMLSH, createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
+import { HybridCMLSH, createDefaultCmLsh } from '@0din/prompt-toolkit';
 
 // Use default factory (recommended)
 const hasher = createDefaultCmLsh(384, 0);
@@ -456,7 +456,7 @@ function createDefaultCmLsh(dimensions: number, family?: number): HybridCMLSH
 
 **Example:**
 ```typescript
-import { createDefaultCmLsh } from '@0din/odin-prompt-toolkit';
+import { createDefaultCmLsh } from '@0din/prompt-toolkit';
 
 // For 1024-dimensional embeddings (V1/ONNX)
 const hasher = createDefaultCmLsh(384, 0);
@@ -529,7 +529,7 @@ function genHyperplanes(family: number, bits: number, dims: number): Float32Arra
 
 **Example:**
 ```typescript
-import { genHyperplanes } from '@0din/odin-prompt-toolkit';
+import { genHyperplanes } from '@0din/prompt-toolkit';
 
 // Generate 512 hyperplanes for 1024-dim embeddings, family 0
 const planes = genHyperplanes(0, 512, 384);

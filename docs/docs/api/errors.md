@@ -107,7 +107,7 @@ class InvalidInputError extends SigError {
 
 **Usage:**
 ```typescript
-import { signText, SigError, ProviderError, InvalidInputError } from '@0din/odin-prompt-toolkit';
+import { signText, SigError, ProviderError, InvalidInputError } from '@0din/prompt-toolkit';
 
 try {
   const result = await signText(text, provider);
@@ -171,7 +171,7 @@ except ConfigError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ConfigError } from '@0din/odin-prompt-toolkit';
+import { ConfigError } from '@0din/prompt-toolkit';
 
 // Invalid configuration would throw ConfigError
 // if validated in constructor
@@ -226,8 +226,8 @@ except ProviderError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
-import { ProviderError } from '@0din/odin-prompt-toolkit';
+import { OpenAIProvider } from '@0din/prompt-toolkit/providers';
+import { ProviderError } from '@0din/prompt-toolkit';
 
 try {
   const provider = new OpenAIProvider({ apiKey: 'invalid' });
@@ -286,8 +286,8 @@ except ModelError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
-import { ModelError } from '@0din/odin-prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
+import { ModelError } from '@0din/prompt-toolkit';
 
 try {
   const cache = new ModelCache();
@@ -367,7 +367,7 @@ except InvalidInputError as e:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { parseSignatureString, InvalidInputError } from '@0din/odin-prompt-toolkit';
+import { parseSignatureString, InvalidInputError } from '@0din/prompt-toolkit';
 
 try {
   // Invalid signature format
@@ -460,7 +460,7 @@ async def sign_with_retry(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, ProviderError } from '@0din/odin-prompt-toolkit';
+import { signText, SignatureVersion, ProviderError } from '@0din/prompt-toolkit';
 
 async function signWithRetry(
   text: string,
@@ -529,7 +529,7 @@ Validate inputs before expensive operations:
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { parseSignatureString, InvalidInputError } from '@0din/odin-prompt-toolkit';
+import { parseSignatureString, InvalidInputError } from '@0din/prompt-toolkit';
 
 function validateAndCompare(sig1: string, sig2: string): number | null {
   try {

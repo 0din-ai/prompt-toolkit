@@ -768,7 +768,7 @@ conn.execute("PRAGMA journal_mode=WAL")
 ## Related Documentation
 
 - **[Similarity Search](./similarity-search.md)** - Build an ANN search system with band-based indexing
-- **[Native Acceleration](./native-acceleration.md)** - 592× speedup with Rust extension
+- **[Native Acceleration](./native-acceleration.md)** - up to ~600× speedup with Rust extension
 - **[Configuration](../getting-started/configuration.md)** - Tune LSH parameters (bands, bits, families)
 - **[API Reference: Core Functions](../api/core-functions.md)** - Signature generation functions
 

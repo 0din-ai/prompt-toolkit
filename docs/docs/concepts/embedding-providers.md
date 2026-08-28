@@ -70,8 +70,8 @@ result = await sign_text("Your text here", provider)
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, SignatureVersion } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(cache);
@@ -97,14 +97,14 @@ odin-prompt-toolkit = { version = "0.1", features = ["onnx"] }
   <TabItem value="python" label="Python">
 
 ```bash
-pip install 'odin-prompt-toolkit[onnx]'
+pip install '0din-prompt-toolkit[onnx]'
 ```
 
   </TabItem>
   <TabItem value="typescript" label="TypeScript">
 
 ```bash
-npm install @0din/odin-prompt-toolkit onnxruntime-node
+npm install @0din/prompt-toolkit onnxruntime-node
 ```
 
   </TabItem>
@@ -165,7 +165,7 @@ class MyProvider:
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { EmbeddingProvider, EmbeddingResult } from '@0din/odin-prompt-toolkit';
+import { EmbeddingProvider, EmbeddingResult } from '@0din/prompt-toolkit';
 
 class MyProvider implements EmbeddingProvider {
   name(): string { return 'my-provider'; }

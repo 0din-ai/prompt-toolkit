@@ -4,11 +4,11 @@ sidebar_position: 3
 
 # Native Rust Acceleration
 
-The Python SDK includes optional native Rust acceleration that provides **~627× faster signature generation** with zero code changes.
+The Python SDK includes optional native Rust acceleration that makes signature generation **up to ~600× faster** (dimension-dependent — see below) with zero code changes.
 
 ## Overview
 
-The Python package supports native Rust acceleration through the `odin-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
+The Python package supports native Rust acceleration through the `0din-prompt-toolkit-native` PyO3 extension. This is a **drop-in performance enhancement**:
 
 - **Same API**: No code changes required
 - **Transparent fallback**: If native extension unavailable, falls back to pure Python
@@ -31,6 +31,14 @@ The Python package supports native Rust acceleration through the `odin-prompt-to
 
 With native acceleration, signature generation adds only **0.6% overhead** on top of embedding generation, making it essentially free for most workloads.
 
+> **Why you'll see different multipliers.** The speedup depends on embedding
+> dimension: pure Python loops over every dimension, so it runs ~63× slower than
+> native at 384-dim but ~590× slower at 1024-dim, while native stays roughly
+> constant (~5,300 sigs/sec). Both produce **identical** signatures. End-to-end,
+> embedding generation usually dominates (112.6 s vs 0.7 s for signatures on the
+> 3,714-prompt benchmark), so native's practical win is turning pure Python's
+> ~38% signature overhead into ~0.6%.
+
 ---
 
 ## Installation
@@ -39,34 +47,36 @@ With native acceleration, signature generation adds only **0.6% overhead** on to
 
 ```bash
 # From PyPI (when published)
-pip install 'odin-prompt-toolkit[native]'
+pip install '0din-prompt-toolkit[native]'
 
 # From Git
-pip install 'git+https://github.com/0din-ai/prompt-toolkit.git#subdirectory=packages/python&egg=odin-prompt-toolkit[native]'
+pip install 'git+https://github.com/0din-ai/prompt-toolkit.git#subdirectory=packages/python&egg=0din-prompt-toolkit[native]'
 
 # Local development
 cd packages/python
 pip install -e '.[native]'
 ```
 
-The `[native]` extra installs:
-- `maturin>=1.0,\<2.0` - Build tool for Rust Python extensions
-- `odin-prompt-toolkit-native` - The Rust PyO3 extension (built from `packages/rust`)
+The `[native]` extra pulls in `0din-prompt-toolkit-native` — a **prebuilt** compiled
+Rust extension (PyO3). On Linux/macOS/Windows with CPython 3.10–3.13, pip downloads a
+wheel matching your platform, so **no Rust toolchain or compiler is required**. Only the
+editable/source path (`-e '.[native]'`) or a platform without a prebuilt wheel triggers a
+local `maturin` build.
 
 ### Option 2: Pure Python (Fallback)
 
 ```bash
 # Basic installation without native acceleration
-pip install odin-prompt-toolkit
+pip install 0din-prompt-toolkit
 ```
 
-The SDK will work fine without the native extension, but signature generation will be ~592× slower.
+The SDK works fine without the native extension — it falls back to pure Python automatically. Signature generation is roughly **60×–600× slower** than native (dimension-dependent, see above), but results are identical.
 
 ### Option 3: All Features
 
 ```bash
 # Install everything including native acceleration
-pip install 'odin-prompt-toolkit[all]'
+pip install '0din-prompt-toolkit[all]'
 ```
 
 Includes: `native`, `openai`, `onnx`, `cm-lsh` extras.
@@ -248,10 +258,10 @@ At large scale, the native extension is the difference between **minutes and day
 
 ### Use Pure Python (Development Fallback)
 
-⚠️ **Edge cases only**
-- Maturin build fails on exotic platforms (rare)
-- Python version incompatibility (< 3.8, not officially supported)
-- Quick prototyping on systems without Rust toolchain
+⚠️ **Automatic fallback / edge cases**
+- No prebuilt wheel for your platform or Python (outside Linux/macOS/Windows × CPython 3.10–3.13) — the base package falls back automatically, no action needed
+- Air-gapped or locked-down installs where you want zero compiled dependencies
+- Quick prototyping where signature-generation speed doesn't matter
 
 **Note**: The pure Python implementation is **fully validated** and produces bit-identical results. It's slower, but not less correct.
 
@@ -265,7 +275,7 @@ At large scale, the native extension is the difference between **minutes and day
 
 **Solution 1**: Install the native extra:
 ```bash
-pip install 'odin-prompt-toolkit[native]'
+pip install '0din-prompt-toolkit[native]'
 ```
 
 **Solution 2**: Rebuild the extension manually:
@@ -316,8 +326,8 @@ print(f"simhash_lsh module: {lsh.simhash_lsh.__module__}")
 ```
 
 If `NATIVE_AVAILABLE` is `False`:
-1. Check if `pip list | grep odin-prompt-toolkit-native` shows the package
-2. Reinstall with `pip install --force-reinstall 'odin-prompt-toolkit[native]'`
+1. Check if `pip list | grep 0din-prompt-toolkit-native` shows the package
+2. Reinstall with `pip install --force-reinstall '0din-prompt-toolkit[native]'`
 3. Check for import errors: `python -c "import odin_prompt_toolkit_native"`
 
 ### Different Results: Native vs Pure Python
@@ -370,7 +380,7 @@ fn odin_prompt_toolkit_native(_py: Python, m: &PyModule) -> PyResult<()> {
 The Python SDK detects the native extension at import time:
 
 ```python
-# packages/python/odin_prompt_toolkit/__init__.py
+# packages/python/odin_prompt_toolkit/_accel.py (simplified)
 try:
     from odin_prompt_toolkit_native import simhash_lsh, simhash_lsh_multi
     NATIVE_AVAILABLE = True
@@ -441,7 +451,7 @@ Compile the Rust core to WebAssembly for:
 
 **Key Takeaways**:
 
-1. ✅ **Install `odin-prompt-toolkit[native]` for production** - 592× faster signature generation
+1. ✅ **Install `0din-prompt-toolkit[native]` for production** - up to ~600× faster signature generation
 2. ✅ **No code changes required** - Drop-in replacement with automatic fallback
 3. ✅ **Bit-identical results** - Validated across all implementations
 4. ✅ **Minimal overhead** - Signature generation adds only 0.6% on top of embedding time (vs 38% for pure Python)
@@ -449,7 +459,7 @@ Compile the Rust core to WebAssembly for:
 
 **Recommended Installation**:
 ```bash
-pip install 'odin-prompt-toolkit[native,onnx]'  # Native acceleration + local embeddings
+pip install '0din-prompt-toolkit[native,onnx]'  # Native acceleration + local embeddings
 ```
 
 **Performance Verification**:

@@ -142,6 +142,71 @@ npm run build
 
 Check for broken links or invalid markdown in `docs/docs/`.
 
+## Publishing & Releases
+
+### Workflows
+
+- **`bump-release.yml`** (manual dispatch) — bumps every manifest to the new
+  version, commits, and pushes an annotated `vX.Y.Z` tag.
+- **`release.yml`** (triggered by the `vX.Y.Z` tag) — validates version
+  consistency, re-runs CI, builds all artifacts, creates the GitHub Release, and
+  then publishes to every registry.
+
+### Registry publishing
+
+All registry pushes use **OIDC trusted publishing — no long-lived tokens are
+stored in the repo.** Each publish job runs in the protected `release`
+environment, so a maintainer must approve it before anything ships.
+
+| Job | Package | Registry |
+|-----|---------|----------|
+| `publish-pypi` | `0din-prompt-toolkit` | PyPI |
+| `publish-pypi-native` | `0din-prompt-toolkit-native` | PyPI |
+| `publish-crates` | `odin-prompt-toolkit` | crates.io |
+| `publish-npm` | `@0din/prompt-toolkit` | npm |
+| `publish-go` | `github.com/0din-ai/prompt-toolkit/packages/go` | Go module proxy |
+
+### One-time setup (required before the first automated publish)
+
+1. **Protected environments.** Settings → Environments → create `release` **and**
+   `release-native`, each with at least one required reviewer. Without these the
+   approval gate does nothing. (Two PyPI environments are required — see below.)
+2. **PyPI** (two publishers, on pypi.org). Both use owner `0din-ai`, repo
+   `prompt-toolkit`, workflow `release.yml`. They need **different environments**
+   because PyPI keys a *pending* publisher on (owner, repo, workflow, environment)
+   and rejects two not-yet-existing projects sharing an identical tuple:
+   - `0din-prompt-toolkit` → environment `release`
+   - `0din-prompt-toolkit-native` → environment `release-native`
+
+   A *pending publisher* covers the very first upload, so no manual bootstrap is needed.
+3. **crates.io.** Publish `odin-prompt-toolkit` once manually
+   (`cd packages/rust && cargo publish`), then link this repo + `release.yml`
+   as a trusted publisher in the crate settings. OIDC cannot create the first
+   version.
+4. **npm.** Publish `@0din/prompt-toolkit` once manually under the `@0din` org,
+   then configure trusted publishing (repo `0din-ai/prompt-toolkit`, workflow
+   `release.yml`) in the package settings. OIDC cannot create the first version.
+   The job upgrades npm to ≥ 11.5.1 automatically (required for OIDC).
+5. **`RELEASE_TOKEN` (required for automated releases).** `bump-release.yml`
+   pushes the `vX.Y.Z` tag, but a tag pushed with the default `GITHUB_TOKEN`
+   does **not** trigger the tag-driven `release.yml` — GitHub blocks pushes made
+   with the workflow token from starting downstream workflows. Add a PAT with
+   `contents: write` (repo + workflow scope) as the `RELEASE_TOKEN` Actions
+   secret; `bump-release.yml` uses it in preference to `GITHUB_TOKEN` so the tag
+   push fires `release.yml`. Without it, `bump-release.yml` bumps and tags but
+   nothing publishes — you would have to push the tag manually to start the release.
+
+### Go module note
+
+Because the Go module lives under `packages/go`, `go get …@vX.Y.Z` only resolves
+against a `packages/go/vX.Y.Z` tag — the root `vX.Y.Z` tag is invisible to the
+module system. `publish-go` creates that submodule tag at the release commit and
+warms `proxy.golang.org`. Install with:
+
+```bash
+go get github.com/0din-ai/prompt-toolkit/packages/go@vX.Y.Z
+```
+
 ## Maintenance
 
 ### Updating CI
@@ -196,7 +261,7 @@ Potential improvements:
 
 - [ ] Add coverage reporting (codecov/coveralls)
 - [ ] Add performance benchmarks
-- [ ] Add automated releases on tag push
+- [x] Add automated releases on tag push
 - [ ] Add security scanning (dependabot, snyk)
 - [ ] Add license checking
 - [ ] Add changelog generation

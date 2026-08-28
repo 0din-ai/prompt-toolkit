@@ -16,8 +16,8 @@ The odin-prompt-toolkit SDK consolidates three legacy implementations into a uni
 | Legacy System | Language | New Package | Status |
 |---------------|----------|-------------|--------|
 | **heimdall-core** | Rust | `odin-prompt-toolkit` (crate) | Canonical implementation |
-| **thor** | TypeScript | `@0din/odin-prompt-toolkit` (npm) | Feature parity |
-| **research/signature_cli** | Python | `odin-prompt-toolkit` (PyPI) | Feature parity + native acceleration |
+| **thor** | TypeScript | `@0din/prompt-toolkit` (npm) | Feature parity |
+| **research/signature_cli** | Python | `0din-prompt-toolkit` (PyPI) | Feature parity + native acceleration |
 
 **Key improvements**:
 - ✅ Unified API across all languages
@@ -86,10 +86,10 @@ const normalized = normalizeVector(vector);
 const families = simhashLshMulti(normalized, 3, 256, 16);
 ```
 
-**After** (@0din/odin-prompt-toolkit npm package):
+**After** (@0din/prompt-toolkit npm package):
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
-import { LshConfig, SignatureVersion } from '@0din/odin-prompt-toolkit';
+import { simhashLshMulti, normalizeVector } from '@0din/prompt-toolkit';
+import { LshConfig, SignatureVersion } from '@0din/prompt-toolkit';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);
@@ -98,14 +98,14 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
 
 **Changes**:
 - ✅ **No API changes** — functions and types are identical
-- ✅ Centralized imports from `@0din/odin-prompt-toolkit` (no relative paths)
+- ✅ Centralized imports from `@0din/prompt-toolkit` (no relative paths)
 - ✅ TypeScript declarations included (full IntelliSense support)
 - ⚠️ Signature format now versioned (`0din-v1:...`)
 
 **Migration steps**:
 1. Install package:
    ```bash
-   npm install @0din/odin-prompt-toolkit
+   npm install @0din/prompt-toolkit
    ```
 2. Update imports:
    ```typescript
@@ -114,7 +114,7 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
    import { ... } from './types';
    
    // After
-   import { ... } from '@0din/odin-prompt-toolkit';
+   import { ... } from '@0din/prompt-toolkit';
    ```
 3. Update signature parsing (if using raw hex):
    ```typescript
@@ -122,7 +122,7 @@ const families = simhashLshMulti(normalized, 3, 256, 16);
    const signature = "8d000000ac854dae...";
    
    // After: versioned format
-   import { signatureString } from '@0din/odin-prompt-toolkit';
+   import { signatureString } from '@0din/prompt-toolkit';
    const signature = signatureString(families[0], SignatureVersion.V1);
    // Output: "0din-v1:8d000000ac854dae..."
    ```
@@ -143,7 +143,7 @@ normalized = normalize_vector(vector)
 families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
 ```
 
-**After** (odin-prompt-toolkit PyPI package):
+**After** (0din-prompt-toolkit PyPI package):
 ```python
 from odin_prompt_toolkit import simhash_lsh_multi, normalize_vector
 from odin_prompt_toolkit.types import LshConfig, SignatureVersion
@@ -162,7 +162,7 @@ families = simhash_lsh_multi(normalized, families=3, bits=256, bands=16)
 **Migration steps**:
 1. Install package (with native acceleration):
    ```bash
-   pip install 'odin-prompt-toolkit[native,onnx]'
+   pip install '0din-prompt-toolkit[native,onnx]'
    ```
 2. Update imports:
    ```python
@@ -304,8 +304,8 @@ The following **stay in their respective applications** (not part of the SDK):
    <TabItem value="typescript" label="TypeScript">
    
    ```typescript
-   import { getOnnxProvider } from '@0din/odin-prompt-toolkit/providers/onnx';
-   import { SignatureVersion } from '@0din/odin-prompt-toolkit';
+   import { getOnnxProvider } from '@0din/prompt-toolkit/providers/onnx';
+   import { SignatureVersion } from '@0din/prompt-toolkit';
    
    const provider = await getOnnxProvider(); // Auto-downloads model
    ```
@@ -666,7 +666,7 @@ COMMIT;
 | Python V1 | TypeScript V1 | ✅ Yes | Bit-identical signatures |
 | Rust V0 | Python V0 | ✅ Yes | Bit-identical signatures |
 | Legacy heimdall | odin-prompt-toolkit Rust | ✅ Yes | Same algorithm |
-| Legacy thor | @0din/odin-prompt-toolkit | ✅ Yes | Same algorithm |
+| Legacy thor | @0din/prompt-toolkit | ✅ Yes | Same algorithm |
 | Legacy research | odin-prompt-toolkit Python | ✅ Yes | Same algorithm (592× faster with native) |
 
 **Validation**: See `docs/docs/concepts/cross-language.md` for test vector validation methodology.
@@ -821,7 +821,7 @@ assert parsed.version.value == 0
 ### Quick Migration Checklist
 
 **From legacy systems**:
-- [ ] Install new package (`odin-prompt-toolkit`, `@0din/odin-prompt-toolkit`, or `odin-prompt-toolkit`)
+- [ ] Install new package (`odin-prompt-toolkit`, `@0din/prompt-toolkit`, or `0din-prompt-toolkit`)
 - [ ] Update imports (remove relative paths, use package name)
 - [ ] Update signature format (add `0din-v1:` prefix)
 - [ ] Update function calls (keyword args in Python)
@@ -840,7 +840,7 @@ assert parsed.version.value == 0
 **Key Takeaways**:
 1. ✅ **Legacy → SDK migration is straightforward** (mostly import path changes)
 2. ⚠️ **V0 → V1 migration requires full regeneration** (incompatible embedding spaces)
-3. ✅ **Native Rust acceleration makes Python 592× faster** (install `odin-prompt-toolkit[native]`)
+3. ✅ **Native Rust acceleration makes Python 592× faster** (install `0din-prompt-toolkit[native]`)
 4. ✅ **All implementations validated** (109 tests, bit-identical signatures)
 5. ✅ **Rollback plan available** (keep backups, use version control)
 

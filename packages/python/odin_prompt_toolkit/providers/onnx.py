@@ -14,7 +14,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "ONNX provider requires the 'onnxruntime' package. "
-        "Install with: pip install 'odin-prompt-toolkit[onnx]'"
+        "Install with: pip install '0din-prompt-toolkit[onnx]'"
     ) from e
 
 try:
@@ -22,7 +22,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "ONNX provider requires the 'transformers' package. "
-        "Install with: pip install 'odin-prompt-toolkit[onnx]'"
+        "Install with: pip install '0din-prompt-toolkit[onnx]'"
     ) from e
 
 

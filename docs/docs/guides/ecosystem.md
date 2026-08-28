@@ -44,7 +44,7 @@ guardrails:
 
 **Repository:** [0din-ai/openclaw-shield](https://github.com/0din-ai/openclaw-shield)  
 **Language:** TypeScript  
-**Toolkit packages used:** TypeScript SDK (`@0din/odin-prompt-toolkit`), LSH signatures, threat feed
+**Toolkit packages used:** TypeScript SDK (`@0din/prompt-toolkit`), LSH signatures, threat feed
 
 A reference implementation and production plugin for [OpenClaw](https://github.com/openclaw-ai/openclaw) (an open-source AI agent runtime) that demonstrates how to integrate the prompt security toolkit at five distinct agent lifecycle hooks. Addresses the harder problem: **injection through tool results** (emails, web pages, API responses, documents) — not just user input.
 
@@ -52,7 +52,7 @@ A reference implementation and production plugin for [OpenClaw](https://github.c
 
 1. **Text normalization** — strips invisible Unicode, normalizes homoglyphs (Cyrillic а → a), decodes HTML entities
 2. **Pattern matching** — 49 substring patterns across 7 jailbreak categories; sub-microsecond, always active
-3. **LSH signature similarity** — ~788 signatures from 0DIN threat feed, backed by `@0din/odin-prompt-toolkit` with `jailbreak-embeddings-large` (1024d ONNX, XLM-RoBERTa large); sliding window for documents
+3. **LSH signature similarity** — ~788 signatures from 0DIN threat feed, backed by `@0din/prompt-toolkit` with `jailbreak-embeddings-large` (1024d ONNX, XLM-RoBERTa large); sliding window for documents
 
 **Five integration points:**
 

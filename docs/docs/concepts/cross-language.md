@@ -275,7 +275,7 @@ print(f"Family 0: {families[0].signature}")
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
+import { simhashLshMulti, normalizeVector } from '@0din/prompt-toolkit';
 
 const vector = [0.5, 0.5, 0.5, 0.5];
 const normalized = normalizeVector(vector);

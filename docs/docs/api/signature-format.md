@@ -100,7 +100,7 @@ function signatureString(version: SignatureVersion, signature: string): string
 
 **Example:**
 ```typescript
-import { signatureString, SignatureVersion } from '@0din/odin-prompt-toolkit';
+import { signatureString, SignatureVersion } from '@0din/prompt-toolkit';
 
 const sig = "8d000000ac854dae7f3b9c1e...";
 const formatted = signatureString(SignatureVersion.V1, sig);
@@ -196,7 +196,7 @@ function parseSignatureString(s: string): ParsedSignature
 
 **Example:**
 ```typescript
-import { parseSignatureString } from '@0din/odin-prompt-toolkit';
+import { parseSignatureString } from '@0din/prompt-toolkit';
 
 const parsed = parseSignatureString("0din-v1:8d000000ac854dae...");
 console.log(`Version: ${parsed.version}`);    // "v1"

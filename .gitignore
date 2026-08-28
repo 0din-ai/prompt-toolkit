@@ -62,3 +62,8 @@ models/*/*.json
 # ...but keep the small metadata config.json (tracked for every model version)
 !models/*/config.json
 docs/static/api/rust/
+
+# build/test artifacts (accidentally committed once; keep untracked)
+packages/typescript/coverage/
+*.db-shm
+*.db-wal

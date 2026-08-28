@@ -59,7 +59,7 @@ config = LshConfig(families=5, bits=512, bands=32)
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { LshConfig } from '@0din/odin-prompt-toolkit';
+import { LshConfig } from '@0din/prompt-toolkit';
 
 // Use defaults (pass undefined or omit config)
 const config = { families: 3, bits: 256, bands: 16 };
@@ -146,7 +146,7 @@ Single-process, single-thread benchmarks. Concurrency, batch size, and hardware 
 | **Python (pure)** | Pure Python | 111ms | ~9/s | Fallback only; not for production |
 | **Go** | — | — | — | Go SDK is SusFactor-only; LSH not implemented |
 
-**Python native acceleration** (`odin-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration.md)).
+**Python native acceleration** (`0din-prompt-toolkit-native`) is a PyO3 Rust extension — bit-identical results at Rust speed. The pure-Python fallback exists for environments where the extension can't be built (see [Native Acceleration guide](../guides/native-acceleration.md)).
 
 ---
 
@@ -275,7 +275,7 @@ provider = OpenAIProvider(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
+import { OpenAIProvider } from '@0din/prompt-toolkit/providers';
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -335,7 +335,7 @@ provider = await OnnxProvider.new(
 <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 const cache = new ModelCache();
 const provider = await OnnxProvider.create(
@@ -490,7 +490,7 @@ for i, family in enumerate(families):
 **Installation:**
 ```bash
 # With native acceleration
-pip install odin-prompt-toolkit
+pip install 0din-prompt-toolkit
 
 # Verify native is available
 python -c "from odin_prompt_toolkit import NATIVE_AVAILABLE; print(NATIVE_AVAILABLE)"

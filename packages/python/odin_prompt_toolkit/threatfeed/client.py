@@ -75,7 +75,7 @@ class ThreatFeedClient:
         except ImportError:
             raise ThreatFeedApiError(
                 "aiohttp is required for threat feed fetching. "
-                "Install with: pip install odin-prompt-toolkit[threatfeed]"
+                "Install with: pip install '0din-prompt-toolkit[threatfeed]'"
             )
 
         all_entries: list[ThreatFeedEntry] = []
@@ -114,7 +114,7 @@ class ThreatFeedClient:
         except ImportError:
             raise ThreatFeedApiError(
                 "aiohttp is required for threat feed fetching. "
-                "Install with: pip install odin-prompt-toolkit[threatfeed]"
+                "Install with: pip install '0din-prompt-toolkit[threatfeed]'"
             )
 
         url = f"{self._base_url}/api/v1/threatfeed/{uuid}"

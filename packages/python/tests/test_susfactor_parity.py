@@ -78,7 +78,7 @@ _VECTORS = _load_vectors()
 
 _skip_reason = None
 if not TORCH_AVAILABLE:
-    _skip_reason = "requires torch + transformers (pip install 'odin-prompt-toolkit[susfactor]')"
+    _skip_reason = "requires torch + transformers (pip install '0din-prompt-toolkit[susfactor]')"
 elif not MODEL_AVAILABLE:
     _skip_reason = "SusFactor model not cached (set SIGNATURE_SDK_MODEL_CACHE)"
 elif not _VECTORS:

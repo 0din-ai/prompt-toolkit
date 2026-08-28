@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "odin-prompt-toolkit"
+name = "0din-prompt-toolkit"
 version = "0.9.2"
 description = "Multi-language SDK for LSH signature generation for AI prompt similarity detection"
 readme = "README.md"
@@ -50,7 +50,7 @@ susfactor = [
     "transformers>=4.0.0",
 ]
 native = [
-    "odin-prompt-toolkit-native>=0.1.0",  # Rust acceleration (~627× speedup) - not published yet
+    "0din-prompt-toolkit-native>=0.1.0",  # Rust acceleration (~600× speedup)
 ]
 dev = [
     "pytest>=7.4.0",
@@ -69,7 +69,7 @@ all = [
     "aiohttp>=3.9.0",
     "torch>=2.0.0",
     "transformers>=4.0.0",
-    "odin-prompt-toolkit-native>=0.1.0",
+    "0din-prompt-toolkit-native>=0.1.0",
 ]
 
 [project.urls]

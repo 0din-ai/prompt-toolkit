@@ -161,9 +161,9 @@ if [[ -n "$PURE_WHEEL_OVERRIDE" ]]; then
     [[ -f "$PURE_WHEEL" ]] || die "Pure wheel not found at: $PURE_WHEEL"
 else
     [[ -d "$PYTHON_DIST" ]] || die "Python dist directory not found: $PYTHON_DIST (run 'make package-python' first)"
-    PURE_WHEEL=$(find "$PYTHON_DIST" -name "odin_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
+    PURE_WHEEL=$(find "$PYTHON_DIST" -name "0din_prompt_toolkit-${VERSION}-py3-none-any.whl" | head -n 1)
     if [[ -z "$PURE_WHEEL" ]]; then
-        die "Python wheel not found: odin_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
+        die "Python wheel not found: 0din_prompt_toolkit-${VERSION}-py3-none-any.whl (run 'make package-python')"
     fi
 fi
 log_success "Found Python wheel: $(basename "$PURE_WHEEL")"
@@ -173,7 +173,7 @@ NATIVE_WHEELS=()
 if [[ -d "$NATIVE_DIST" ]]; then
     while IFS= read -r wheel; do
         NATIVE_WHEELS+=("$wheel")
-    done < <(find "$NATIVE_DIST" -name "odin_prompt_toolkit_native-${VERSION}-*.whl")
+    done < <(find "$NATIVE_DIST" -name "0din_prompt_toolkit_native-${VERSION}-*.whl")
     
     if [[ ${#NATIVE_WHEELS[@]} -gt 0 ]]; then
         log_success "Found ${#NATIVE_WHEELS[@]} native wheel(s)"

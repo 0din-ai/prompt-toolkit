@@ -11,21 +11,21 @@ Multi-language SDK for AI prompt similarity detection — LSH signatures, jailbr
 | **LSH Signatures** | SimHash locality-sensitive hashing — 256-bit signatures for fast prompt similarity |
 | **SusFactor Classifier** | ONNX-backed jailbreak/prompt-injection classifier (score 0–1) |
 | **Threat Feed** | Compare signatures against live 0DIN threat intelligence feeds |
-| **Native Acceleration** | PyO3 Rust extension for Python — 627× faster LSH computation |
+| **Native Acceleration** | PyO3 Rust extension for Python — up to ~600× faster LSH computation |
 
 ## Packages
 
 | Language | Package | Tests | Path |
 |---|---|---|---|
 | Rust | `odin-prompt-toolkit` v0.5.0 | 69 passing | [packages/rust/](packages/rust/) |
-| Python | `odin-prompt-toolkit` | 183 passing | [packages/python/](packages/python/) |
-| TypeScript | `@0din/odin-prompt-toolkit` | 132 passing | [packages/typescript/](packages/typescript/) |
+| Python | `0din-prompt-toolkit` | 183 passing | [packages/python/](packages/python/) |
+| TypeScript | `@0din/prompt-toolkit` | 132 passing | [packages/typescript/](packages/typescript/) |
 | Go | `github.com/0din-ai/prompt-toolkit/packages/go` | 27+ passing | [packages/go/](packages/go/) |
-| Python Native | `odin-prompt-toolkit-native` | — | [packages/python-native/](packages/python-native/) |
+| Python Native | `0din-prompt-toolkit-native` | — | [packages/python-native/](packages/python-native/) |
 
 ## Installation
 
-> These packages are not published to public registries. Install via git dependency.
+> Registry publishing to PyPI, crates.io, and npm is configured via GitHub Actions and activates on the next tagged release. Until then, install from git:
 
 ### Rust
 
@@ -43,10 +43,10 @@ odin-prompt-toolkit = { git = "https://github.com/0din-ai/prompt-toolkit", branc
 ### Python
 
 ```bash
-pip install "odin-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 
 # With all optional features
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+pip install "0din-prompt-toolkit[all] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
 ```
 
 ### TypeScript
@@ -90,8 +90,8 @@ print(result.signature_string)  # 0din-v1:8d000000ac854dae...
 
 ```typescript
 // TypeScript
-import { signText, getSignatureString } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, getSignatureString } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 const provider = await OnnxProvider.create(new ModelCache());
 const result = await signText("How do I reset my password?", provider);

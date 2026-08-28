@@ -6,43 +6,65 @@ This is the Python implementation of the odin-prompt-toolkit algorithm, also ava
 
 ## Installation
 
-### From Git (Development)
+`0din-prompt-toolkit` ships as **two packages** so you only ship compiled code when you want it:
+
+| Package | What it is | When you get it |
+|---------|-----------|-----------------|
+| `0din-prompt-toolkit` | Pure-Python core. One universal (`py3-none-any`) wheel — installs on any OS/arch/Python, **no compiler**. | Always (base install) |
+| `0din-prompt-toolkit-native` | Optional Rust accelerator (PyO3). **Prebuilt** wheels for Linux/macOS/Windows × CPython 3.10–3.13. | Only with the `[native]` extra |
 
 ```bash
-# Basic installation (pure Python)
-pip install git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python
+# Pure Python — works everywhere, slower signature generation
+pip install 0din-prompt-toolkit
 
-# With native Rust acceleration (653× faster signature generation!)
-pip install "odin-prompt-toolkit[native] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+# With native Rust acceleration — recommended for production
+pip install "0din-prompt-toolkit[native]"
 
-# With OpenAI support
-pip install "odin-prompt-toolkit[openai] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
-
-# With ONNX support (local embeddings)
-pip install "odin-prompt-toolkit[onnx] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
-
-# With CM-LSH (Confidence Matrix LSH)
-pip install "odin-prompt-toolkit[cm-lsh] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
-
-# All features (including native acceleration)
-pip install "odin-prompt-toolkit[all] @ git+https://github.com/0din-ai/odin-prompt-toolkit.git#subdirectory=python"
+# Optional features
+pip install "0din-prompt-toolkit[onnx]"        # local ONNX embeddings + SusFactor
+pip install "0din-prompt-toolkit[openai]"      # OpenAI embeddings
+pip install "0din-prompt-toolkit[cm-lsh]"      # Confidence Matrix LSH
+pip install "0din-prompt-toolkit[threatfeed]"  # 0DIN threat feed
+pip install "0din-prompt-toolkit[all]"         # everything, including native
 ```
 
-### Performance: Native vs Pure Python
+From git (development):
 
-The native Rust extension provides **~653× speedup** for signature generation:
+```bash
+pip install "0din-prompt-toolkit[native] @ git+https://github.com/0din-ai/prompt-toolkit#subdirectory=packages/python"
+```
 
-| Implementation | Throughput | Latency | Notes |
-|---------------|-----------|---------|-------|
-| **Native (Rust)** | ~5,685 sigs/sec | 0.18 ms/sig | Recommended for production |
-| Pure Python | ~8.7 sigs/sec | 115 ms/sig | Fallback if native unavailable |
+## Native vs pure Python
 
-The extension is **transparent** — install it and your code automatically gets faster. Check at runtime:
+Both paths produce **bit-identical signatures** (verified across all implementations via canonical test vectors). They differ only in **how they install** and **how fast** signature generation runs.
+
+- **Pure Python** (`0din-prompt-toolkit`) — a single universal wheel with no compiled code. Installs anywhere with zero build tools. Signature generation runs in a Python loop.
+- **Native** (`[native]` → `0din-prompt-toolkit-native`) — a prebuilt compiled Rust extension. `pip` downloads a wheel matching your platform, so **no Rust toolchain or compiler is required** on Linux/macOS/Windows with CPython 3.10–3.13. On any platform without a matching wheel, the base package still installs and **automatically falls back to pure Python** — nothing breaks, it's just slower.
+
+The accelerator is **transparent** — the same API uses native automatically when it's present:
 
 ```python
 from odin_prompt_toolkit import NATIVE_AVAILABLE
-print(f"Native acceleration: {'✅ active' if NATIVE_AVAILABLE else '❌ not installed'}")
+print("native" if NATIVE_AVAILABLE else "pure Python")
 ```
+
+Force pure Python even when native is installed: `export ODIN_PROMPT_TOOLKIT_NO_NATIVE=1`.
+
+### Speed tradeoff
+
+Native replaces the hot signature-generation loop with compiled, SIMD-optimized Rust:
+
+| | Native (Rust) | Pure Python |
+|---|---|---|
+| Throughput | ~5,300 sigs/sec | ~85 sigs/sec (384-dim) … ~9 sigs/sec (1024-dim) |
+| Per signature | ~0.2 ms | ~12 ms … ~115 ms |
+| vs native | — | **~60×–600× slower** |
+
+The multiplier depends on **embedding dimension**: pure Python loops over every dimension, so the gap widens with larger vectors (~63× at 384-dim, ~590× at 1024-dim). Native throughput is roughly constant.
+
+**What it means end-to-end:** in a real pipeline, embedding generation usually dominates. On the 3,714-prompt benchmark (local ONNX, CPU) embedding took 112.6 s; adding signature generation cost **0.7 s with native (+0.6%)** vs **43.8 s pure Python (+38%)**. When embeddings are pre-computed or cached (e.g. real-time dedup), signature generation *is* the cost — and the full speedup applies.
+
+**Rule of thumb:** use `[native]` in production; pure Python is a correct, always-available fallback for prototyping or unusual platforms.
 
 ## Quick Start
 

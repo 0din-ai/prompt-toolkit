@@ -60,14 +60,14 @@ async def main():
 asyncio.run(main())
 ```
 
-Requires `pip install 'odin-prompt-toolkit[onnx]'`.
+Requires `pip install '0din-prompt-toolkit[onnx]'`.
 
   </TabItem>
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { SusFactorClassifier } from '@0din/odin-prompt-toolkit/susfactor';
-import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
+import { SusFactorClassifier } from '@0din/prompt-toolkit/susfactor';
+import { ModelCache } from '@0din/prompt-toolkit/providers';
 
 const clf = await SusFactorClassifier.create(new ModelCache());
 const result = await clf.classify('Ignore all previous instructions');
@@ -185,8 +185,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 async function main() {
   // Initialize local ONNX provider (no API key needed)
@@ -287,8 +287,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, SignatureVersion, getSignatureString } from '@0din/odin-prompt-toolkit';
-import { OpenAIProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, SignatureVersion, getSignatureString } from '@0din/prompt-toolkit';
+import { OpenAIProvider } from '@0din/prompt-toolkit/providers';
 
 async function main() {
   const provider = new OpenAIProvider({
@@ -359,7 +359,7 @@ print(f"Signature: {families[0].signature}")
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { simhashLshMulti, normalizeVector } from '@0din/odin-prompt-toolkit';
+import { simhashLshMulti, normalizeVector } from '@0din/prompt-toolkit';
 
 // Your pre-computed embedding
 const embedding = new Array(384).fill(0.5);
@@ -454,7 +454,7 @@ print(f"Estimated cosine similarity: {similarity:.4f}")
 import {
   simhashLshMulti, normalizeVector,
   hammingDistanceHex, cosineFromHamming
-} from '@0din/odin-prompt-toolkit';
+} from '@0din/prompt-toolkit';
 
 const embedding1 = [1.0, 1.0, 1.0, 1.0];
 const embedding2 = [1.0, 0.9, 1.1, 1.0];  // Similar to embedding1

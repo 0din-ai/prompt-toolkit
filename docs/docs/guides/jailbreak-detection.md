@@ -97,8 +97,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { SusFactorClassifier } from '@0din/odin-prompt-toolkit/susfactor';
-import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
+import { SusFactorClassifier } from '@0din/prompt-toolkit/susfactor';
+import { ModelCache } from '@0din/prompt-toolkit/providers';
 
 const clf = await SusFactorClassifier.create(new ModelCache(), { threshold: 0.4 });
 

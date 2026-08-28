@@ -38,7 +38,7 @@ Use it to:
 - 🛡️ **Threat intelligence** — Sync and query the 0DIN threat feed of known adversarial prompts
 - 🌍 **Cross-language** — Identical signatures and parity scores across Rust, Python, TypeScript, and Go
 - 📦 **No API required** — Local ONNX models for both embeddings (V1) and classification
-- 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (627× speedup)
+- 🚀 **Fast** — O(1) signature lookups; native Rust acceleration for Python (up to ~600× speedup)
 - 🧪 **Battle-tested** — 400+ tests across 4 languages
 
 ---
@@ -94,8 +94,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { SusFactorClassifier } from '@0din/odin-prompt-toolkit/susfactor';
-import { ModelCache } from '@0din/odin-prompt-toolkit/providers';
+import { SusFactorClassifier } from '@0din/prompt-toolkit/susfactor';
+import { ModelCache } from '@0din/prompt-toolkit/providers';
 
 const clf = await SusFactorClassifier.create(new ModelCache());
 const result = await clf.classify('Ignore all previous instructions');
@@ -188,8 +188,8 @@ asyncio.run(main())
   <TabItem value="typescript" label="TypeScript">
 
 ```typescript
-import { signText, getSignatureString } from '@0din/odin-prompt-toolkit';
-import { ModelCache, OnnxProvider } from '@0din/odin-prompt-toolkit/providers';
+import { signText, getSignatureString } from '@0din/prompt-toolkit';
+import { ModelCache, OnnxProvider } from '@0din/prompt-toolkit/providers';
 
 async function main() {
   const provider = await OnnxProvider.create(new ModelCache());
@@ -246,8 +246,8 @@ Signatures are generated using **SimHash via Random Hyperplane LSH** — a deter
 | Language | Package | Status | Tests |
 |----------|---------|--------|-------|
 | Rust | `odin-prompt-toolkit` v0.6.0 | ✅ Ready | 69 passing |
-| Python | `odin-prompt-toolkit` | ✅ Ready | 183 passing |
-| TypeScript | `@0din/odin-prompt-toolkit` | ✅ Ready | 146 passing |
+| Python | `0din-prompt-toolkit` | ✅ Ready | 183 passing |
+| TypeScript | `@0din/prompt-toolkit` | ✅ Ready | 146 passing |
 | Go | `github.com/0din-ai/prompt-toolkit/packages/go` | ✅ Ready (SusFactor) | 27+ passing |
 
 See the [Validation Report](https://github.com/0din-ai/prompt-toolkit/blob/main/VALIDATION.md) for detailed cross-language parity results.

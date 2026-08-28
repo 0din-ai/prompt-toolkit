@@ -5,7 +5,7 @@ and exposes its functions. If the native extension is not available, it
 sets NATIVE_AVAILABLE to False and the pure Python implementations are used.
 
 The native extension can be installed via:
-    pip install odin-prompt-toolkit-native
+    pip install 0din-prompt-toolkit-native
 
 Or by building from source:
     cd packages/python-native

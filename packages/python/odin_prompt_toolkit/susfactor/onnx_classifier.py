@@ -22,7 +22,7 @@ Both return identical ``SusFactorResult`` values (within floating-point
 tolerance of the ONNX export).
 
 Requires: onnxruntime, transformers (for tokenization only — no torch needed).
-Install with: ``pip install 'odin-prompt-toolkit[onnx]'``
+Install with: ``pip install '0din-prompt-toolkit[onnx]'``
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ from .types import (
     suspicious_prob,
 )
 
-_INSTALL_HINT = "pip install 'odin-prompt-toolkit[onnx]'"
+_INSTALL_HINT = "pip install '0din-prompt-toolkit[onnx]'"
 
 # The ONNX model is published separately from the torch weights.
 # Reporting this repo in result.model lets callers distinguish the backend.

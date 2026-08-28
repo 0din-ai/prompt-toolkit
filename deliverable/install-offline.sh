@@ -97,8 +97,8 @@ info "Locating SDK wheel..."
 SDK_DIR="${SCRIPT_DIR}/sdk"
 [[ -d "$SDK_DIR" ]] || error "sdk/ directory not found next to install.sh (expected: ${SDK_DIR})"
 
-PURE_WHEEL=$(find "$SDK_DIR" -name "odin_prompt_toolkit-*-py3-none-any.whl" | sort -V | tail -1)
-[[ -n "$PURE_WHEEL" ]] || error "No odin_prompt_toolkit-*-py3-none-any.whl found in ${SDK_DIR}"
+PURE_WHEEL=$(find "$SDK_DIR" -name "0din_prompt_toolkit-*-py3-none-any.whl" | sort -V | tail -1)
+[[ -n "$PURE_WHEEL" ]] || error "No 0din_prompt_toolkit-*-py3-none-any.whl found in ${SDK_DIR}"
 
 success "SDK wheel: $(basename "$PURE_WHEEL")"
 
@@ -121,7 +121,7 @@ case "$ARCH_RAW" in
 esac
 
 NATIVE_WHEEL=$(find "$SDK_DIR" \
-    -name "odin_prompt_toolkit_native-*-${PYTHON_TAG}-*-${PLAT_GLOB}*.whl" 2>/dev/null \
+    -name "0din_prompt_toolkit_native-*-${PYTHON_TAG}-*-${PLAT_GLOB}*.whl" 2>/dev/null \
     | grep -E "${ARCH_GLOB}" | sort -V | tail -1 || true)
 
 if [[ -n "$NATIVE_WHEEL" ]]; then
