@@ -21,13 +21,17 @@ jobs:
           # Explicitly persisting credentials — the "Push commit and tag"
           # step below needs the checked-out credential to push directly.
           persist-credentials: true
-          # Use a PAT or the default GITHUB_TOKEN.
-          # GITHUB_TOKEN pushes are blocked from triggering downstream
-          # tag-triggered workflows by default; a PAT avoids that restriction.
-          # If you have a PAT stored as RELEASE_TOKEN, it will be used;
-          # otherwise falls back to the default GITHUB_TOKEN (you may need
-          # to enable "Allow GitHub Actions to create and approve pull requests"
-          # under Settings > Actions > General).
+          # Token used to push the bump commit + tag to main. Automated
+          # releases need it to satisfy BOTH of these, or this job fails at the
+          # push step:
+          #   1. Triggering release.yml — a tag pushed with the default
+          #      GITHUB_TOKEN does NOT start the tag-driven release.yml. A PAT
+          #      (RELEASE_TOKEN) avoids that restriction.
+          #   2. Protected main — if branch protection requires PRs / status
+          #      checks, the push is rejected unless RELEASE_TOKEN belongs to an
+          #      actor granted a ruleset bypass for main.
+          # Falls back to GITHUB_TOKEN, which only works when main is unprotected
+          # and will not trigger release.yml.
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
           fetch-depth: 0
 
@@ -116,4 +120,8 @@ jobs:
           git tag -a "v$VERSION" -m "Release v$VERSION"
 
       - name: Push commit and tag
-        run: git push origin main --follow-tags
+        # --atomic: the main branch update and the tag are pushed as one unit —
+        # both succeed or both fail. Without it, a rejected branch push (e.g.
+        # protected main) can still land the tag, leaving a "release" tag that
+        # points at a bump commit which never made it onto main.
+        run: git push --atomic origin main --follow-tags
