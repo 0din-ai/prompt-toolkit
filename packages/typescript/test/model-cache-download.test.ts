@@ -231,6 +231,7 @@ describe('ModelCache.downloadModel', () => {
     const onnxDir = path.join(modelDir, 'onnx');
     fs.mkdirSync(onnxDir, { recursive: true });
     fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx_data'), 'x');
     fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
     fs.writeFileSync(path.join(modelDir, 'config.json'), '{}');
 
@@ -238,5 +239,111 @@ describe('ModelCache.downloadModel', () => {
     await expect(
       cache.downloadModel('v1', { baseUrl: 'http://127.0.0.1:1' }),
     ).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasModel — v1 manifest completeness
+// ---------------------------------------------------------------------------
+
+describe("ModelCache.hasModel('v1') completeness", () => {
+  let dir: string;
+
+  afterEach(() => { if (dir) rmrf(dir); });
+
+  it('returns false when onnx/model.onnx_data is missing', () => {
+    dir = makeTempDir();
+    const cache = new ModelCache(dir);
+
+    const modelDir = cache.modelDirectory('v1');
+    const onnxDir = path.join(modelDir, 'onnx');
+    fs.mkdirSync(onnxDir, { recursive: true });
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
+    fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
+    fs.writeFileSync(path.join(modelDir, 'config.json'), '{}');
+
+    expect(cache.hasModel('v1')).toBe(false);
+  });
+
+  it('returns true once onnx/model.onnx_data is also present', () => {
+    dir = makeTempDir();
+    const cache = new ModelCache(dir);
+
+    const modelDir = cache.modelDirectory('v1');
+    const onnxDir = path.join(modelDir, 'onnx');
+    fs.mkdirSync(onnxDir, { recursive: true });
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx_data'), 'x');
+    fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
+    fs.writeFileSync(path.join(modelDir, 'config.json'), '{}');
+
+    expect(cache.hasModel('v1')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// downloadModel — v1 manifest / hasModel self-consistency (regression)
+// ---------------------------------------------------------------------------
+
+/** Start a minimal HTTP server serving distinct small bodies per path. */
+function startMultiRouteServer(
+  routes: Record<string, Buffer>,
+): Promise<{ url: string; close: () => Promise<void> }> {
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const body = req.url ? routes[req.url] : undefined;
+      if (body) {
+        res.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(body.length),
+        });
+        res.end(body);
+      } else {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+    server.listen(0, '127.0.0.1', () => {
+      const { port } = server.address() as { port: number };
+      resolve({
+        url: `http://127.0.0.1:${port}`,
+        close: () => new Promise((r) => server.close(() => r())),
+      });
+    });
+  });
+}
+
+describe('ModelCache.downloadModel — v1 manifest self-consistency', () => {
+  let dir: string;
+  let server: { url: string; close: () => Promise<void> };
+
+  beforeEach(async () => {
+    dir = makeTempDir();
+    server = await startMultiRouteServer({
+      '/intfloat/multilingual-e5-large/resolve/main/onnx/model.onnx':
+        Buffer.from('graph-bytes'),
+      '/intfloat/multilingual-e5-large/resolve/main/onnx/model.onnx_data':
+        Buffer.from('external-weights-bytes'),
+      '/intfloat/multilingual-e5-large/resolve/main/tokenizer.json':
+        Buffer.from('{}'),
+      '/intfloat/multilingual-e5-large/resolve/main/config.json':
+        Buffer.from('{}'),
+    });
+  });
+  afterEach(async () => {
+    rmrf(dir);
+    await server.close();
+  });
+
+  it('downloads model.onnx_data and hasModel agrees the cache is complete', async () => {
+    const cache = new ModelCache(dir);
+    await cache.downloadModel('v1', { baseUrl: server.url });
+
+    expect(cache.hasModel('v1')).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(cache.modelDirectory('v1'), 'onnx', 'model.onnx_data'),
+      ),
+    ).toBe(true);
   });
 });
