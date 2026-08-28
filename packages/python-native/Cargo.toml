@@ -1,6 +1,6 @@
 [package]
 name = "odin-prompt-toolkit-python"
-version = "0.9.2"
+version = "0.9.3"
 edition = "2021"
 rust-version = "1.70"
 authors = ["0din Team"]
