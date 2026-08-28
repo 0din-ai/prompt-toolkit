@@ -347,3 +347,85 @@ describe('ModelCache.downloadModel — v1 manifest self-consistency', () => {
     ).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// downloadModel — susfactor-v1 manifest / hasSusfactorModel self-consistency
+// (regression)
+// ---------------------------------------------------------------------------
+
+describe('ModelCache.downloadModel — susfactor-v1 manifest self-consistency', () => {
+  let dir: string;
+  let server: { url: string; close: () => Promise<void> };
+
+  beforeEach(async () => {
+    dir = makeTempDir();
+    server = await startMultiRouteServer({
+      '/0dinai/susfactor-e5-large-onnx/resolve/main/onnx/model.onnx':
+        Buffer.from('graph-bytes'),
+      '/0dinai/susfactor-e5-large-onnx/resolve/main/onnx/model.onnx_data':
+        Buffer.from('external-weights-bytes'),
+      '/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer.json':
+        Buffer.from('{}'),
+      '/0dinai/susfactor-e5-large-onnx/resolve/main/tokenizer_config.json':
+        Buffer.from('{}'),
+    });
+  });
+  afterEach(async () => {
+    rmrf(dir);
+    await server.close();
+  });
+
+  it('downloads tokenizer_config.json and hasSusfactorModel agrees the cache is complete', async () => {
+    const cache = new ModelCache(dir);
+    await cache.downloadModel('susfactor-v1', { baseUrl: server.url });
+
+    expect(cache.hasSusfactorModel('susfactor-v1')).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(
+          cache.modelDirectory('susfactor-v1'),
+          'tokenizer_config.json',
+        ),
+      ),
+    ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasSusfactorModel — susfactor-v1 manifest completeness
+// ---------------------------------------------------------------------------
+
+describe("ModelCache.hasSusfactorModel('susfactor-v1') completeness", () => {
+  let dir: string;
+
+  afterEach(() => { if (dir) rmrf(dir); });
+
+  it('returns false when tokenizer_config.json is missing', () => {
+    dir = makeTempDir();
+    const cache = new ModelCache(dir);
+
+    const modelDir = cache.modelDirectory('susfactor-v1');
+    const onnxDir = path.join(modelDir, 'onnx');
+    fs.mkdirSync(onnxDir, { recursive: true });
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx_data'), 'x');
+    fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
+
+    expect(cache.hasSusfactorModel('susfactor-v1')).toBe(false);
+  });
+
+  it('returns true once tokenizer_config.json is also present', () => {
+    dir = makeTempDir();
+    const cache = new ModelCache(dir);
+
+    const modelDir = cache.modelDirectory('susfactor-v1');
+    const onnxDir = path.join(modelDir, 'onnx');
+    fs.mkdirSync(onnxDir, { recursive: true });
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
+    fs.writeFileSync(path.join(onnxDir, 'model.onnx_data'), 'x');
+    fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
+    fs.writeFileSync(path.join(modelDir, 'tokenizer_config.json'), '{}');
+
+    expect(cache.hasSusfactorModel('susfactor-v1')).toBe(true);
+  });
+});

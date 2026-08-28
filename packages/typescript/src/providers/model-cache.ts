@@ -127,11 +127,15 @@ const EMBEDDING_MODEL_REPO = 'intfloat/multilingual-e5-large';
  *
  * These come from `0dinai/susfactor-e5-large-onnx` (gated — requires HF token).
  * `model.onnx_data` holds the external weights required by ORT.
+ * `tokenizer_config.json` is required by transformers.js's
+ * `AutoTokenizer.from_pretrained(..., { local_files_only: true })` to resolve
+ * `tokenizer_class`; without it, tokenizer loading throws.
  */
 const SUSFACTOR_MODEL_FILES = [
   'onnx/model.onnx',
   'onnx/model.onnx_data',
   'tokenizer.json',
+  'tokenizer_config.json',
 ] as const;
 
 /** HuggingFace repo for the SusFactor ONNX model. */
@@ -279,9 +283,12 @@ export class ModelCache {
    * Check if a SusFactor ONNX model version is cached locally.
    *
    * Requires the validated model pair (`onnx/model.onnx` +
-   * `onnx/model.onnx_data`) plus `tokenizer.json`. This is the graph validated
-   * in production via the Rust SDK. The `.onnx_data` file holds the external
-   * weights required by ORT to load the graph.
+   * `onnx/model.onnx_data`) plus `tokenizer.json` and `tokenizer_config.json`.
+   * This is the graph validated in production via the Rust SDK. The
+   * `.onnx_data` file holds the external weights required by ORT to load the
+   * graph. `tokenizer_config.json` is required by transformers.js's
+   * `AutoTokenizer.from_pretrained(..., { local_files_only: true })` to
+   * resolve `tokenizer_class`; without it, tokenizer loading throws.
    *
    * Note: `model_O4.onnx` is a pre-optimized variant that has not been
    * validated against the production reference; it is intentionally not accepted
@@ -299,7 +306,10 @@ export class ModelCache {
       fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
       fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
     const hasTokenizer = fs.existsSync(path.join(modelDir, 'tokenizer.json'));
-    return hasValidatedPair && hasTokenizer;
+    const hasTokenizerConfig = fs.existsSync(
+      path.join(modelDir, 'tokenizer_config.json'),
+    );
+    return hasValidatedPair && hasTokenizer && hasTokenizerConfig;
   }
 
   /**
