@@ -82,11 +82,12 @@ describe('SusFactorClassifier.create() — download gate', () => {
 //
 // The onnxruntime-node / @huggingface/transformers require() calls inside
 // create() can only throw MODULE_NOT_FOUND when those packages genuinely
-// aren't installed. Jest's module registry has them loaded already, so we
-// can't intercept them via jest.mock() without complex module isolation.
+// aren't installed. We verify the error-wrapping contract directly here
+// (raw errors get wrapped as SusFactorError with a helpful install message).
 //
-// Instead we verify the error-wrapping contract directly: the classifier
-// wraps raw errors as SusFactorError with a helpful install message.
+// The block below this one additionally proves the real underlying error is
+// preserved via `.cause` by forcing each require() to throw via
+// jest.doMock() against a fresh, reset module registry.
 // ---------------------------------------------------------------------------
 
 describe('SusFactorClassifier — peer dep error wrapping contract', () => {
@@ -106,6 +107,65 @@ describe('SusFactorClassifier — peer dep error wrapping contract', () => {
         'Install with: npm install @huggingface/transformers',
     );
     expect(err.message).toMatch(/@huggingface\/transformers/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SusFactorClassifier.create() — real error preserved as cause
+//
+// Forces each require() inside create() to throw a specific, known error via
+// jest.doMock() against a freshly reset module registry, then asserts the
+// SusFactorError rejection carries that exact error as `.cause`.
+// ---------------------------------------------------------------------------
+
+describe('SusFactorClassifier.create() — real error preserved as cause', () => {
+  afterEach(() => {
+    jest.dontMock('onnxruntime-node');
+    // '@huggingface/transformers' is virtual and only registered by the test
+    // that doMocks it; dontMock() throws "Cannot find module" if called when
+    // it was never registered in this test.
+    try {
+      jest.dontMock('@huggingface/transformers');
+    } catch {
+      // not mocked in this test — nothing to undo
+    }
+    jest.resetModules();
+  });
+
+  it('preserves the real onnxruntime-node load error as .cause', async () => {
+    jest.resetModules();
+    jest.doMock('onnxruntime-node', () => {
+      throw new Error('native binding failed to load: boom-ort');
+    });
+    const { SusFactorClassifier: FreshClassifier } = require('../src/susfactor/classifier');
+    const { ModelCache: FreshModelCache } = require('../src/providers/model-cache');
+    const cache = new FreshModelCache('/fake/cache');
+    cache.downloadModel = jest.fn().mockResolvedValue(undefined);
+
+    await expect(FreshClassifier.create(cache)).rejects.toMatchObject({
+      name: 'SusFactorError',
+      cause: expect.objectContaining({ message: 'native binding failed to load: boom-ort' }),
+    });
+  });
+
+  it('preserves the real @huggingface/transformers load error as .cause', async () => {
+    jest.resetModules();
+    jest.doMock(
+      '@huggingface/transformers',
+      () => {
+        throw new Error('native binding failed to load: boom-hf');
+      },
+      { virtual: true },
+    );
+    const { SusFactorClassifier: FreshClassifier } = require('../src/susfactor/classifier');
+    const { ModelCache: FreshModelCache } = require('../src/providers/model-cache');
+    const cache = new FreshModelCache('/fake/cache');
+    cache.downloadModel = jest.fn().mockResolvedValue(undefined);
+
+    await expect(FreshClassifier.create(cache)).rejects.toMatchObject({
+      name: 'SusFactorError',
+      cause: expect.objectContaining({ message: 'native binding failed to load: boom-hf' }),
+    });
   });
 });
 

@@ -141,10 +141,11 @@ export class SusFactorClassifier {
     let ort: any;
     try {
       ort = require("onnxruntime-node");
-    } catch {
+    } catch (error) {
       throw new SusFactorError(
         "SusFactor requires the 'onnxruntime-node' package. " +
           "Install with: npm install onnxruntime-node",
+        { cause: error },
       );
     }
 
@@ -154,10 +155,11 @@ export class SusFactorClassifier {
       const hf = require("@huggingface/transformers");
       AutoTokenizer = hf.AutoTokenizer;
       hfEnv = hf.env;
-    } catch {
+    } catch (error) {
       throw new SusFactorError(
         "SusFactor requires the '@huggingface/transformers' package. " +
           "Install with: npm install @huggingface/transformers",
+        { cause: error },
       );
     }
 
