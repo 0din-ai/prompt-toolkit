@@ -1,6 +1,6 @@
 {
   "name": "@0din/prompt-toolkit",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Multi-language SDK for LSH signature generation for AI prompt similarity detection",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
