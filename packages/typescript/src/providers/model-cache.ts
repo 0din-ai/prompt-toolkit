@@ -106,9 +106,15 @@ export interface DownloadModelOptions extends GetModelOptions {
  * The HuggingFace repo that hosts these files is `intfloat/multilingual-e5-large`.
  * We always download `model.onnx`; `model_O4.onnx` is an optional optimized
  * variant that is not automatically fetched.
+ *
+ * `model.onnx` stores its weights externally in `onnx/model.onnx_data` (ORT's
+ * external-data mechanism for models whose weights exceed the 2GB protobuf
+ * limit). Both files must be downloaded together — the graph in `model.onnx`
+ * cannot be loaded without the external weights.
  */
 const EMBEDDING_MODEL_FILES = [
   'onnx/model.onnx',
+  'onnx/model.onnx_data',
   'tokenizer.json',
   'config.json',
 ] as const;
@@ -251,13 +257,15 @@ export class ModelCache {
       return false;
     }
 
-    // Check for required files (prefer optimized model, accept either)
+    // Check for required files (prefer optimized model, accept either).
+    // The unoptimized model stores its weights externally in
+    // onnx/model.onnx_data, so both files must be present together.
     const hasOptimized = fs.existsSync(
       path.join(modelDir, 'onnx', 'model_O4.onnx')
     );
-    const hasUnoptimized = fs.existsSync(
-      path.join(modelDir, 'onnx', 'model.onnx')
-    );
+    const hasUnoptimized =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
 
     const requiredFiles = ['tokenizer.json', 'config.json'];
 

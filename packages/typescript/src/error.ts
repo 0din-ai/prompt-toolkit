@@ -23,8 +23,8 @@
  * ```
  */
 export class SigError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'SigError';
     // Restore prototype chain for instanceof checks
     Object.setPrototypeOf(this, new.target.prototype);
@@ -145,8 +145,8 @@ export class ThreatFeedCacheError extends SigError {
  * files or run inference.
  */
 export class SusFactorError extends SigError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'SusFactorError';
   }
 }
