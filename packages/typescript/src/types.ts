@@ -13,7 +13,7 @@ import { InvalidInputError } from './error';
  */
 export enum SignatureVersion {
   V0 = 'v0', // OpenAI text-embedding-3-large (1536 dims)
-  V1 = 'v1', // 0din-jailbreak-embeddings-small ONNX (1024 dims)
+  V1 = 'v1', // 0din-jailbreak-embeddings-small ONNX (768 dims)
   LATEST = 'latest', // Resolves to V1
 }
 
@@ -23,7 +23,7 @@ export enum SignatureVersion {
 export enum HashAlgorithm {
   LSH = 'lsh', // Generic LSH (used with any embedding)
   OPENAI = 'openai', // OpenAI embeddings (V0, 1536 dims)
-  ONNX = 'onnx', // ONNX local embeddings (V1, 1024 dims)
+  ONNX = 'onnx', // ONNX local embeddings (V1, 768 dims)
 }
 
 /**
@@ -116,7 +116,7 @@ export function embeddingDimensions(version: SignatureVersion): number {
   if (resolved === SignatureVersion.V0) {
     return 1536;
   } else if (resolved === SignatureVersion.V1) {
-    return 1024;
+    return 768;
   }
   throw new Error(`Unknown version: ${resolved}`);
 }

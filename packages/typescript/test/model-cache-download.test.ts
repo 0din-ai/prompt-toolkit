@@ -226,7 +226,7 @@ describe('ModelCache.downloadModel', () => {
     const cache = new ModelCache(dir);
 
     // Pre-populate at the HF org/repo path that modelDirectory('v1') now resolves to.
-    // This mirrors the Rust SDK layout: <cacheDir>/intfloat/multilingual-e5-large/...
+    // This mirrors the Rust SDK layout: <cacheDir>/0dinai/jailbreak-embeddings-base-onnx/...
     const modelDir = cache.modelDirectory('v1');
     const onnxDir = path.join(modelDir, 'onnx');
     fs.mkdirSync(onnxDir, { recursive: true });
@@ -251,7 +251,7 @@ describe("ModelCache.hasModel('v1') completeness", () => {
 
   afterEach(() => { if (dir) rmrf(dir); });
 
-  it('returns false when onnx/model.onnx_data is missing', () => {
+  it('returns true when onnx/model.onnx_data is missing (not required for v1)', () => {
     dir = makeTempDir();
     const cache = new ModelCache(dir);
 
@@ -262,10 +262,10 @@ describe("ModelCache.hasModel('v1') completeness", () => {
     fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
     fs.writeFileSync(path.join(modelDir, 'config.json'), '{}');
 
-    expect(cache.hasModel('v1')).toBe(false);
+    expect(cache.hasModel('v1')).toBe(true);
   });
 
-  it('returns true once onnx/model.onnx_data is also present', () => {
+  it('returns true when onnx/model.onnx_data happens to also be present (harmless)', () => {
     dir = makeTempDir();
     const cache = new ModelCache(dir);
 
@@ -320,13 +320,13 @@ describe('ModelCache.downloadModel — v1 manifest self-consistency', () => {
   beforeEach(async () => {
     dir = makeTempDir();
     server = await startMultiRouteServer({
-      '/intfloat/multilingual-e5-large/resolve/main/onnx/model.onnx':
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/onnx/model.onnx':
         Buffer.from('graph-bytes'),
-      '/intfloat/multilingual-e5-large/resolve/main/onnx/model.onnx_data':
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/onnx/model.onnx_data':
         Buffer.from('external-weights-bytes'),
-      '/intfloat/multilingual-e5-large/resolve/main/tokenizer.json':
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/tokenizer.json':
         Buffer.from('{}'),
-      '/intfloat/multilingual-e5-large/resolve/main/config.json':
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/config.json':
         Buffer.from('{}'),
     });
   });
@@ -335,16 +335,53 @@ describe('ModelCache.downloadModel — v1 manifest self-consistency', () => {
     await server.close();
   });
 
-  it('downloads model.onnx_data and hasModel agrees the cache is complete', async () => {
+  it('tolerates onnx/model.onnx_data when the server happens to serve it (optional, not required)', async () => {
     const cache = new ModelCache(dir);
     await cache.downloadModel('v1', { baseUrl: server.url });
 
+    // onnx/model.onnx_data is not part of the mandatory v1 manifest, so it is
+    // never fetched even though the mock server has a route for it — that
+    // route existing (unused) is what proves its presence is harmless/tolerated.
     expect(cache.hasModel('v1')).toBe(true);
     expect(
       fs.existsSync(
         path.join(cache.modelDirectory('v1'), 'onnx', 'model.onnx_data'),
       ),
-    ).toBe(true);
+    ).toBe(false);
+  });
+});
+
+describe('ModelCache.downloadModel — v1 manifest excludes onnx_data (regression)', () => {
+  let dir: string;
+  let server: { url: string; close: () => Promise<void> };
+
+  beforeEach(async () => {
+    dir = makeTempDir();
+    // Deliberately no route for onnx/model.onnx_data — the real
+    // 0dinai/jailbreak-embeddings-base-onnx repo does not ship that file at
+    // all, so this mirrors a real 404 for that path.
+    server = await startMultiRouteServer({
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/onnx/model.onnx':
+        Buffer.from('graph-bytes'),
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/tokenizer.json':
+        Buffer.from('{}'),
+      '/0dinai/jailbreak-embeddings-base-onnx/resolve/main/config.json':
+        Buffer.from('{}'),
+    });
+  });
+  afterEach(async () => {
+    rmrf(dir);
+    await server.close();
+  });
+
+  it('downloads successfully and hasModel is true even though onnx_data 404s upstream', async () => {
+    const cache = new ModelCache(dir);
+
+    await expect(
+      cache.downloadModel('v1', { baseUrl: server.url }),
+    ).resolves.toBeUndefined();
+
+    expect(cache.hasModel('v1')).toBe(true);
   });
 });
 

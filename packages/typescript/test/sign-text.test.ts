@@ -12,7 +12,7 @@ import { SignatureVersion, EmbeddingResult, LshConfig, getSignatureString } from
 class MockProvider implements EmbeddingProvider {
   private dims: number;
 
-  constructor(dimensions: number = 1024) {
+  constructor(dimensions: number = 768) {
     this.dims = dimensions;
   }
 
@@ -49,7 +49,7 @@ class MockProvider implements EmbeddingProvider {
 
 describe('signText', () => {
   test('sign_text with explicit V1 provider', async () => {
-    const provider = new MockProvider(1024);
+    const provider = new MockProvider(768);
 
     const result = await signText('test prompt', {
       provider,
@@ -59,7 +59,7 @@ describe('signText', () => {
     expect(result.version).toBe(SignatureVersion.V1);
     expect(result.provider).toBe('mock-provider');
     expect(result.model).toBe('mock-model');
-    expect(result.dimensions).toBe(1024);
+    expect(result.dimensions).toBe(768);
     expect(result.promptPreview).toBe('test prompt');
     expect(result.promptLength).toBe(11);
     expect(result.timingMs).toBeGreaterThan(0);
@@ -85,7 +85,7 @@ describe('signText', () => {
   });
 
   test('LATEST resolves to V1', async () => {
-    const provider = new MockProvider(1024);
+    const provider = new MockProvider(768);
 
     const result = await signText('test', {
       provider,
@@ -96,8 +96,8 @@ describe('signText', () => {
   });
 
   test('infer version from provider dimensions', async () => {
-    // V1 provider (1024 dims) - version inferred
-    const providerV1 = new MockProvider(1024);
+    // V1 provider (768 dims) - version inferred
+    const providerV1 = new MockProvider(768);
     const resultV1 = await signText('test', { provider: providerV1 });
     expect(resultV1.version).toBe(SignatureVersion.V1);
 
@@ -108,8 +108,8 @@ describe('signText', () => {
   });
 
   test('version mismatch with provider throws error', async () => {
-    // Provider returns 1024 dimensions but we request V0 (expects 1536)
-    const provider = new MockProvider(1024);
+    // Provider returns 768 dimensions but we request V0 (expects 1536)
+    const provider = new MockProvider(768);
 
     await expect(
       signText('test', { provider, version: SignatureVersion.V0 })
@@ -126,7 +126,7 @@ describe('signText', () => {
   });
 
   test('sign_text with custom config', async () => {
-    const provider = new MockProvider(1024);
+    const provider = new MockProvider(768);
 
     const customConfig: LshConfig = {
       families: 5,
@@ -146,7 +146,7 @@ describe('signText', () => {
   });
 
   test('long prompt preview truncation', async () => {
-    const provider = new MockProvider(1024);
+    const provider = new MockProvider(768);
 
     const longText = 'a'.repeat(100);
     const result = await signText(longText, { provider });
@@ -171,7 +171,7 @@ describe('signText', () => {
   });
 
   test('backward compat - provider-only call', async () => {
-    const provider = new MockProvider(1024);
+    const provider = new MockProvider(768);
 
     // Should still work with just provider (version inferred)
     const result = await signText('test', { provider });
