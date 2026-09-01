@@ -30,7 +30,10 @@ export type {
   DetectionSignature,
   SyncResult,
   ThreatFeedEntry,
+  ThreatFeedExtraField,
+  ThreatFeedExtraFields,
   ThreatFeedResponse,
+  ThreatFeedTaxonomy,
   ThreatMatch,
 } from './types';
-export { parseThreatFeedResponse } from './types';
+export { extractThreatFeedExtraFields, parseThreatFeedResponse } from './types';

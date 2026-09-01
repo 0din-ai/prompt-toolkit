@@ -40,21 +40,21 @@ function makeEntry(
     published_at: '2025-01-15T12:00:00.000Z',
     updated_at: '2025-03-01T10:00:00.000Z',
     detection_signatures: v1Sig ? [{ version: 'v1', signature: v1Sig }] : [],
-    models: [],
-    messages: [],
-    taxonomies: [],
-    test_results: [],
-    metadata: [],
-    reference_urls: [],
-    variant_prompts: [],
+    models: [] as unknown[],
+    messages: [] as unknown[],
+    taxonomies: [] as {
+      category: string;
+      strategy: string;
+      technique: string;
+    }[],
+    test_results: [] as unknown[],
+    metadata: [] as unknown[],
+    reference_urls: [] as unknown[],
+    variant_prompts: [] as unknown[],
   };
 }
 
-function pageResponse(
-  entries: ReturnType<typeof makeEntry>[],
-  page = 1,
-  totalPages = 1,
-) {
+function pageResponse(entries: ReturnType<typeof makeEntry>[], page = 1, totalPages = 1) {
   return {
     page,
     total_pages: totalPages,
@@ -168,10 +168,7 @@ describe('ThreatFeedClient.fetchAll', () => {
     const page1 = [makeEntry('p1e1'), makeEntry('p1e2')];
     const page2 = [makeEntry('p2e1')];
 
-    mockFetch([
-      { body: pageResponse(page1, 1, 2) },
-      { body: pageResponse(page2, 2, 2) },
-    ]);
+    mockFetch([{ body: pageResponse(page1, 1, 2) }, { body: pageResponse(page2, 2, 2) }]);
 
     const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
     const result = await client.fetchAll();
@@ -210,7 +207,10 @@ describe('ThreatFeedClient.fetchAll', () => {
   test('401 throws ThreatFeedApiError with status code', async () => {
     mockFetch([{ body: 'Unauthorized', status: 401 }]);
 
-    const client = new ThreatFeedClient({ apiToken: 'bad-token', baseUrl: BASE_URL });
+    const client = new ThreatFeedClient({
+      apiToken: 'bad-token',
+      baseUrl: BASE_URL,
+    });
     await expect(client.fetchAll()).rejects.toThrow(ThreatFeedApiError);
     await expect(client.fetchAll()).rejects.toMatchObject({ statusCode: 401 });
   });
@@ -270,6 +270,55 @@ describe('ThreatFeedClient.fetchAll', () => {
 
     expect(result[0].detectionSignatures).toHaveLength(0);
   });
+
+  test('default (no options) leaves extra undefined', async () => {
+    const entry = makeEntry('aaa');
+    entry.taxonomies.push({ category: 'c', strategy: 's', technique: 't' });
+    mockFetch([{ body: pageResponse([entry]) }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchAll();
+
+    expect(result[0].extra).toBeUndefined();
+  });
+
+  test('{ since } only (no fields) leaves extra undefined', async () => {
+    const entry = makeEntry('aaa');
+    entry.taxonomies.push({ category: 'c', strategy: 's', technique: 't' });
+    mockFetch([{ body: pageResponse([entry]) }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchAll({ since: '2025-03-01T00:00:00Z' });
+
+    expect(result[0].extra).toBeUndefined();
+  });
+
+  test('fields: ["taxonomies"] populates extra.taxonomies across pages', async () => {
+    const page1Entry = makeEntry('p1e1');
+    page1Entry.taxonomies.push({
+      category: 'c1',
+      strategy: 's1',
+      technique: 't1',
+    });
+    const page2Entry = makeEntry('p2e1');
+    page2Entry.taxonomies.push({
+      category: 'c2',
+      strategy: 's2',
+      technique: 't2',
+    });
+
+    mockFetch([
+      { body: pageResponse([page1Entry], 1, 2) },
+      { body: pageResponse([page2Entry], 2, 2) },
+    ]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchAll({ fields: ['taxonomies'] });
+
+    const byUuid = new Map(result.map((e) => [e.uuid, e]));
+    expect(byUuid.get('p1e1')?.extra?.taxonomies).toEqual(page1Entry.taxonomies);
+    expect(byUuid.get('p2e1')?.extra?.taxonomies).toEqual(page2Entry.taxonomies);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -297,5 +346,55 @@ describe('ThreatFeedClient.fetchOne', () => {
     await expect(client.fetchOne('nonexistent')).rejects.toMatchObject({
       statusCode: 404,
     });
+  });
+
+  test('default (no options) leaves extra undefined', async () => {
+    const uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    mockFetch([{ body: makeEntry(uuid) }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchOne(uuid);
+
+    expect(result.extra).toBeUndefined();
+  });
+
+  test('options without fields leaves extra undefined', async () => {
+    const uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    mockFetch([{ body: makeEntry(uuid) }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchOne(uuid, {});
+
+    expect(result.extra).toBeUndefined();
+  });
+
+  test('fields: ["taxonomies"] populates only taxonomies', async () => {
+    const uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const entry = makeEntry(uuid);
+    const taxonomies = [{ category: 'jailbreak', strategy: 'roleplay', technique: 'dan' }];
+    entry.taxonomies.push(...taxonomies);
+    mockFetch([{ body: entry }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchOne(uuid, { fields: ['taxonomies'] });
+
+    expect(result.extra?.taxonomies).toEqual(taxonomies);
+    expect(result.extra?.models).toBeUndefined();
+  });
+
+  test('fields: ["taxonomies", "source"] populates both', async () => {
+    const uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const entry = makeEntry(uuid);
+    const taxonomies = [{ category: 'jailbreak', strategy: 'roleplay', technique: 'dan' }];
+    entry.taxonomies.push(...taxonomies);
+    mockFetch([{ body: entry }]);
+
+    const client = new ThreatFeedClient({ apiToken: TOKEN, baseUrl: BASE_URL });
+    const result = await client.fetchOne(uuid, {
+      fields: ['taxonomies', 'source'],
+    });
+
+    expect(result.extra?.taxonomies).toEqual(taxonomies);
+    expect(result.extra?.source).toBe('internal');
   });
 });
