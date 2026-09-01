@@ -13,7 +13,7 @@ import { InvalidInputError } from './error';
  */
 export enum SignatureVersion {
   V0 = 'v0', // OpenAI text-embedding-3-large (1536 dims)
-  V1 = 'v1', // 0din-jailbreak-embeddings-small ONNX (768 dims)
+  V1 = 'v1', // 0dinai/jailbreak-embeddings-base-onnx ONNX (768 dims)
   LATEST = 'latest', // Resolves to V1
 }
 

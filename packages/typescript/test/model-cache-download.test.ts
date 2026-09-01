@@ -231,7 +231,6 @@ describe('ModelCache.downloadModel', () => {
     const onnxDir = path.join(modelDir, 'onnx');
     fs.mkdirSync(onnxDir, { recursive: true });
     fs.writeFileSync(path.join(onnxDir, 'model.onnx'), 'x');
-    fs.writeFileSync(path.join(onnxDir, 'model.onnx_data'), 'x');
     fs.writeFileSync(path.join(modelDir, 'tokenizer.json'), '{}');
     fs.writeFileSync(path.join(modelDir, 'config.json'), '{}');
 
