@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "0din-prompt-toolkit-native"
-version = "0.9.4"
+version = "0.9.5"
 description = "Native Rust acceleration for 0din-prompt-toolkit"
 authors = [{ name = "0din Team" }]
 requires-python = ">=3.10"

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "0din-prompt-toolkit"
-version = "0.9.4"
+version = "0.9.5"
 description = "Multi-language SDK for LSH signature generation for AI prompt similarity detection"
 readme = "README.md"
 requires-python = ">=3.10"
