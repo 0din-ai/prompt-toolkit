@@ -12,9 +12,34 @@ import { ModelCache } from './model-cache';
 /**
  * Embedding provider using local ONNX model inference.
  *
- * This provider uses the 0dinai/jailbreak-embeddings-base-onnx model by default,
- * a contrastively fine-tuned model that produces 768-dimensional embeddings
- * suitable for jailbreak/prompt similarity detection.
+ * By default, this provider downloads and runs `intfloat/multilingual-e5-large`
+ * (1024-dimensional multilingual embeddings) from HuggingFace, cached locally
+ * after the first run.
+ *
+ * ### Overriding the model
+ *
+ * Pass a different HuggingFace repo id as the `model` argument to `create()`
+ * to use a different embedding model instead of the default — for example, a
+ * domain-specific fine-tune, an internal/private model your organization
+ * hosts on HuggingFace, or a smaller/faster model for a different latency
+ * budget. Any repo id in `"org/name"` form is accepted; it does not need to
+ * be a known version key.
+ *
+ * If the repo is private or gated, `create()` does not accept a token
+ * directly — set the `HF_TOKEN` environment variable before calling it (see
+ * {@link ModelCache.downloadModel} for how the token is resolved).
+ *
+ * A compatible custom model must:
+ * - Be exported to ONNX with a `onnx/model.onnx` file (an optional
+ *   `onnx/model.onnx_data` external-weights file is also downloaded if the
+ *   repo has one, but is not required)
+ * - Ship `tokenizer.json` and `config.json` at the repo root, loadable via
+ *   `@huggingface/transformers`'s `AutoTokenizer`
+ * - Use mean-token pooling over the last hidden state (this provider does
+ *   not implement other pooling strategies, e.g. CLS-token or max pooling)
+ * - Produce a fixed-size embedding whose dimensionality you pass to callers
+ *   consistently (this provider does not auto-detect dimensionality from
+ *   the model; verify it separately before switching)
  *
  * The model is automatically loaded from the local cache directory.
  *
@@ -26,10 +51,18 @@ import { ModelCache } from './model-cache';
  * console.log(`Generated ${result.dimensions}-dimensional embedding`);
  * await provider.close();
  * ```
+ *
+ * @example Overriding the default model
+ * ```typescript
+ * process.env.HF_TOKEN = '...'; // only needed for a private/gated repo
+ * const cache = new ModelCache();
+ * const provider = await OnnxProvider.create(cache, 'your-org/your-fine-tuned-model');
+ * const result = await provider.generateEmbedding("Hello, world!");
+ * ```
  */
 export class OnnxProvider implements EmbeddingProvider {
-  private static readonly DEFAULT_MODEL = '0dinai/jailbreak-embeddings-base-onnx';
-  private static readonly DEFAULT_DIMENSIONS = 768;
+  private static readonly DEFAULT_MODEL = 'intfloat/multilingual-e5-large';
+  private static readonly DEFAULT_DIMENSIONS = 1024;
   private static readonly MAX_SEQUENCE_LENGTH = 512;
 
   private session: any; // InferenceSession type
@@ -67,7 +100,9 @@ export class OnnxProvider implements EmbeddingProvider {
    * ```
    *
    * @param cache - ModelCache instance for managing model files
-   * @param model - Model name (default: 0dinai/jailbreak-embeddings-base-onnx)
+   * @param model - Model name (default: intfloat/multilingual-e5-large). Accepts
+   *   any `"org/name"` HuggingFace repo id to override the default — see the
+   *   class-level doc comment above for compatibility requirements.
    * @param name - Provider name (default: "onnx")
    * @returns Initialized OnnxProvider
    * @throws Error if model files are not found or required packages are not installed
@@ -81,7 +116,7 @@ export class OnnxProvider implements EmbeddingProvider {
     const providerName = name || 'onnx';
 
     // Auto-download model files if not already cached.
-    await cache.downloadModel('v1');
+    await cache.downloadModel(modelName);
 
     // Dynamically import onnxruntime-node
     let ort: any;
@@ -96,7 +131,7 @@ export class OnnxProvider implements EmbeddingProvider {
     }
 
     // Load ONNX model
-    const modelPath = cache.getModelPath('v1');
+    const modelPath = cache.getModelPath(modelName);
     const session = await ort.InferenceSession.create(modelPath);
 
     // Load tokenizer using @huggingface/transformers AutoTokenizer.
@@ -121,7 +156,7 @@ export class OnnxProvider implements EmbeddingProvider {
     // localModelPath is the base directory; we pass the version folder name as the
     // model identifier to from_pretrained(), so it looks for:
     //   {localModelPath}/{version}/tokenizer.json
-    const modelDir = cache.modelDirectory('v1');
+    const modelDir = cache.modelDirectory(modelName);
     const parentDir = path.dirname(modelDir);
     const versionName = path.basename(modelDir);
 
@@ -133,7 +168,7 @@ export class OnnxProvider implements EmbeddingProvider {
     });
 
     // Load input prefix from config (empty string for the 0din fine-tuned model)
-    const config = cache.loadConfig('v1');
+    const config = cache.loadConfig(modelName);
     const inputPrefix = config.inference?.input_prefix || '';
 
     return new OnnxProvider(
