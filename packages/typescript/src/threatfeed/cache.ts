@@ -10,7 +10,13 @@ import { ThreatFeedCacheError } from '../error';
 import { hammingDistanceHex, cosineFromHamming } from '../lsh';
 import { SignatureVersion, resolveVersion } from '../types';
 import { ThreatFeedClient } from './client';
-import type { CachedSignature, SyncResult, ThreatMatch } from './types';
+import type {
+  CachedSignature,
+  SyncResult,
+  ThreatFeedExtraField,
+  ThreatFeedExtraFields,
+  ThreatMatch,
+} from './types';
 
 /** Schema version for the cache file format. */
 const CACHE_SCHEMA_VERSION = 1;
@@ -37,6 +43,7 @@ interface CacheFile {
     signature: string;
     bands: string[];
     updated_at?: string;
+    extra?: ThreatFeedExtraFields;
   }>;
   band_index: Record<string, number[]>;
 }
@@ -86,11 +93,7 @@ export class ThreatFeedCache {
    * @param options.cacheDir Override cache directory path
    * @param options.bands Number of bands for LSH indexing (default: 16)
    */
-  constructor(options: {
-    version: SignatureVersion;
-    cacheDir?: string;
-    bands?: number;
-  }) {
+  constructor(options: { version: SignatureVersion; cacheDir?: string; bands?: number }) {
     this.version = resolveVersion(options.version);
     this.bits = DEFAULT_BITS;
     this.bands = options.bands ?? DEFAULT_BANDS;
@@ -133,6 +136,7 @@ export class ThreatFeedCache {
       signature: entry.signature,
       bands: entry.bands,
       updatedAt: entry.updated_at,
+      extra: entry.extra,
     }));
     this.bandIndex = data.band_index || {};
     this.syncedAt = data.synced_at;
@@ -168,6 +172,7 @@ export class ThreatFeedCache {
         signature: e.signature,
         bands: e.bands,
         updated_at: e.updatedAt,
+        extra: e.extra,
       })),
       band_index: this.bandIndex,
     };
@@ -194,17 +199,18 @@ export class ThreatFeedCache {
    * @param client Threat feed API client
    * @param options Sync options
    * @param options.full If true, fetch all entries. If false, incremental sync.
+   * @param options.fields Optional list of opt-in extra fields to populate on each entry
    * @returns SyncResult with counts of added/updated entries.
    */
   async sync(
     client: ThreatFeedClient,
-    options?: { full?: boolean },
+    options?: { full?: boolean; fields?: ThreatFeedExtraField[] },
   ): Promise<SyncResult> {
     const full = options?.full ?? false;
     const since = full ? undefined : this.lastUpdatedAt();
     this.sourceUrl = client.baseUrl;
 
-    const entries = await client.fetchAll({ since });
+    const entries = await client.fetchAll({ since, fields: options?.fields });
     const versionStr = this.version;
 
     const newCached: CachedSignature[] = [];
@@ -219,6 +225,7 @@ export class ThreatFeedCache {
             signature: sig.signature,
             bands: computeBands(sig.signature, this.bands),
             updatedAt: entry.updatedAt,
+            extra: entry.extra,
           });
         }
       }
@@ -251,10 +258,7 @@ export class ThreatFeedCache {
    * @param options.maxResults Maximum number of results to return (default: 10)
    * @returns Array of ThreatMatch objects sorted by cosine similarity descending.
    */
-  query(
-    signature: string,
-    options?: { threshold?: number; maxResults?: number },
-  ): ThreatMatch[] {
+  query(signature: string, options?: { threshold?: number; maxResults?: number }): ThreatMatch[] {
     const threshold = options?.threshold ?? 0.85;
     const maxResults = options?.maxResults ?? 10;
 

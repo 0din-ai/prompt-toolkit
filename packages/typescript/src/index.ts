@@ -128,12 +128,16 @@ export {
   ThreatFeedCache,
   ThreatFeedClient,
   compareToThreatfeed,
+  extractThreatFeedExtraFields,
   parseThreatFeedResponse,
   type CachedSignature,
   type DetectionSignature,
   type SyncResult,
   type ThreatFeedEntry,
+  type ThreatFeedExtraField,
+  type ThreatFeedExtraFields,
   type ThreatFeedResponse,
+  type ThreatFeedTaxonomy,
   type ThreatMatch,
 } from './threatfeed';
 

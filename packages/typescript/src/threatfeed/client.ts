@@ -3,8 +3,8 @@
  */
 
 import { ThreatFeedApiError } from '../error';
-import type { ThreatFeedEntry } from './types';
-import { parseThreatFeedResponse } from './types';
+import type { ThreatFeedEntry, ThreatFeedExtraField } from './types';
+import { extractThreatFeedExtraFields, parseThreatFeedResponse } from './types';
 
 /**
  * Options for creating a ThreatFeedClient.
@@ -38,10 +38,7 @@ export class ThreatFeedClient {
 
   constructor(options: ThreatFeedClientOptions = {}) {
     this.apiToken =
-      options.apiToken ??
-      process.env.ODIN_THREATFEED_API_TOKEN ??
-      process.env.ODIN_API_TOKEN ??
-      '';
+      options.apiToken ?? process.env.ODIN_THREATFEED_API_TOKEN ?? process.env.ODIN_API_TOKEN ?? '';
 
     if (!this.apiToken) {
       throw new ThreatFeedApiError(
@@ -49,10 +46,7 @@ export class ThreatFeedClient {
       );
     }
 
-    this._baseUrl =
-      options.baseUrl ??
-      process.env.ODIN_THREATFEED_BASE_URL ??
-      'https://0din.ai';
+    this._baseUrl = options.baseUrl ?? process.env.ODIN_THREATFEED_BASE_URL ?? 'https://0din.ai';
 
     this.perPage = options.perPage ?? 100;
   }
@@ -67,17 +61,22 @@ export class ThreatFeedClient {
    *
    * @param options Fetch options
    * @param options.since Optional ISO8601 timestamp to filter entries updated since
+   * @param options.fields Optional list of opt-in extra fields to populate on each entry
    * @returns Array of all threat feed entries
    * @throws ThreatFeedApiError on network or API errors
    */
-  async fetchAll(options?: { since?: string }): Promise<ThreatFeedEntry[]> {
+  async fetchAll(options?: {
+    since?: string;
+    fields?: ThreatFeedExtraField[];
+  }): Promise<ThreatFeedEntry[]> {
     const since = options?.since;
+    const fields = options?.fields;
     const allEntries: ThreatFeedEntry[] = [];
     let page = 1;
 
     for (;;) {
       const data = await this.fetchPage(page, since);
-      const response = parseThreatFeedResponse(data);
+      const response = parseThreatFeedResponse(data, fields);
       allEntries.push(...response.threatFeeds);
 
       if (page >= response.totalPages) {
@@ -96,10 +95,15 @@ export class ThreatFeedClient {
    * Fetch a single threat feed entry by UUID.
    *
    * @param uuid Threat feed entry UUID
+   * @param options Fetch options
+   * @param options.fields Optional list of opt-in extra fields to populate on the entry
    * @returns ThreatFeedEntry for the specified UUID
    * @throws ThreatFeedApiError on network or API errors
    */
-  async fetchOne(uuid: string): Promise<ThreatFeedEntry> {
+  async fetchOne(
+    uuid: string,
+    options?: { fields?: ThreatFeedExtraField[] },
+  ): Promise<ThreatFeedEntry> {
     const url = `${this._baseUrl}/api/v1/threatfeed/${uuid}`;
     const headers = {
       Authorization: this.apiToken,
@@ -137,15 +141,13 @@ export class ThreatFeedClient {
       securityBoundary: (data.security_boundary as string) || '',
       updatedAt: data.updated_at as string | undefined,
       detectionSignatures: sigs,
+      extra: extractThreatFeedExtraFields(data, options?.fields),
     };
   }
 
   // --- Private methods ---
 
-  private async fetchPage(
-    page: number,
-    since?: string,
-  ): Promise<Record<string, unknown>> {
+  private async fetchPage(page: number, since?: string): Promise<Record<string, unknown>> {
     let url = `${this._baseUrl}/api/v1/threatfeed?page=${page}&per_page=${this.perPage}`;
     if (since) {
       url += `&q[updated_at_gteq]=${encodeURIComponent(since)}`;

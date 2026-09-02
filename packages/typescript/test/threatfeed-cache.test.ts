@@ -2,8 +2,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { ThreatFeedCache, computeBands } from '../src/threatfeed/cache';
+import { ThreatFeedClient } from '../src/threatfeed/client';
 import { SignatureVersion } from '../src/types';
-import type { CachedSignature } from '../src/threatfeed/types';
+import type { CachedSignature, ThreatFeedEntry } from '../src/threatfeed/types';
 
 const SIG_A = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
 const SIG_B = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b3';
@@ -104,9 +105,7 @@ describe('ThreatFeedCache', () => {
 
   test('max results', () => {
     const cache = new ThreatFeedCache({ version: SignatureVersion.V1 });
-    const entries = Array.from({ length: 20 }, (_, i) =>
-      makeEntry(`entry-${i}`, SIG_A),
-    );
+    const entries = Array.from({ length: 20 }, (_, i) => makeEntry(`entry-${i}`, SIG_A));
     cache.loadEntries(entries);
 
     const matches = cache.query(SIG_A, { maxResults: 5 });
@@ -184,6 +183,62 @@ describe('ThreatFeedCache', () => {
       });
       const loaded = cache.load();
       expect(loaded).toBe(false);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true });
+    }
+  });
+});
+
+describe('ThreatFeedCache.sync', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  function fakeEntry(uuid: string, sig: string, taxonomies?: unknown[]): ThreatFeedEntry {
+    return {
+      uuid,
+      title: 'Test',
+      severity: 'high',
+      securityBoundary: 'guardrail_jailbreak',
+      detectionSignatures: [{ version: 'v1', signature: sig }],
+      extra: taxonomies ? { taxonomies: taxonomies as never } : undefined,
+    };
+  }
+
+  test('sync with fields carries extra.taxonomies onto cached entries', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'threatfeed-test-'));
+    try {
+      const client = new ThreatFeedClient({ apiToken: 'test-token' });
+      const taxonomies = [{ category: 'c', strategy: 's', technique: 't' }];
+      jest.spyOn(client, 'fetchAll').mockResolvedValue([fakeEntry('entry-a', SIG_A, taxonomies)]);
+
+      const cache = new ThreatFeedCache({
+        version: SignatureVersion.V1,
+        cacheDir: tmpDir,
+      });
+
+      await cache.sync(client, { full: true, fields: ['taxonomies'] });
+
+      expect(cache.entries).toHaveLength(1);
+      expect(cache.entries[0].extra?.taxonomies).toEqual(taxonomies);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true });
+    }
+  });
+
+  test('sync without fields leaves extra undefined', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'threatfeed-test-'));
+    try {
+      const client = new ThreatFeedClient({ apiToken: 'test-token' });
+      jest.spyOn(client, 'fetchAll').mockResolvedValue([fakeEntry('entry-a', SIG_A)]);
+
+      const cache = new ThreatFeedCache({
+        version: SignatureVersion.V1,
+        cacheDir: tmpDir,
+      });
+
+      await cache.sync(client, { full: true });
+
+      expect(cache.entries).toHaveLength(1);
+      expect(cache.entries[0].extra).toBeUndefined();
     } finally {
       fs.rmSync(tmpDir, { recursive: true });
     }
