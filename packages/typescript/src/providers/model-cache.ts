@@ -101,25 +101,26 @@ export interface DownloadModelOptions extends GetModelOptions {
 // ---------------------------------------------------------------------------
 
 /**
- * Files required for the embedding model (v1 / 0dinai/jailbreak-embeddings-base-onnx).
+ * Files required for the embedding model (v1 / intfloat/multilingual-e5-large).
  *
- * The HuggingFace repo that hosts these files is
- * `0dinai/jailbreak-embeddings-base-onnx`. We always download `model.onnx`;
- * `model_O4.onnx` is an optional optimized variant that is not automatically
- * fetched.
+ * The HuggingFace repo that hosts these files is `intfloat/multilingual-e5-large`.
+ * We always download `model.onnx`; `model_O4.onnx` is an optional optimized
+ * variant that is not automatically fetched.
  *
- * Unlike some ORT exports, this repo ships `model.onnx` as a single self-contained
- * file — there is no `onnx/model.onnx_data` external-weights file upstream, so it
- * is intentionally not part of the mandatory download manifest.
+ * `model.onnx` stores its weights externally in `onnx/model.onnx_data` (ORT's
+ * external-data mechanism for models whose weights exceed the 2GB protobuf
+ * limit). Both files must be downloaded together — the graph in `model.onnx`
+ * cannot be loaded without the external weights.
  */
 const EMBEDDING_MODEL_FILES = [
   'onnx/model.onnx',
+  'onnx/model.onnx_data',
   'tokenizer.json',
   'config.json',
 ] as const;
 
 /** HuggingFace repo for the embedding ONNX model. */
-const EMBEDDING_MODEL_REPO = '0dinai/jailbreak-embeddings-base-onnx';
+const EMBEDDING_MODEL_REPO = 'intfloat/multilingual-e5-large';
 
 /**
  * Files required for the SusFactor classifier (susfactor-v1).
@@ -224,7 +225,7 @@ export class ModelCache {
    *
    * | version         | on-disk path                                          |
    * |-----------------|-------------------------------------------------------|
-   * | `"v1"`          | `<cacheDir>/0dinai/jailbreak-embeddings-base-onnx`    |
+   * | `"v1"`          | `<cacheDir>/intfloat/multilingual-e5-large`           |
    * | `"susfactor-v1"`| `<cacheDir>/0dinai/susfactor-e5-large-onnx`           |
    * | anything else   | `<cacheDir>/<version>` (legacy / custom)              |
    *
@@ -261,16 +262,14 @@ export class ModelCache {
     }
 
     // Check for required files (prefer optimized model, accept either).
-    // Unlike the SusFactor model, the embedding model ships as a single
-    // self-contained onnx/model.onnx with no external onnx/model.onnx_data
-    // file, so that file is not required here even if it happens to exist
-    // on disk (e.g. leftover from an old cache).
+    // The unoptimized model stores its weights externally in
+    // onnx/model.onnx_data, so both files must be present together.
     const hasOptimized = fs.existsSync(
       path.join(modelDir, 'onnx', 'model_O4.onnx')
     );
-    const hasUnoptimized = fs.existsSync(
-      path.join(modelDir, 'onnx', 'model.onnx')
-    );
+    const hasUnoptimized =
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx')) &&
+      fs.existsSync(path.join(modelDir, 'onnx', 'model.onnx_data'));
 
     const requiredFiles = ['tokenizer.json', 'config.json'];
 
@@ -378,7 +377,7 @@ export class ModelCache {
    * - Cache-miss: streams the file from HuggingFace to a unique temp file,
    *   then atomically renames it into place.
    *
-   * @param modelId  - HuggingFace model repo (e.g. `"0dinai/jailbreak-embeddings-base-onnx"`)
+   * @param modelId  - HuggingFace model repo (e.g. `"intfloat/multilingual-e5-large"`)
    * @param filename - File path within the repo (e.g. `"onnx/model.onnx"`)
    * @param options  - Token, base URL override, progress callback
    * @returns Absolute path to the cached file
@@ -387,7 +386,7 @@ export class ModelCache {
    * ```typescript
    * const cache = new ModelCache();
    * const modelPath = await cache.getModel(
-   *   '0dinai/jailbreak-embeddings-base-onnx',
+   *   'intfloat/multilingual-e5-large',
    *   'onnx/model.onnx',
    *   { onProgress: (e) => console.log(`${e.file}: ${e.percent ?? '?'}%`) },
    * );
@@ -413,7 +412,7 @@ export class ModelCache {
    * Download all required files for a model version.
    *
    * Known versions:
-   * - `"v1"` — embedding model (`0dinai/jailbreak-embeddings-base-onnx`)
+   * - `"v1"` — embedding model (`intfloat/multilingual-e5-large`)
    * - `"susfactor-v1"` — SusFactor classifier (`0dinai/susfactor-e5-large-onnx`, gated)
    *
    * A HuggingFace token is required for `"susfactor-v1"`. Pass it via
