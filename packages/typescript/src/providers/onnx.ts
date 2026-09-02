@@ -12,8 +12,9 @@ import { ModelCache } from './model-cache';
 /**
  * Embedding provider using local ONNX model inference.
  *
- * This provider uses the 0dinai/0din-jailbreak-embeddings-large model by default,
- * which produces 1024-dimensional embeddings suitable for multilingual text similarity.
+ * This provider uses the 0dinai/jailbreak-embeddings-base-onnx model by default,
+ * a contrastively fine-tuned model that produces 768-dimensional embeddings
+ * suitable for jailbreak/prompt similarity detection.
  *
  * The model is automatically loaded from the local cache directory.
  *
@@ -27,8 +28,8 @@ import { ModelCache } from './model-cache';
  * ```
  */
 export class OnnxProvider implements EmbeddingProvider {
-  private static readonly DEFAULT_MODEL = 'intfloat/multilingual-e5-large';
-  private static readonly DEFAULT_DIMENSIONS = 1024;
+  private static readonly DEFAULT_MODEL = '0dinai/jailbreak-embeddings-base-onnx';
+  private static readonly DEFAULT_DIMENSIONS = 768;
   private static readonly MAX_SEQUENCE_LENGTH = 512;
 
   private session: any; // InferenceSession type
@@ -66,7 +67,7 @@ export class OnnxProvider implements EmbeddingProvider {
    * ```
    *
    * @param cache - ModelCache instance for managing model files
-   * @param model - Model name (default: intfloat/multilingual-e5-large)
+   * @param model - Model name (default: 0dinai/jailbreak-embeddings-base-onnx)
    * @param name - Provider name (default: "onnx")
    * @returns Initialized OnnxProvider
    * @throws Error if model files are not found or required packages are not installed
