@@ -418,6 +418,12 @@ export class ModelCache {
    * A HuggingFace token is required for `"susfactor-v1"`. Pass it via
    * `options.hfToken` or set the `HF_TOKEN` environment variable.
    *
+   * `version` also accepts an arbitrary `"org/name"` HuggingFace repo id, not
+   * just the two known keys above — this is how `OnnxProvider.create()`'s
+   * `model` override is resolved. The same `options.hfToken` /
+   * `HF_TOKEN` mechanism applies if that custom repo happens to be
+   * gated or private.
+   *
    * Files are downloaded in parallel. Already-cached files are skipped
    * unless `options.force` is `true`.
    *

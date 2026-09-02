@@ -12,8 +12,34 @@ import { ModelCache } from './model-cache';
 /**
  * Embedding provider using local ONNX model inference.
  *
- * This provider uses the 0dinai/0din-jailbreak-embeddings-large model by default,
- * which produces 1024-dimensional embeddings suitable for multilingual text similarity.
+ * By default, this provider downloads and runs `intfloat/multilingual-e5-large`
+ * (1024-dimensional multilingual embeddings) from HuggingFace, cached locally
+ * after the first run.
+ *
+ * ### Overriding the model
+ *
+ * Pass a different HuggingFace repo id as the `model` argument to `create()`
+ * to use a different embedding model instead of the default — for example, a
+ * domain-specific fine-tune, an internal/private model your organization
+ * hosts on HuggingFace, or a smaller/faster model for a different latency
+ * budget. Any repo id in `"org/name"` form is accepted; it does not need to
+ * be a known version key.
+ *
+ * If the repo is private or gated, `create()` does not accept a token
+ * directly — set the `HF_TOKEN` environment variable before calling it (see
+ * {@link ModelCache.downloadModel} for how the token is resolved).
+ *
+ * A compatible custom model must:
+ * - Be exported to ONNX with a `onnx/model.onnx` file (an optional
+ *   `onnx/model.onnx_data` external-weights file is also downloaded if the
+ *   repo has one, but is not required)
+ * - Ship `tokenizer.json` and `config.json` at the repo root, loadable via
+ *   `@huggingface/transformers`'s `AutoTokenizer`
+ * - Use mean-token pooling over the last hidden state (this provider does
+ *   not implement other pooling strategies, e.g. CLS-token or max pooling)
+ * - Produce a fixed-size embedding whose dimensionality you pass to callers
+ *   consistently (this provider does not auto-detect dimensionality from
+ *   the model; verify it separately before switching)
  *
  * The model is automatically loaded from the local cache directory.
  *
@@ -24,6 +50,14 @@ import { ModelCache } from './model-cache';
  * const result = await provider.generateEmbedding("Hello, world!");
  * console.log(`Generated ${result.dimensions}-dimensional embedding`);
  * await provider.close();
+ * ```
+ *
+ * @example Overriding the default model
+ * ```typescript
+ * process.env.HF_TOKEN = '...'; // only needed for a private/gated repo
+ * const cache = new ModelCache();
+ * const provider = await OnnxProvider.create(cache, 'your-org/your-fine-tuned-model');
+ * const result = await provider.generateEmbedding("Hello, world!");
  * ```
  */
 export class OnnxProvider implements EmbeddingProvider {
@@ -66,7 +100,9 @@ export class OnnxProvider implements EmbeddingProvider {
    * ```
    *
    * @param cache - ModelCache instance for managing model files
-   * @param model - Model name (default: intfloat/multilingual-e5-large)
+   * @param model - Model name (default: intfloat/multilingual-e5-large). Accepts
+   *   any `"org/name"` HuggingFace repo id to override the default — see the
+   *   class-level doc comment above for compatibility requirements.
    * @param name - Provider name (default: "onnx")
    * @returns Initialized OnnxProvider
    * @throws Error if model files are not found or required packages are not installed
