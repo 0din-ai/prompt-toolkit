@@ -475,9 +475,18 @@ export class ModelCache {
     if (version === 'v1') {
       return { repo: EMBEDDING_MODEL_REPO, files: EMBEDDING_MODEL_FILES };
     }
+    // Treat any other "org/name"-shaped string as a caller-supplied custom
+    // HuggingFace repo override (e.g. passed via OnnxProvider's `model` param).
+    // Uses the same file manifest as the default embedding model since custom
+    // overrides are expected to be embedding models compatible with the same
+    // ONNX + tokenizer + config layout.
+    if (/^[^/]+\/[^/]+$/.test(version)) {
+      return { repo: version, files: EMBEDDING_MODEL_FILES };
+    }
     throw new ProviderError(
       `Unknown model version "${version}". ` +
-        'Known versions: "v1" (embedding), "susfactor-v1" (SusFactor classifier).',
+        'Known versions: "v1" (embedding), "susfactor-v1" (SusFactor classifier), ' +
+        'or a custom HuggingFace repo id in "org/name" form.',
     );
   }
 

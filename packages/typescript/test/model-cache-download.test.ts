@@ -392,6 +392,54 @@ describe('ModelCache.downloadModel — susfactor-v1 manifest self-consistency', 
 });
 
 // ---------------------------------------------------------------------------
+// downloadModel — custom repo override (org/name string that is not a known
+// version key). Proves the fix for 0DIN-2097: any "org/name"-shaped string
+// is treated as a literal HuggingFace repo, not silently mapped to the
+// default embedding repo.
+// ---------------------------------------------------------------------------
+
+describe('ModelCache.downloadModel — custom repo override', () => {
+  let dir: string;
+  let server: { url: string; close: () => Promise<void> };
+  const customRepo = 'test-org/custom-embedding-model';
+
+  beforeEach(async () => {
+    dir = makeTempDir();
+    server = await startMultiRouteServer({
+      [`/${customRepo}/resolve/main/onnx/model.onnx`]:
+        Buffer.from('graph-bytes'),
+      [`/${customRepo}/resolve/main/onnx/model.onnx_data`]:
+        Buffer.from('external-weights-bytes'),
+      [`/${customRepo}/resolve/main/tokenizer.json`]: Buffer.from('{}'),
+      [`/${customRepo}/resolve/main/config.json`]: Buffer.from('{}'),
+    });
+  });
+  afterEach(async () => {
+    rmrf(dir);
+    await server.close();
+  });
+
+  it('downloads from the custom repo id, not the default embedding repo', async () => {
+    const cache = new ModelCache(dir);
+    await cache.downloadModel(customRepo, { baseUrl: server.url });
+
+    expect(cache.hasModel(customRepo)).toBe(true);
+    expect(cache.modelDirectory(customRepo)).toBe(
+      path.join(dir, 'test-org', 'custom-embedding-model'),
+    );
+    expect(cache.getModelPath(customRepo)).toBe(
+      path.join(dir, 'test-org', 'custom-embedding-model', 'onnx', 'model.onnx'),
+    );
+    expect(
+      fs.existsSync(path.join(dir, 'test-org', 'custom-embedding-model', 'onnx', 'model.onnx_data')),
+    ).toBe(true);
+
+    // The default embedding repo directory must never have been touched.
+    expect(fs.existsSync(path.join(dir, 'intfloat'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // hasSusfactorModel — susfactor-v1 manifest completeness
 // ---------------------------------------------------------------------------
 

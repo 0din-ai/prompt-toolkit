@@ -80,7 +80,7 @@ export class OnnxProvider implements EmbeddingProvider {
     const providerName = name || 'onnx';
 
     // Auto-download model files if not already cached.
-    await cache.downloadModel('v1');
+    await cache.downloadModel(modelName);
 
     // Dynamically import onnxruntime-node
     let ort: any;
@@ -95,7 +95,7 @@ export class OnnxProvider implements EmbeddingProvider {
     }
 
     // Load ONNX model
-    const modelPath = cache.getModelPath('v1');
+    const modelPath = cache.getModelPath(modelName);
     const session = await ort.InferenceSession.create(modelPath);
 
     // Load tokenizer using @huggingface/transformers AutoTokenizer.
@@ -120,7 +120,7 @@ export class OnnxProvider implements EmbeddingProvider {
     // localModelPath is the base directory; we pass the version folder name as the
     // model identifier to from_pretrained(), so it looks for:
     //   {localModelPath}/{version}/tokenizer.json
-    const modelDir = cache.modelDirectory('v1');
+    const modelDir = cache.modelDirectory(modelName);
     const parentDir = path.dirname(modelDir);
     const versionName = path.basename(modelDir);
 
@@ -132,7 +132,7 @@ export class OnnxProvider implements EmbeddingProvider {
     });
 
     // Load input prefix from config (empty string for the 0din fine-tuned model)
-    const config = cache.loadConfig('v1');
+    const config = cache.loadConfig(modelName);
     const inputPrefix = config.inference?.input_prefix || '';
 
     return new OnnxProvider(
