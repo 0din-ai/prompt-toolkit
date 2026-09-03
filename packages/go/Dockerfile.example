@@ -15,8 +15,8 @@
 #   docker run --rm my-service:latest /usr/local/bin/susfactor-check
 
 # ─── Pinned versions ─────────────────────────────────────────────────────────
-# yalue/onnxruntime_go v1.31.0 requires ORT API version 26 → ORT v1.26.0 exactly.
-ARG ORT_VERSION=1.26.0
+# yalue/onnxruntime_go v1.35.0 requires ORT API version 29 → ORT v1.29.0 exactly.
+ARG ORT_VERSION=1.29.0
 ARG TOKENIZERS_VERSION=1.27.0
 ARG GO_VERSION=1.22
 

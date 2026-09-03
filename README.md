@@ -61,7 +61,7 @@ npm install github:0din-ai/prompt-toolkit#main
 
 ```bash
 go get github.com/0din-ai/prompt-toolkit/packages/go
-# Also requires: ORT v1.26.0 shared lib + libtokenizers.a (see packages/go/README.md)
+# Also requires: ORT v1.29.0 shared lib + libtokenizers.a (see packages/go/README.md)
 ```
 
 ## Quick Start

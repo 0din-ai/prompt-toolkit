@@ -135,16 +135,16 @@ The Go SDK uses CGo and links against:
 
 | Library | Version | Purpose |
 |---------|---------|---------|
-| `libonnxruntime.so` | 1.26.0 | ONNX Runtime inference |
+| `libonnxruntime.so` | 1.29.0 | ONNX Runtime inference |
 | `libtokenizers.a` | 1.27.0 | HuggingFace tokenizers |
 
 **Linux (CI / Docker):**
 
 ```bash
-# ORT v1.26.0
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.26.0/onnxruntime-linux-x64-1.26.0.tgz \
+# ORT v1.29.0
+curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.29.0/onnxruntime-linux-x64-1.29.0.tgz \
   | tar -xz -C /opt/
-sudo cp /opt/onnxruntime-linux-x64-1.26.0/lib/libonnxruntime.so.1.26.0 /usr/local/lib/libonnxruntime.so
+sudo cp /opt/onnxruntime-linux-x64-1.29.0/lib/libonnxruntime.so.1.29.0 /usr/local/lib/libonnxruntime.so
 sudo ldconfig
 
 # libtokenizers v1.27.0
@@ -165,7 +165,7 @@ CGO_ENABLED=1 CGO_LDFLAGS="-L/usr/local/lib" \
 
 - Go 1.22 or higher
 - CGo enabled (`CGO_ENABLED=1`)
-- ORT v1.26.0 shared library
+- ORT v1.29.0 shared library
 - libtokenizers v1.27.0 static library
 
 ### Verify Installation
