@@ -130,15 +130,15 @@ jobs:
 
       - name: Install CGo deps (ORT shared lib + libtokenizers)
         env:
-          ORT_VERSION: "1.26.0"
+          ORT_VERSION: "1.29.0"
           TOKENIZERS_VERSION: "1.27.0"
         run: |
-          # ORT v1.26.0 is for the Go SDK (yalue/onnxruntime_go v1.31.0, API v26).
+          # ORT v1.29.0 is for the Go SDK (yalue/onnxruntime_go v1.35.0, API v29).
           # Install to /opt/ort-go/lib/ to avoid polluting /usr/local/lib, which
           # the Rust SDK's ort-sys probes when the download-binaries feature is used.
-          # A stale v1.26 .so in /usr/local/lib causes ort-sys to reject it
+          # A stale v1.29 .so in /usr/local/lib causes ort-sys to reject it
           # ("could not link to the ONNX Runtime build") because Rust's ort crate
-          # expects ORT 2.x, not 1.26.
+          # expects ORT 2.x, not 1.29.
           sudo mkdir -p /opt/ort-go/lib
           curl -fsSL \
             "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
@@ -276,15 +276,15 @@ jobs:
 
       - name: Install Go CGo deps (ORT shared lib + libtokenizers)
         env:
-          ORT_VERSION: "1.26.0"
+          ORT_VERSION: "1.29.0"
           TOKENIZERS_VERSION: "1.27.0"
         run: |
-          # ORT v1.26.0 is for the Go SDK (yalue/onnxruntime_go v1.31.0, API v26).
+          # ORT v1.29.0 is for the Go SDK (yalue/onnxruntime_go v1.35.0, API v29).
           # Install to /opt/ort-go/lib/ — NOT /usr/local/lib/ — so the system lib
           # path stays clean for the Rust SDK. The Rust ort crate uses the
           # "download-binaries" feature and fetches ORT 2.x at build time; ort-sys
           # then validates against /usr/local/lib/libonnxruntime.so if present. A
-          # mismatched v1.26 .so there causes: "ort-sys could not link to the ONNX
+          # mismatched v1.29 .so there causes: "ort-sys could not link to the ONNX
           # Runtime build in /usr/local/lib/libonnxruntime.so". Using /opt/ort-go/lib/
           # avoids that probe entirely.
           sudo mkdir -p /opt/ort-go/lib
