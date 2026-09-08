@@ -19,10 +19,10 @@ across 15+ golden test vectors.
 | Dependency | Version | Notes |
 |---|---|---|
 | Go | 1.22+ | CGo required (`CGO_ENABLED=1`) |
-| ONNX Runtime | **v1.26.0** | Must match `yalue/onnxruntime_go` v1.31.0 exactly |
+| ONNX Runtime | **v1.29.0** | Must match `yalue/onnxruntime_go` v1.35.0 exactly |
 | `libtokenizers.a` | v1.27.0 | Pre-built static lib from `daulet/tokenizers` releases |
 
-> **ORT version is strict.** `yalue/onnxruntime_go` v1.31.0 requires ORT API version 26, which is ORT v1.26.0. Other versions fail at startup.
+> **ORT version is strict.** `yalue/onnxruntime_go` v1.35.0 requires ORT API version 29, which is ORT v1.29.0. Other versions fail at startup.
 
 ## Installation
 
@@ -36,14 +36,14 @@ bash scripts/download-libtokenizers.sh
 
 # 3. Download and install ORT shared lib
 # macOS (Apple Silicon):
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.26.0/onnxruntime-osx-arm64-1.26.0.tgz \
+curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.29.0/onnxruntime-osx-arm64-1.29.0.tgz \
   | tar -xz -C /tmp/
-export ORT_LIB_PATH=/tmp/onnxruntime-osx-arm64-1.26.0/lib/libonnxruntime.dylib
+export ORT_LIB_PATH=/tmp/onnxruntime-osx-arm64-1.29.0/lib/libonnxruntime.dylib
 
 # Linux x86-64:
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.26.0/onnxruntime-linux-x64-1.26.0.tgz \
+curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.29.0/onnxruntime-linux-x64-1.29.0.tgz \
   | tar -xz -C /opt/
-sudo cp /opt/onnxruntime-linux-x64-1.26.0/lib/libonnxruntime.so.1.26.0 /usr/local/lib/libonnxruntime.so
+sudo cp /opt/onnxruntime-linux-x64-1.29.0/lib/libonnxruntime.so.1.29.0 /usr/local/lib/libonnxruntime.so
 sudo ldconfig
 export ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so
 ```

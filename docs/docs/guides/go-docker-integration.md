@@ -23,12 +23,12 @@ The model is ~2.1 GB (encoder weights). Keep it in its own Docker layer to avoid
 | Component | Version |
 |---|---|
 | Go | 1.22+ |
-| `yalue/onnxruntime_go` | v1.31.0 |
-| ONNX Runtime | **v1.26.0** (must match — ORT API version 26) |
+| `yalue/onnxruntime_go` | v1.35.0 |
+| ONNX Runtime | **v1.29.0** (must match — ORT API version 29) |
 | `daulet/tokenizers` | v1.27.0 |
 
 :::caution ORT version must match exactly
-`yalue/onnxruntime_go` v1.31.0 requires ORT API version 26, which is ORT **v1.26.0**.
+`yalue/onnxruntime_go` v1.35.0 requires ORT API version 29, which is ORT **v1.29.0**.
 Using a different ORT runtime version will fail at startup with a version mismatch error.
 :::
 
@@ -61,7 +61,7 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ && rm -rf /var/lib/apt/lists/*
 
 # Download ORT shared lib (must match yalue/onnxruntime_go version)
-ARG ORT_VERSION=1.26.0
+ARG ORT_VERSION=1.29.0
 RUN curl -fsSL \
     "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
     | tar -xz -C /opt/ && \
@@ -262,7 +262,7 @@ Ubuntu GitHub Actions runners ship with ~14 GB free. The model download step in 
 
 | Error | Cause | Fix |
 |---|---|---|
-| `ORT initialization failed: version mismatch` | ORT runtime version ≠ API version in `yalue/onnxruntime_go` | Use ORT **v1.26.0** with `yalue/onnxruntime_go` **v1.31.0** |
+| `ORT initialization failed: version mismatch` | ORT runtime version ≠ API version in `yalue/onnxruntime_go` | Use ORT **v1.29.0** with `yalue/onnxruntime_go` **v1.35.0** |
 | `ld: library 'tokenizers' not found` | `libtokenizers.a` not in linker path | Set `CGO_LDFLAGS="-L/path/to/libtokenizers"` at build time |
 | `ONNX model not found` | `SUSFACTOR_MODEL_DIR` not set or wrong path | Set env var; verify `$SUSFACTOR_MODEL_DIR/onnx/model.onnx` exists |
 | `401 Unauthorized` from HuggingFace | Repo is gated; `HF_TOKEN` missing | Set `HF_TOKEN` with access to `0dinai/susfactor-e5-large-onnx` |
