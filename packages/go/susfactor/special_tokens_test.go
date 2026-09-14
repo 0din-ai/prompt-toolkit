@@ -2,18 +2,22 @@ package susfactor
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
 // TestLoadTokenizerResolvesBOSEOS asserts that bosID/eosID are resolved
-// dynamically from the bundled tokenizer.json's added_tokens table (XLM-
-// RoBERTa vocab: <s>=0, </s>=2), not hardcoded in the chunking loop.
+// dynamically from the tokenizer.json's added_tokens table (XLM-RoBERTa
+// vocab: <s>=0, </s>=2), not hardcoded in the chunking loop. Model-gated:
+// skips when SUSFACTOR_MODEL_DIR is unset (no tokenizer.json is checked
+// into the repo).
 func TestLoadTokenizerResolvesBOSEOS(t *testing.T) {
-	_, thisFile, _, _ := runtime.Caller(0)
-	root := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
-	tokPath := filepath.Join(root, "models", "v1", "tokenizer.json")
+	dir := os.Getenv("SUSFACTOR_MODEL_DIR")
+	if dir == "" {
+		t.Skip("SUSFACTOR_MODEL_DIR not set")
+	}
+	tokPath := filepath.Join(dir, "tokenizer.json")
 
 	tk, bosID, eosID, err := loadTokenizerNoTruncation(tokPath)
 	if err != nil {
