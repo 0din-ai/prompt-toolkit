@@ -282,9 +282,9 @@ class SusFactorOnnxClassifier:
             padding=False,
             truncation=False,
             return_tensors="np",
+            add_special_tokens=False,
         )
         all_ids: list[int] = inputs["input_ids"][0].tolist()
-        all_mask: list[int] = inputs["attention_mask"][0].tolist()
         tokenize_span = PhaseSpan(
             name="tokenize",
             start_ms=(tokenize_start - wall_start) * 1000,
@@ -300,16 +300,20 @@ class SusFactorOnnxClassifier:
             duration_ms=(_time.time() - chunk_start_t) * 1000,
         )
 
+        bos_id = self._tokenizer.bos_token_id
+        eos_id = self._tokenizer.eos_token_id
+
         # Build a coroutine per chunk that runs the ONNX session directly
         # (no extra tokenization — we pass pre-built token arrays).
         async def _score_chunk(
             index: int, chunk_ids: list[int]
         ) -> tuple[SusFactorResult, PhaseSpan]:
             chunk_start = _time.time()
-            chunk_len = len(chunk_ids)
-            chunk_mask = all_mask[:chunk_len]
+            wrapped_ids = [bos_id, *chunk_ids, eos_id]
+            chunk_len = len(wrapped_ids)
+            chunk_mask = [1] * chunk_len
 
-            ids_arr = np.array([chunk_ids], dtype=np.int64)
+            ids_arr = np.array([wrapped_ids], dtype=np.int64)
             mask_arr = np.array([chunk_mask], dtype=np.int64)
 
             onnx_inputs: dict = {

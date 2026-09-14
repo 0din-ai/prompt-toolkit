@@ -28,6 +28,9 @@ class _FakeTokenizerOutput(dict):
 class FakeTokenizer:
     """Returns fixed token tensors regardless of input."""
 
+    bos_token_id = 0
+    eos_token_id = 2
+
     def __init__(self):
         self.calls = []
 
@@ -49,6 +52,9 @@ class FakeTokenizerN:
     Used to force multi-chunk classification so the per-chunk inference spans
     can be exercised.
     """
+
+    bos_token_id = 0
+    eos_token_id = 2
 
     def __init__(self, seq: int):
         self.seq = seq
@@ -170,10 +176,10 @@ class TestClassifyWithFakes:
         inference = [s for s in result.spans if s.name == "inference"]
         assert len(inference) == 1
         assert inference[0].chunk_index == 0
-        # total_tokens is the full tokenized length; the single inference span's
-        # token_count is that chunk's sequence length (positive).
+        # total_tokens is the full content-token length; the single inference
+        # span's token_count includes the wrapped BOS/EOS (+2).
         assert result.total_tokens > 0
-        assert inference[0].token_count == result.total_tokens
+        assert inference[0].token_count == result.total_tokens + 2
 
     async def test_multi_chunk_span_waterfall(self):
         """A prompt spanning multiple chunks emits one inference span per chunk."""
