@@ -16,11 +16,14 @@ func TestLoadTokenizerDisablesTruncation(t *testing.T) {
 	if dir == "" {
 		t.Skip("SUSFACTOR_MODEL_DIR unset; skipping truncation regression")
 	}
-	tk, err := loadTokenizerNoTruncation(filepath.Join(dir, "tokenizer.json"))
+	tk, bosID, eosID, err := loadTokenizerNoTruncation(filepath.Join(dir, "tokenizer.json"))
 	if err != nil {
 		t.Fatalf("load tokenizer: %v", err)
 	}
 	defer tk.Close()
+	if bosID == eosID {
+		t.Fatalf("bosID and eosID must differ, got both = %d", bosID)
+	}
 
 	long := strings.Repeat("The quarterly business review covered revenue and churn. ", 150)
 	ids, _ := tk.Encode(long, true)
