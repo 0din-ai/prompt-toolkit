@@ -16,8 +16,9 @@ MODEL_VERSION: str = "susfactor-v1"
 DEFAULT_THRESHOLD: float = 0.5
 
 # Chunking constants.
-# The model's hard limit is MAX_SEQUENCE_LENGTH tokens total, but the tokenizer
-# adds [CLS] and [SEP], leaving 510 usable positions for the prompt payload.
+# The model's hard limit is MAX_SEQUENCE_LENGTH tokens total, but each chunk
+# is wrapped with a <s> (BOS) and </s> (EOS) token, leaving 510 usable
+# positions for the prompt payload.
 MAX_CONTENT_TOKENS: int = MAX_SEQUENCE_LENGTH - 2  # 510
 CHUNK_OVERLAP: int = 50
 CHUNK_STRIDE: int = MAX_CONTENT_TOKENS - CHUNK_OVERLAP  # 460

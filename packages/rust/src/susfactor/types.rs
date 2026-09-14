@@ -7,8 +7,9 @@ pub const LABEL_SAFE: &str = "safe";
 
 /// Maximum number of *content* tokens per inference chunk.
 ///
-/// The model's hard limit is 512 tokens total, but the tokenizer adds a `[CLS]`
-/// and a `[SEP]` token, leaving 510 usable positions for the prompt payload.
+/// The model's hard limit is 512 tokens total, but each chunk is wrapped with
+/// a `<s>` (BOS) and `</s>` (EOS) token, leaving 510 usable positions for the
+/// prompt payload.
 pub const MAX_CONTENT_TOKENS: usize = 510;
 
 /// Overlap between adjacent chunks in tokens.

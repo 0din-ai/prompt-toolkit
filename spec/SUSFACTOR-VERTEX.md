@@ -72,9 +72,19 @@ The following MUST be extracted into a shared module
 (`susfactor::common`) and used **verbatim** by both backends, so the two cannot
 diverge:
 
-- `tokenize_full(text) -> (input_ids: Vec<i64>, attention_mask: Vec<i64>)`
+- `tokenize_full(text) -> Vec<i64>` — content-only IDs, tokenized with
+  `add_special_tokens: false`. BOS/EOS are NOT included here; they are
+  wrapped onto each chunk individually (see below), so every chunk — not
+  just the first/last — carries real special tokens.
+- `resolve_special_token_ids(tokenizer) -> (bos_id: i64, eos_id: i64)` —
+  resolved dynamically from the tokenizer's vocab (`token_to_id("<s>")` /
+  `token_to_id("</s>")`); never hardcoded.
 - `chunk_token_ids(ids) -> Vec<Vec<i64>>` with constants
   `MAX_CONTENT_TOKENS = 510`, `CHUNK_OVERLAP = 50`, `CHUNK_STRIDE = 460`
+- `chunk_token_ids_with_special_tokens(ids, bos_id, eos_id) -> Vec<(Vec<i64>, Vec<i64>)>`
+  — calls `chunk_token_ids` unchanged, then wraps each resulting window as
+  `[bos_id, ...chunk, eos_id]` with a freshly-built all-1s attention mask of
+  length `chunk.len() + 2`.
 - `suspicious_prob(logits) -> f32` (numerically-stable softmax, P(class 1))
 - `label_for_score(score, threshold) -> &str` (`>=` is inclusive → suspicious)
 - per-chunk `SusFactorResult` assembly and the `ChunkedSusFactorResult`
@@ -149,13 +159,16 @@ pub struct VertexSusFactor {
   threshold, and canonical model id via the constructor.
 
 **`classify()` flow (MUST):**
-1. `tokenize_full(text)` (shared).
-2. `chunk_token_ids(ids)` (shared).
-3. For each chunk, build a Triton V2 `rawPredict` body (§5.2) and POST to
+1. `tokenize_full(text)` (shared) — content-only IDs.
+2. `resolve_special_token_ids(tokenizer)` (shared) — resolved once, cached
+   on the struct at construction rather than per-call.
+3. `chunk_token_ids_with_special_tokens(ids, bos_id, eos_id)` (shared) —
+   every chunk, including interior ones, is wrapped with real BOS/EOS.
+4. For each chunk, build a Triton V2 `rawPredict` body (§5.2) and POST to
    `endpoint_url` with a bearer token from `auth` (§6).
-4. Parse `logits[1, 2]` from the response (§5.3).
-5. `suspicious_prob(logits)` → `label_for_score(score, threshold)` (shared).
-6. Assemble per-chunk `SusFactorResult`; reduce to `ChunkedSusFactorResult`
+5. Parse `logits[1, 2]` from the response (§5.3).
+6. `suspicious_prob(logits)` → `label_for_score(score, threshold)` (shared).
+7. Assemble per-chunk `SusFactorResult`; reduce to `ChunkedSusFactorResult`
    (shared).
 
 **Concurrency (SHOULD):** chunk requests SHOULD be dispatched concurrently,

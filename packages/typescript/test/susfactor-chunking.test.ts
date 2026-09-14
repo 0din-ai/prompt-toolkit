@@ -184,17 +184,30 @@ function fakeTokenizerForLength(
 ) {
   const fn = (
     _text: string,
-    _opts: {
+    opts: {
       padding?: boolean;
       truncation?: boolean;
       add_special_tokens?: boolean;
     },
-  ) => ({
-    input_ids: { data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN) },
-    attention_mask: {
-      data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN),
-    },
-  });
+  ) => {
+    // Regression guard: classify() must tokenize content-only so it can wrap
+    // BOS/EOS onto every chunk itself. If production ever stops passing
+    // add_special_tokens: false, this fake — which otherwise ignores opts —
+    // would silently keep passing, masking the regression.
+    if (opts.add_special_tokens !== false) {
+      throw new Error(
+        `expected add_special_tokens: false, got ${JSON.stringify(opts.add_special_tokens)}`,
+      );
+    }
+    return {
+      input_ids: {
+        data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN),
+      },
+      attention_mask: {
+        data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN),
+      },
+    };
+  };
   (fn as unknown as { bos_token_id: number }).bos_token_id = bosId;
   (fn as unknown as { eos_token_id: number }).eos_token_id = eosId;
   return fn;

@@ -103,7 +103,7 @@ Scores a prompt for jailbreak / prompt-injection risk using the Sus Factor ONNX 
 | `is_suspicious` / `isSuspicious` | bool | **Use this for security gating.** `true` if any chunk is suspicious. |
 | `total_timing_ms` / `totalTimingMs` | float | Wall-clock time for all chunks, in ms |
 | `spans` / `spans` | `PhaseSpan[]` | Ordered per-call phase timeline — see below. Lets callers visualize where time was spent in the call. |
-| `total_tokens` / `totalTokens` | int | Number of tokens submitted (length of the full tokenized input) |
+| `total_tokens` / `totalTokens` | int | Content-token count — the full input tokenized without special tokens (BOS/EOS are wrapped onto each chunk separately, not counted here) |
 
 Each `SusFactorResult` chunk entry:
 
@@ -144,7 +144,7 @@ Spans are ordered `tokenize`, `chunk`, `inference[0..n]`, `reduce`. Because chun
   "spans": [
     { "name": "tokenize",  "start_ms": 0.0,  "duration_ms": 0.6 },
     { "name": "chunk",     "start_ms": 0.6,  "duration_ms": 0.1 },
-    { "name": "inference", "start_ms": 0.7,  "duration_ms": 45.2, "chunk_index": 0, "token_count": 24 },
+    { "name": "inference", "start_ms": 0.7,  "duration_ms": 45.2, "chunk_index": 0, "token_count": 26 },
     { "name": "reduce",    "start_ms": 45.9, "duration_ms": 0.1 }
   ]
 }
@@ -166,9 +166,9 @@ Spans are ordered `tokenize`, `chunk`, `inference[0..n]`, `reduce`. Because chun
   "spans": [
     { "name": "tokenize",  "start_ms": 0.0,  "duration_ms": 1.2 },
     { "name": "chunk",     "start_ms": 1.2,  "duration_ms": 0.3 },
-    { "name": "inference", "start_ms": 1.5,  "duration_ms": 44.1, "chunk_index": 0, "token_count": 510 },
-    { "name": "inference", "start_ms": 1.6,  "duration_ms": 43.8, "chunk_index": 1, "token_count": 510 },
-    { "name": "inference", "start_ms": 1.7,  "duration_ms": 44.6, "chunk_index": 2, "token_count": 235 },
+    { "name": "inference", "start_ms": 1.5,  "duration_ms": 44.1, "chunk_index": 0, "token_count": 512 },
+    { "name": "inference", "start_ms": 1.6,  "duration_ms": 43.8, "chunk_index": 1, "token_count": 512 },
+    { "name": "inference", "start_ms": 1.7,  "duration_ms": 44.6, "chunk_index": 2, "token_count": 237 },
     { "name": "reduce",    "start_ms": 46.2, "duration_ms": 0.1 }
   ]
 }
@@ -202,7 +202,7 @@ const displayScore = result.chunks[0].score;                        // first-chu
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `MAX_CONTENT_TOKENS` | 510 | Tokens per chunk (512 minus `[CLS]` + `[SEP]`) |
+| `MAX_CONTENT_TOKENS` | 510 | Tokens per chunk (512 minus `<s>` (BOS) + `</s>` (EOS), wrapped onto each chunk individually) |
 | `CHUNK_OVERLAP` | 50 | Tokens shared between adjacent chunks |
 | `CHUNK_STRIDE` | 460 | New tokens advanced per chunk |
 

@@ -84,6 +84,23 @@ export function labelForScore(
 }
 
 /**
+ * Validates a special-token ID (bos_token_id / eos_token_id) read off a
+ * tokenizer before it is passed to `BigInt()`. `BigInt()` throws its own
+ * native `TypeError`/`RangeError` for `NaN`, fractional, or otherwise
+ * malformed input — this raises a {@link SusFactorError} naming the field
+ * instead, so callers get an actionable message rather than a generic
+ * conversion error.
+ */
+function validateSpecialTokenId(name: string, value: unknown): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new SusFactorError(
+      `Tokenizer's ${name} must be a non-negative integer required for SusFactor chunking, got ${JSON.stringify(value)}`,
+    );
+  }
+  return value;
+}
+
+/**
  * Classifies prompts as safe vs. suspicious using SusFactor.
  *
  * Use {@link SusFactorClassifier.create} to load from the model cache. The
@@ -242,18 +259,8 @@ export class SusFactorClassifier {
     const ort = require("onnxruntime-node");
 
     const { bos_token_id: rawBosId, eos_token_id: rawEosId } = this.tokenizer;
-    if (
-      rawBosId === undefined ||
-      rawBosId === null ||
-      rawEosId === undefined ||
-      rawEosId === null
-    ) {
-      throw new SusFactorError(
-        `Tokenizer is missing bos_token_id/eos_token_id required for SusFactor chunking (bos_token_id=${rawBosId}, eos_token_id=${rawEosId})`,
-      );
-    }
-    const bosId = BigInt(rawBosId);
-    const eosId = BigInt(rawEosId);
+    const bosId = BigInt(validateSpecialTokenId("bos_token_id", rawBosId));
+    const eosId = BigInt(validateSpecialTokenId("eos_token_id", rawEosId));
 
     const scoreChunk = async (
       chunkIds: bigint[],

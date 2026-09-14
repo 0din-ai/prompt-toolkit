@@ -153,7 +153,7 @@ console.log(result.isSuspicious); // overall gate
 
 ## Long-Prompt Chunking
 
-The model accepts at most **512 tokens** per call (including the tokenizer's `[CLS]` and `[SEP]` tokens, leaving **510 tokens of usable content**). Prompts longer than 510 tokens are split automatically into overlapping chunks — you never need to check length or call a separate method.
+The model accepts at most **512 tokens** per call. Each chunk is wrapped with a `<s>` (BOS) and `</s>` (EOS) token, leaving **510 tokens of usable content**. Prompts longer than 510 tokens are split automatically into overlapping chunks — you never need to check length or call a separate method.
 
 ### How it works
 
@@ -257,9 +257,10 @@ concurrently, `inference` spans overlap — read the timeline as a waterfall by
 `start_ms`, not a stacked bar. `total_timing_ms` is the whole-call envelope; the
 gap between it and the summed spans is runtime scheduling/join overhead.
 
-Each span also carries a token count — `total_tokens` on the result (tokens
-submitted) and `token_count` on each `inference` span (that chunk's tokens) — so
-you can tie latency to input size. The tabs below are real captures (ONNX
+Each span also carries a token count — `total_tokens` on the result (content
+tokens submitted, before chunking) and `token_count` on each `inference` span
+(that chunk's wrapped input length, i.e. content plus the BOS/EOS tokens
+added to every chunk) — so you can tie latency to input size. The tabs below are real captures (ONNX
 backend, CPU) at increasing prompt lengths: inference is essentially the whole
 call and scales with token count, while tokenizing, batching, and response
 assembly stay sub-millisecond. The longest tab is a 1,348-token prompt that
