@@ -57,26 +57,36 @@ pub fn label_for_score(score: f32, threshold: f32) -> &'static str {
     }
 }
 
-/// Encode `text` into `(input_ids, attention_mask)` as `i64` vectors, adding the
-/// special tokens (`[CLS]`/`[SEP]`) the model expects.
+/// Encode `text` into pure content `input_ids` as an `i64` vector, WITHOUT
+/// automatically adding special tokens (`<s>`/`</s>`).
+///
+/// Special tokens are wrapped onto each post-chunking window explicitly (see
+/// [`chunk_token_ids_with_special_tokens`]) so every chunk — including
+/// interior ones — carries real BOS/EOS. Encoding with special tokens added
+/// up front and then slicing the flat array would leave only the first/last
+/// chunk with real `<s>`/`</s>`.
 ///
 /// Extracted from the ONNX backend so the Vertex backend tokenizes identically.
-pub fn tokenize_full(
-    tokenizer: &tokenizers::Tokenizer,
-    text: &str,
-) -> Result<(Vec<i64>, Vec<i64>)> {
+pub fn tokenize_full(tokenizer: &tokenizers::Tokenizer, text: &str) -> Result<Vec<i64>> {
     let encoding = tokenizer
-        .encode(text, true)
+        .encode(text, false)
         .map_err(|e| SigError::Model(format!("Tokenization failed: {e}")))?;
 
-    let input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
-    let attention_mask: Vec<i64> = encoding
-        .get_attention_mask()
-        .iter()
-        .map(|&m| m as i64)
-        .collect();
+    Ok(encoding.get_ids().iter().map(|&id| id as i64).collect())
+}
 
-    Ok((input_ids, attention_mask))
+/// Resolve the model's BOS/EOS token IDs (`<s>` / `</s>` for this
+/// XLM-RoBERTa-based model) from the tokenizer's own vocabulary rather than
+/// hardcoding them, so a future tokenizer swap can't silently wrap chunks
+/// with the wrong special tokens.
+pub fn resolve_special_token_ids(tokenizer: &tokenizers::Tokenizer) -> Result<(i64, i64)> {
+    let bos_id = tokenizer
+        .token_to_id("<s>")
+        .ok_or_else(|| SigError::Model("Tokenizer is missing the <s> (BOS) token".into()))?;
+    let eos_id = tokenizer
+        .token_to_id("</s>")
+        .ok_or_else(|| SigError::Model("Tokenizer is missing the </s> (EOS) token".into()))?;
+    Ok((bos_id as i64, eos_id as i64))
 }
 
 /// Load a SusFactor tokenizer with truncation disabled.
@@ -120,28 +130,30 @@ pub fn chunk_token_ids(ids: &[i64]) -> Vec<Vec<i64>> {
     chunks
 }
 
-/// Split token-ID and attention-mask sequences into overlapping chunks using
-/// identical stride/overlap windows.
+/// Split a token-ID sequence into overlapping content windows (via
+/// [`chunk_token_ids`], unchanged) and wrap each window as
+/// `[bos_id, ...chunk, eos_id]`, with an attention mask of all 1s covering
+/// `chunk.len() + 2` positions.
 ///
-/// Returns `Vec<(id_chunk, mask_chunk)>` where each pair covers the same
-/// token range. The chunking logic mirrors [`chunk_token_ids`] exactly; this
-/// function exists so the mask is never reconstructed from scratch inside a
-/// chunk handler (which would be wrong once padding is added).
-pub fn chunk_token_ids_with_mask(ids: &[i64], mask: &[i64]) -> Vec<(Vec<i64>, Vec<i64>)> {
-    if ids.len() <= MAX_CONTENT_TOKENS {
-        return vec![(ids.to_vec(), mask.to_vec())];
-    }
-    let mut chunks = Vec::new();
-    let mut start = 0;
-    loop {
-        let end = (start + MAX_CONTENT_TOKENS).min(ids.len());
-        chunks.push((ids[start..end].to_vec(), mask[start..end].to_vec()));
-        if end == ids.len() {
-            break;
-        }
-        start += CHUNK_STRIDE;
-    }
-    chunks
+/// This is what makes every chunk — including interior ones — carry real
+/// BOS/EOS: encoding the full input with special tokens added once and then
+/// slicing would leave only the first/last chunk with real `<s>`/`</s>`.
+pub fn chunk_token_ids_with_special_tokens(
+    ids: &[i64],
+    bos_id: i64,
+    eos_id: i64,
+) -> Vec<(Vec<i64>, Vec<i64>)> {
+    chunk_token_ids(ids)
+        .into_iter()
+        .map(|chunk| {
+            let mut wrapped = Vec::with_capacity(chunk.len() + 2);
+            wrapped.push(bos_id);
+            wrapped.extend(chunk);
+            wrapped.push(eos_id);
+            let mask = vec![1i64; wrapped.len()];
+            (wrapped, mask)
+        })
+        .collect()
 }
 
 /// Validate a model's raw logits slice.
@@ -467,48 +479,96 @@ mod tests {
         assert!(chunks[0].is_empty());
     }
 
+    // -----------------------------------------------------------------------
+    // BOS/EOS wrapping tests (0DIN-2132 regression coverage)
+    // -----------------------------------------------------------------------
+
     #[test]
-    fn chunk_token_ids_with_mask_short_produces_one_pair() {
+    fn chunk_token_ids_with_special_tokens_single_chunk_wraps_bos_eos() {
+        // Short input: pre-fix behavior was already correct here, but the
+        // wrap must still produce exactly one chunk with real BOS/EOS and
+        // content-token boundaries unchanged.
         let ids: Vec<i64> = (0..100).map(|i| i as i64).collect();
-        let mask: Vec<i64> = vec![1i64; 100];
-        let chunks = chunk_token_ids_with_mask(&ids, &mask);
+        let bos_id = 0i64;
+        let eos_id = 2i64;
+        let chunks = chunk_token_ids_with_special_tokens(&ids, bos_id, eos_id);
         assert_eq!(chunks.len(), 1);
-        assert_eq!(chunks[0].0, ids);
-        assert_eq!(chunks[0].1, mask);
+        let (wrapped, mask) = &chunks[0];
+        assert_eq!(*wrapped.first().unwrap(), bos_id);
+        assert_eq!(*wrapped.last().unwrap(), eos_id);
+        assert_eq!(&wrapped[1..wrapped.len() - 1], ids.as_slice());
+        assert_eq!(mask.len(), ids.len() + 2);
+        assert!(mask.iter().all(|&m| m == 1));
     }
 
     #[test]
-    fn chunk_token_ids_with_mask_produces_same_count_as_ids_only() {
+    fn chunk_token_ids_with_special_tokens_every_chunk_wraps_bos_eos() {
+        // Long input (> MAX_CONTENT_TOKENS): this is the actual regression —
+        // a single encode-with-specials pass over the full input followed by
+        // slicing left only the first/last chunk with real `<s>`/`</s>`.
+        // Every chunk, including interior ones, must carry both now.
         let n = MAX_CONTENT_TOKENS * 3;
         let ids: Vec<i64> = (0..n as i64).collect();
-        let mask: Vec<i64> = vec![1i64; n];
-        let paired = chunk_token_ids_with_mask(&ids, &mask);
-        let ids_only = chunk_token_ids(&ids);
-        assert_eq!(paired.len(), ids_only.len());
-        for (i, ((pid, pmask), pid_only)) in paired.iter().zip(ids_only.iter()).enumerate() {
-            assert_eq!(pid, pid_only, "chunk {i}: id mismatch");
+        let bos_id = 0i64;
+        let eos_id = 2i64;
+        let chunks = chunk_token_ids_with_special_tokens(&ids, bos_id, eos_id);
+        assert!(
+            chunks.len() > 2,
+            "expected multiple chunks, got {}",
+            chunks.len()
+        );
+        for (i, (wrapped, mask)) in chunks.iter().enumerate() {
+            assert_eq!(*wrapped.first().unwrap(), bos_id, "chunk {i} missing BOS");
+            assert_eq!(*wrapped.last().unwrap(), eos_id, "chunk {i} missing EOS");
             assert_eq!(
-                pmask.len(),
-                pid.len(),
-                "chunk {i}: mask length != id length"
+                mask.len(),
+                wrapped.len(),
+                "chunk {i}: mask length != wrapped chunk length"
             );
+            assert!(mask.iter().all(|&m| m == 1), "chunk {i}: mask not all-1s");
         }
     }
 
     #[test]
-    fn chunk_token_ids_with_mask_windows_match_ids() {
+    fn chunk_token_ids_with_special_tokens_content_matches_unwrapped_chunking() {
         let n = MAX_CONTENT_TOKENS + 1;
         let ids: Vec<i64> = (0..n as i64).collect();
-        let mask: Vec<i64> = (0..n as i64)
-            .map(|i| if i % 2 == 0 { 1 } else { 0 })
-            .collect();
-        let chunks = chunk_token_ids_with_mask(&ids, &mask);
-        assert_eq!(chunks.len(), 2);
-        // First chunk: ids[0..MAX] / mask[0..MAX]
-        assert_eq!(chunks[0].0, &ids[..MAX_CONTENT_TOKENS]);
-        assert_eq!(chunks[0].1, &mask[..MAX_CONTENT_TOKENS]);
-        // Second chunk starts at CHUNK_STRIDE
-        assert_eq!(chunks[1].0, &ids[CHUNK_STRIDE..]);
-        assert_eq!(chunks[1].1, &mask[CHUNK_STRIDE..]);
+        let bos_id = 0i64;
+        let eos_id = 2i64;
+        let wrapped_chunks = chunk_token_ids_with_special_tokens(&ids, bos_id, eos_id);
+        let content_chunks = chunk_token_ids(&ids);
+        assert_eq!(wrapped_chunks.len(), content_chunks.len());
+        for (i, ((wrapped, mask), content)) in
+            wrapped_chunks.iter().zip(content_chunks.iter()).enumerate()
+        {
+            assert_eq!(
+                &wrapped[1..wrapped.len() - 1],
+                content.as_slice(),
+                "chunk {i}: content-token boundaries changed by wrapping"
+            );
+            assert_eq!(
+                mask.len(),
+                content.len() + 2,
+                "chunk {i}: mask length != chunk.len() + 2"
+            );
+        }
+    }
+
+    /// Model-gated: confirms `<s>`/`</s>` resolve dynamically to the values
+    /// `special_tokens_map.json` documents for this specific model, without
+    /// hardcoding them in the implementation. Skips when
+    /// `SUSFACTOR_MODEL_DIR` is unset.
+    #[test]
+    fn resolve_special_token_ids_finds_bos_and_eos() {
+        let Ok(model_dir) = std::env::var("SUSFACTOR_MODEL_DIR") else {
+            eprintln!("SUSFACTOR_MODEL_DIR unset; skipping BOS/EOS id resolution test");
+            return;
+        };
+        let path = std::path::Path::new(&model_dir).join("tokenizer.json");
+        let tokenizer = load_tokenizer(&path).expect("load tokenizer");
+        let (bos_id, eos_id) =
+            resolve_special_token_ids(&tokenizer).expect("resolve special token ids");
+        assert_eq!(bos_id, 0);
+        assert_eq!(eos_id, 2);
     }
 }

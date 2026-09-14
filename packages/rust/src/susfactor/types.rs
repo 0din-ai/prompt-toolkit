@@ -106,8 +106,9 @@ pub struct ChunkedSusFactorResult {
     /// considered suspicious if any portion of it is suspicious, regardless
     /// of how many chunks are safe.
     pub is_suspicious: bool,
-    /// Total number of tokens submitted for this call: the length of the full
-    /// tokenized input sequence (`[CLS]` + content + `[SEP]`) before chunking.
+    /// Total number of content tokens submitted for this call: the length of
+    /// the full tokenized input sequence (before chunking and before BOS/EOS
+    /// are wrapped onto each chunk).
     ///
     /// This is the same sequence that is split into chunks, so for multi-chunk
     /// prompts it exceeds any single chunk's `token_count` (chunks overlap).
