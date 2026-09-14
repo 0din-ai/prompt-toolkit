@@ -56,7 +56,35 @@ tokenize/wrap logic around it in `classifier.ts`.
 
 <!-- MAESTRO:MODEL tier="default" effort="low" -->
 
-- [ ] Run the TypeScript test suite for `packages/typescript/test/susfactor-chunking.test.ts` (check `packages/typescript/package.json` for the exact test command, e.g. `npm test` or `vitest run susfactor-chunking`) and fix any failures until it's green. Then run a real prompt longer than 510 content tokens through the classifier end-to-end and decode each returned chunk's token IDs to confirm every chunk starts with `<s>` and ends with `</s>` — report the result in your final summary; remove any throwaway script used for this check but keep the permanent test added in the previous task.
+- [x] Run the TypeScript test suite for `packages/typescript/test/susfactor-chunking.test.ts` (check `packages/typescript/package.json` for the exact test command, e.g. `npm test` or `vitest run susfactor-chunking`) and fix any failures until it's green. Then run a real prompt longer than 510 content tokens through the classifier end-to-end and decode each returned chunk's token IDs to confirm every chunk starts with `<s>` and ends with `</s>` — report the result in your final summary; remove any throwaway script used for this check but keep the permanent test added in the previous task.
+
+  > Implementation notes: `npx jest susfactor-chunking` was already green
+  > (no failures to fix) — 24 passed, 3 skipped (model-gated). Ran the
+  > full `npx jest susfactor` suite too: 5 suites, 50 passed, 5 skipped,
+  > and `npm run build` (tsc) clean.
+  >
+  > For the real end-to-end check, found a cached real model at
+  > `/Users/sgolub/.cache/signature-sdk/models/susfactor-v1` (matches the
+  > `SUSFACTOR_MODEL_DIR` layout the tests expect: `onnx/model.onnx` +
+  > `onnx/model.onnx_data` + `tokenizer.json`). `onnxruntime-node`,
+  > `@huggingface/transformers`, and `sharp` are peer deps not present in
+  > `packages/typescript/node_modules`, so they were installed
+  > temporarily (not saved to `package.json`/lockfile) to run this
+  > one-off check. Wrote a throwaway `scratch-e2e-boseos.ts` that: loads
+  > `SusFactorClassifier.create()` against the real cache, builds a
+  > 600-word prompt (>510 content tokens), monkey-patches
+  > `session.run` to capture the exact `input_ids`/`attention_mask`
+  > tensors sent to the model for every chunk, then asserts on the
+  > captured tensors directly (not just on `chunkTokenIds` output).
+  > Result: 3 chunks (lengths 512/512/485 including the wrapped BOS/EOS),
+  > every chunk's `input_ids` starts with `0` (`<s>`) and ends with `2`
+  > (`</s>`), and every attention mask is all-1s of length
+  > `chunk.length`. Scores: `[0.257, 0.200, 0.315]`, all `safe`. Deleted
+  > `scratch-e2e-boseos.ts` afterward — no permanent script left behind
+  > (the permanent regression coverage is the test file from the
+  > previous task, untouched). The temporarily-installed peer deps live
+  > only in the local, gitignored `node_modules/` and were not added to
+  > `package.json` or `package-lock.json`.
 
 ## Manual Follow-Up (not executed by Auto Run)
 
