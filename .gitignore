@@ -67,3 +67,6 @@ docs/static/api/rust/
 packages/typescript/coverage/
 *.db-shm
 *.db-wal
+
+# Maestro Auto Run scratch state (working playbooks, not deliverables)
+.maestro/
