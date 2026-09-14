@@ -46,7 +46,13 @@ inline.
 
 <!-- MAESTRO:MODEL tier="default" effort="low" -->
 
-- [ ] Run `cargo test` scoped to the susfactor module (e.g. `cargo test --package <rust-package-name> susfactor` — check `packages/rust/Cargo.toml` for the exact package name) from the repo root and fix any failures until the suite is green. Then run a real prompt longer than 510 content tokens through the classifier end-to-end and confirm every returned chunk's token IDs start with `bos_id` and end with `eos_id` — report the result in your final summary; remove any throwaway script used for this check but keep the permanent test added in the previous task.
+- [x] Run `cargo test` scoped to the susfactor module (e.g. `cargo test --package <rust-package-name> susfactor` — check `packages/rust/Cargo.toml` for the exact package name) from the repo root and fix any failures until the suite is green. Then run a real prompt longer than 510 content tokens through the classifier end-to-end and confirm every returned chunk's token IDs start with `bos_id` and end with `eos_id` — report the result in your final summary; remove any throwaway script used for this check but keep the permanent test added in the previous task.
+
+  **Notes:** `cargo test --lib --features susfactor susfactor` (package `odin-prompt-toolkit`, run from `packages/rust/`) is green: 22 passed, 0 failed, including the `SUSFACTOR_MODEL_DIR`-gated `resolve_special_token_ids_finds_bos_and_eos` test (ran with `SUSFACTOR_MODEL_DIR=/Users/sgolub/.cache/signature-sdk/models/susfactor-v1`, a locally-cached copy of the real model/tokenizer). No failures needed fixing.
+  - For the end-to-end check, a throwaway example (`examples/susfactor_bos_eos_check.rs`) loaded the real tokenizer via `common::load_tokenizer`, built a repeated-sentence prompt tokenizing to 1200 content tokens (well over 510), and ran it through the same public functions `OnnxSusFactor::classify` uses (`tokenize_full` → `resolve_special_token_ids` → `chunk_token_ids_with_special_tokens`).
+  - Result: 3 chunks (512/512/282 tokens each pre-wrap becomes +2 for BOS/EOS in the mask length shown). `bos_id=0`, `eos_id=2` (matching `special_tokens_map.json`, resolved dynamically not hardcoded). Every chunk — chunk 0, the interior chunk 1, and the final chunk 2 — starts with `0` and ends with `2`, and each attention mask is all-1s with length equal to the wrapped chunk length. This confirms the regression (interior chunks missing BOS/EOS) is fixed.
+  - The throwaway example was deleted after the check; only the permanent tests added in the previous task remain in `common.rs`.
+  - No images were associated with this task.
 
 ## Manual Follow-Up (not executed by Auto Run)
 
