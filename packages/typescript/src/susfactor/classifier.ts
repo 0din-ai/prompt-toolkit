@@ -213,17 +213,17 @@ export class SusFactorClassifier {
     const wallStart = Date.now();
     const offset = (t: number): number => t - wallStart;
 
-    // Tokenize the full text without truncation.
+    // Tokenize the full text without truncation or special tokens — the
+    // resulting IDs are pure content, and BOS/EOS are wrapped onto each
+    // chunk explicitly below so interior chunks get real special tokens too.
     const tokenizeStart = Date.now();
     const encoded = this.tokenizer(text, {
       padding: false,
       truncation: false,
+      add_special_tokens: false,
     });
     const allIds: bigint[] = Array.from(
       encoded.input_ids.data as BigInt64Array,
-    );
-    const allMask: bigint[] = Array.from(
-      encoded.attention_mask.data as BigInt64Array,
     );
     const tokenizeSpan: PhaseSpan = {
       name: "tokenize",
@@ -241,17 +241,21 @@ export class SusFactorClassifier {
 
     const ort = require("onnxruntime-node");
 
+    const bosId = BigInt(this.tokenizer.bos_token_id);
+    const eosId = BigInt(this.tokenizer.eos_token_id);
+
     const scoreChunk = async (
       chunkIds: bigint[],
       index: number,
     ): Promise<{ result: SusFactorResult; span: PhaseSpan }> => {
       const chunkStart = Date.now();
-      const chunkLen = chunkIds.length;
-      const chunkMask = allMask.slice(0, chunkLen);
+      const wrappedIds = [bosId, ...chunkIds, eosId];
+      const chunkLen = wrappedIds.length;
+      const chunkMask = new Array(chunkLen).fill(1n);
 
       const inputIdsTensor = new ort.Tensor(
         "int64",
-        new BigInt64Array(chunkIds),
+        new BigInt64Array(wrappedIds),
         [1, chunkLen],
       );
       const attentionMaskTensor = new ort.Tensor(

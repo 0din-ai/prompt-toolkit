@@ -28,10 +28,13 @@ function fakeSession(suspicious: boolean) {
 }
 
 function fakeTokenizer() {
-  return (_text: string, _opts: unknown) => ({
+  const fn: any = (_text: string, _opts: unknown) => ({
     input_ids: { data: new BigInt64Array([1n, 2n, 3n]) },
     attention_mask: { data: new BigInt64Array([1n, 1n, 1n]) },
   });
+  fn.bos_token_id = 0;
+  fn.eos_token_id = 2;
+  return fn;
 }
 
 /**

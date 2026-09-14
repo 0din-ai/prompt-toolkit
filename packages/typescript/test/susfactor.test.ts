@@ -42,6 +42,8 @@ function fakeTokenizer() {
     input_ids: { data: new BigInt64Array([1n, 1n, 1n, 1n]) },
     attention_mask: { data: new BigInt64Array([1n, 1n, 1n, 1n]) },
   });
+  fn.bos_token_id = 0;
+  fn.eos_token_id = 2;
   return fn;
 }
 
