@@ -241,8 +241,19 @@ export class SusFactorClassifier {
 
     const ort = require("onnxruntime-node");
 
-    const bosId = BigInt(this.tokenizer.bos_token_id);
-    const eosId = BigInt(this.tokenizer.eos_token_id);
+    const { bos_token_id: rawBosId, eos_token_id: rawEosId } = this.tokenizer;
+    if (
+      rawBosId === undefined ||
+      rawBosId === null ||
+      rawEosId === undefined ||
+      rawEosId === null
+    ) {
+      throw new SusFactorError(
+        `Tokenizer is missing bos_token_id/eos_token_id required for SusFactor chunking (bos_token_id=${rawBosId}, eos_token_id=${rawEosId})`,
+      );
+    }
+    const bosId = BigInt(rawBosId);
+    const eosId = BigInt(rawEosId);
 
     const scoreChunk = async (
       chunkIds: bigint[],

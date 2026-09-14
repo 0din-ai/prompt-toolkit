@@ -285,6 +285,11 @@ class SusFactorClassifier:
 
         bos_id = self._tokenizer.bos_token_id
         eos_id = self._tokenizer.eos_token_id
+        if bos_id is None or eos_id is None:
+            raise SusFactorError(
+                "Tokenizer is missing bos_token_id/eos_token_id required for "
+                f"SusFactor chunking (bos_token_id={bos_id!r}, eos_token_id={eos_id!r})"
+            )
 
         async def _score_chunk(
             index: int, chunk_ids: list[int]
