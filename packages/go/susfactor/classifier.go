@@ -114,8 +114,11 @@ func WithModelCache(cache *ModelCache, cacheOpts ...CacheOption) Option {
 type SusFactorClassifier struct {
 	dynSession *ort.DynamicAdvancedSession
 	tokenizer  *tokenizers.Tokenizer
-	model      string
-	threshold  float32
+	// bosID and eosID are the <s>/</s> special-token IDs resolved once at
+	// load time from the tokenizer's own vocab (see loadTokenizerNoTruncation).
+	bosID, eosID int64
+	model        string
+	threshold    float32
 	// closed tracks whether Close has been called; guarded by mu.
 	closed bool
 	mu     sync.Mutex
@@ -193,7 +196,7 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		return nil, newError("create ONNX session: %v", err)
 	}
 
-	tk, err := loadTokenizerNoTruncation(tokPath)
+	tk, bosID, eosID, err := loadTokenizerNoTruncation(tokPath)
 	if err != nil {
 		dynSession.Destroy()
 		return nil, newError("load tokenizer: %v", err)
@@ -202,35 +205,82 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 	return &SusFactorClassifier{
 		dynSession: dynSession,
 		tokenizer:  tk,
+		bosID:      bosID,
+		eosID:      eosID,
 		model:      cfg.model,
 		threshold:  cfg.threshold,
 	}, nil
 }
 
 // loadTokenizerNoTruncation loads a tokenizer from a tokenizer.json file with
-// any embedded truncation disabled.
+// any embedded truncation disabled, and resolves the BOS (<s>) / EOS (</s>)
+// special-token IDs from the same file.
 //
 // The bundled tokenizer.json sets truncation.max_length = 512, which would
 // silently cut every prompt to 512 tokens before chunking runs — bypassing
 // long-prompt chunking and dropping content past the limit. We tokenize the
 // full input and window it ourselves, so the truncation directive is stripped
 // from the tokenizer definition before it is loaded.
-func loadTokenizerNoTruncation(path string) (*tokenizers.Tokenizer, error) {
+//
+// The daulet/tokenizers Go binding (github.com/daulet/tokenizers) does not
+// expose a TokenToID/vocab-lookup method, so BOS/EOS IDs cannot be resolved
+// through the loaded *tokenizers.Tokenizer itself. We read them once here,
+// directly from the tokenizer.json "added_tokens" table we already parse to
+// strip truncation, instead of hardcoding literals in the chunking loop.
+func loadTokenizerNoTruncation(path string) (tk *tokenizers.Tokenizer, bosID, eosID int64, err error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 	var doc map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &doc); err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 	if _, ok := doc["truncation"]; ok {
 		doc["truncation"] = json.RawMessage("null")
 		if raw, err = json.Marshal(doc); err != nil {
-			return nil, err
+			return nil, 0, 0, err
 		}
 	}
-	return tokenizers.FromBytes(raw)
+
+	bosID, eosID, err = resolveBOSEOS(doc["added_tokens"])
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	tk, err = tokenizers.FromBytes(raw)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return tk, bosID, eosID, nil
+}
+
+// resolveBOSEOS extracts the <s> (BOS) and </s> (EOS) token IDs from a
+// tokenizer.json "added_tokens" array.
+func resolveBOSEOS(addedTokens json.RawMessage) (bosID, eosID int64, err error) {
+	if len(addedTokens) == 0 {
+		return 0, 0, newError("tokenizer.json has no added_tokens; cannot resolve BOS/EOS ids")
+	}
+	var entries []struct {
+		ID      int64  `json:"id"`
+		Content string `json:"content"`
+	}
+	if err := json.Unmarshal(addedTokens, &entries); err != nil {
+		return 0, 0, newError("parse added_tokens: %v", err)
+	}
+	haveBOS, haveEOS := false, false
+	for _, e := range entries {
+		switch e.Content {
+		case "<s>":
+			bosID, haveBOS = e.ID, true
+		case "</s>":
+			eosID, haveEOS = e.ID, true
+		}
+	}
+	if !haveBOS || !haveEOS {
+		return 0, 0, newError("tokenizer.json added_tokens missing <s> and/or </s> entries")
+	}
+	return bosID, eosID, nil
 }
 
 // Classify scores a prompt of any length. Prompts within MaxContentTokens
@@ -252,13 +302,12 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 
 	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000.0 }
 
-	// Tokenize full text, no truncation, with special tokens ([CLS]/[SEP]).
+	// Tokenize full text, no truncation, WITHOUT special tokens: allIDs must
+	// be pure content-token IDs, since each chunk adds its own <s>/</s> below
+	// (ChunkTokenIDs expects payload-only input per its docstring).
 	tokenizeStart := time.Now()
-	enc := c.tokenizer.EncodeWithOptions(text, true,
-		tokenizers.WithReturnAttentionMask(),
-	)
+	enc := c.tokenizer.EncodeWithOptions(text, false)
 	allIDs := u32ToI64(enc.IDs)
-	allMask := u32ToI64(enc.AttentionMask)
 	tokenizeSpan := PhaseSpan{
 		Name:       "tokenize",
 		StartMs:    ms(tokenizeStart.Sub(wallStart)),
@@ -283,14 +332,13 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 		}
 
 		chunkStart := time.Now()
-		chunkLen := len(chunkIDs)
 
-		// EXACT: chunk_mask = allMask[:chunkLen]
-		// Reuse the leading mask values (all 1s for non-padded input).
-		// This matches Python/Rust/TypeScript exactly.
-		chunkMask := allMask[:chunkLen]
+		// Wrap this chunk's content IDs with real BOS/EOS special tokens and
+		// build a freshly-sized all-1s mask — every chunk needs its own
+		// boundary tokens, since chunkIDs (from ChunkTokenIDs) is content-only.
+		ids, mask := buildChunkInput(chunkIDs, c.bosID, c.eosID)
 
-		logits, err := c.runInference(chunkIDs, chunkMask)
+		logits, err := c.runInference(ids, mask)
 		if err != nil {
 			return ChunkedSusFactorResult{}, fmt.Errorf("chunk %d inference: %w", i, err)
 		}
@@ -306,7 +354,7 @@ func (c *SusFactorClassifier) Classify(ctx context.Context, text string) (Chunke
 			TimingMs:  timingMs,
 		}
 		idx := i
-		tokenCount := len(chunkIDs)
+		tokenCount := len(ids)
 		inferenceSpans[i] = PhaseSpan{
 			Name:       "inference",
 			StartMs:    ms(chunkStart.Sub(wallStart)),
@@ -400,6 +448,22 @@ func (c *SusFactorClassifier) Close() error {
 }
 
 // ---------- helpers ----------
+
+// buildChunkInput wraps a chunk's content-token IDs with bosID/eosID and
+// returns the resulting input-id sequence alongside a matching all-1s
+// attention mask (length len(chunkIDs)+2).
+func buildChunkInput(chunkIDs []int64, bosID, eosID int64) (ids, mask []int64) {
+	ids = make([]int64, 0, len(chunkIDs)+2)
+	ids = append(ids, bosID)
+	ids = append(ids, chunkIDs...)
+	ids = append(ids, eosID)
+
+	mask = make([]int64, len(ids))
+	for i := range mask {
+		mask[i] = 1
+	}
+	return ids, mask
+}
 
 func u32ToI64(in []uint32) []int64 {
 	out := make([]int64, len(in))

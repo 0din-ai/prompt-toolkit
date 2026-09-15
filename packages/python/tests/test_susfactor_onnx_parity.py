@@ -134,6 +134,9 @@ class FakeOnnxSession:
 class FakeTokenizer:
     """Returns fixed token arrays regardless of input text."""
 
+    bos_token_id = 0
+    eos_token_id = 2
+
     def __init__(self, *, include_token_type_ids: bool = False) -> None:
         self._include_token_type_ids = include_token_type_ids
 

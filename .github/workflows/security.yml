@@ -150,6 +150,9 @@ jobs:
         with:
           # Toolchain used to install/run the govulncheck scanner tool itself;
           # independent of packages/go/go.mod's own `go 1.22` module directive.
-          go-version-input: "1.25"
+          # Must satisfy whatever `golang.org/x/vuln@latest` requires at the time
+          # the action runs (the action always installs @latest, unpinned) — it
+          # needed >=1.26 as of 2026-09.
+          go-version-input: "1.26"
           work-dir: packages/go
           go-package: ./...

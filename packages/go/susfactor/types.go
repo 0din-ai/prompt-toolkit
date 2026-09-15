@@ -14,8 +14,8 @@ const (
 const (
 	MaxSequenceLength = 512
 	// MaxContentTokens is the maximum number of payload tokens per chunk.
-	// The model accepts 512 tokens total; the tokenizer adds [CLS] and [SEP],
-	// leaving 510 positions for prompt content.
+	// The model accepts 512 tokens total; each chunk is wrapped with a <s>
+	// (BOS) and </s> (EOS) token, leaving 510 positions for prompt content.
 	MaxContentTokens = MaxSequenceLength - 2 // 510
 	// ChunkOverlap is the number of tokens shared between adjacent chunks.
 	ChunkOverlap = 50

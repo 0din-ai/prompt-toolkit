@@ -7,8 +7,9 @@ pub const LABEL_SAFE: &str = "safe";
 
 /// Maximum number of *content* tokens per inference chunk.
 ///
-/// The model's hard limit is 512 tokens total, but the tokenizer adds a `[CLS]`
-/// and a `[SEP]` token, leaving 510 usable positions for the prompt payload.
+/// The model's hard limit is 512 tokens total, but each chunk is wrapped with
+/// a `<s>` (BOS) and `</s>` (EOS) token, leaving 510 usable positions for the
+/// prompt payload.
 pub const MAX_CONTENT_TOKENS: usize = 510;
 
 /// Overlap between adjacent chunks in tokens.
@@ -106,8 +107,9 @@ pub struct ChunkedSusFactorResult {
     /// considered suspicious if any portion of it is suspicious, regardless
     /// of how many chunks are safe.
     pub is_suspicious: bool,
-    /// Total number of tokens submitted for this call: the length of the full
-    /// tokenized input sequence (`[CLS]` + content + `[SEP]`) before chunking.
+    /// Total number of content tokens submitted for this call: the length of
+    /// the full tokenized input sequence (before chunking and before BOS/EOS
+    /// are wrapped onto each chunk).
     ///
     /// This is the same sequence that is split into chunks, so for multi-chunk
     /// prompts it exceeds any single chunk's `token_count` (chunks overlap).

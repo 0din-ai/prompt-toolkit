@@ -167,20 +167,76 @@ describe("ChunkedSusFactorResult", () => {
 // SusFactorClassifier.classifyChunked — mocked session + tokenizer
 // ---------------------------------------------------------------------------
 
-/** Build a fake tokenizer that returns n_tokens token IDs regardless of input. */
-function fakeTokenizerForLength(n_tokens: number) {
-  return (
+/** Content-token fill value used by the fake tokenizer; distinct from BOS/EOS below. */
+const FAKE_CONTENT_TOKEN = 1n;
+const FAKE_BOS_ID = 0;
+const FAKE_EOS_ID = 2;
+
+/**
+ * Build a fake tokenizer that returns n_tokens content-only token IDs
+ * regardless of input, plus bos_token_id/eos_token_id properties matching
+ * what @huggingface/transformers exposes on a real PreTrainedTokenizer.
+ */
+function fakeTokenizerForLength(
+  n_tokens: number,
+  bosId: number = FAKE_BOS_ID,
+  eosId: number = FAKE_EOS_ID,
+) {
+  const fn = (
     _text: string,
-    _opts: { padding?: boolean; truncation?: boolean; return_tensors?: string },
-  ) => ({
-    input_ids: { data: new BigInt64Array(n_tokens).fill(1n) },
-    attention_mask: { data: new BigInt64Array(n_tokens).fill(1n) },
-  });
+    opts: {
+      padding?: boolean;
+      truncation?: boolean;
+      add_special_tokens?: boolean;
+    },
+  ) => {
+    // Regression guard: classify() must tokenize content-only so it can wrap
+    // BOS/EOS onto every chunk itself. If production ever stops passing
+    // add_special_tokens: false, this fake — which otherwise ignores opts —
+    // would silently keep passing, masking the regression.
+    if (opts.add_special_tokens !== false) {
+      throw new Error(
+        `expected add_special_tokens: false, got ${JSON.stringify(opts.add_special_tokens)}`,
+      );
+    }
+    return {
+      input_ids: {
+        data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN),
+      },
+      attention_mask: {
+        data: new BigInt64Array(n_tokens).fill(FAKE_CONTENT_TOKEN),
+      },
+    };
+  };
+  (fn as unknown as { bos_token_id: number }).bos_token_id = bosId;
+  (fn as unknown as { eos_token_id: number }).eos_token_id = eosId;
+  return fn;
 }
 
 function fakeSession(suspicious: boolean) {
   return {
     run: async (_inputs: unknown) => {
+      const logits = suspicious
+        ? new Float32Array([-2, 2])
+        : new Float32Array([2, -2]);
+      return { logits: { data: logits } };
+    },
+  };
+}
+
+/** Fake session that also records the (ids, mask) tensors passed to `run`. */
+function recordingSession(suspicious: boolean) {
+  const calls: { ids: bigint[]; mask: bigint[] }[] = [];
+  return {
+    calls,
+    run: async (inputs: {
+      input_ids: { data: BigInt64Array };
+      attention_mask: { data: BigInt64Array };
+    }) => {
+      calls.push({
+        ids: Array.from(inputs.input_ids.data),
+        mask: Array.from(inputs.attention_mask.data),
+      });
       const logits = suspicious
         ? new Float32Array([-2, 2])
         : new Float32Array([2, -2]);
@@ -272,6 +328,78 @@ describe("SusFactorClassifier.classify (mocked — chunking behaviour)", () => {
     );
     const result = await clf.classify("x");
     expect(result.totalTimingMs).toBeGreaterThanOrEqual(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BOS/EOS wrapping — every chunk must get real special tokens (0DIN-2132)
+// ---------------------------------------------------------------------------
+
+describe("SusFactorClassifier.classify — BOS/EOS wrapping per chunk", () => {
+  it("short input (single chunk): wraps with bosId/eosId, chunk count and content unchanged", async () => {
+    const nTokens = 100;
+    const session = recordingSession(false);
+    const clf = new SusFactorClassifier(
+      session,
+      fakeTokenizerForLength(nTokens),
+      "m",
+    );
+    const result = await clf.classify("short text");
+
+    expect(result.chunks.length).toBe(1);
+    expect(session.calls.length).toBe(1);
+
+    const { ids, mask } = session.calls[0];
+    expect(ids.length).toBe(nTokens + 2);
+    expect(ids[0]).toBe(BigInt(FAKE_BOS_ID));
+    expect(ids[ids.length - 1]).toBe(BigInt(FAKE_EOS_ID));
+    // Content tokens (between BOS and EOS) are unchanged from before the fix.
+    expect(ids.slice(1, -1)).toEqual(
+      new Array(nTokens).fill(FAKE_CONTENT_TOKEN),
+    );
+
+    expect(mask.length).toBe(ids.length);
+    expect(mask.every((m) => m === 1n)).toBe(true);
+  });
+
+  it("long input (multiple chunks): every chunk — including interior ones — starts with bosId and ends with eosId", async () => {
+    const nTokens = MAX_CONTENT_TOKENS * 3;
+    const session = recordingSession(false);
+    const clf = new SusFactorClassifier(
+      session,
+      fakeTokenizerForLength(nTokens),
+      "m",
+    );
+    const result = await clf.classify("long prompt");
+
+    expect(result.chunks.length).toBeGreaterThan(2);
+    expect(session.calls.length).toBe(result.chunks.length);
+
+    for (const { ids, mask } of session.calls) {
+      expect(ids[0]).toBe(BigInt(FAKE_BOS_ID));
+      expect(ids[ids.length - 1]).toBe(BigInt(FAKE_EOS_ID));
+      expect(mask.length).toBe(ids.length);
+      expect(mask.every((m) => m === 1n)).toBe(true);
+    }
+  });
+
+  it("resolves bosId/eosId dynamically from the tokenizer rather than hardcoding", async () => {
+    // Use non-default IDs to prove the values come from the tokenizer, not
+    // hardcoded constants.
+    const nTokens = 20;
+    const customBos = 111;
+    const customEos = 222;
+    const session = recordingSession(false);
+    const clf = new SusFactorClassifier(
+      session,
+      fakeTokenizerForLength(nTokens, customBos, customEos),
+      "m",
+    );
+    await clf.classify("short text");
+
+    const { ids } = session.calls[0];
+    expect(ids[0]).toBe(BigInt(customBos));
+    expect(ids[ids.length - 1]).toBe(BigInt(customEos));
   });
 });
 

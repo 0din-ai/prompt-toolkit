@@ -7,6 +7,7 @@ run when SUSFACTOR_MODEL_DIR is set.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 
 import pytest
@@ -22,6 +23,8 @@ from odin_prompt_toolkit.susfactor.types import (
     ChunkedSusFactorResult,
     SusFactorResult,
 )
+
+TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -47,7 +50,7 @@ def _make_ids(n: int) -> list[int]:
 
 class TestChunkingConstants:
     def test_max_content_tokens_fits_model(self):
-        """MAX_CONTENT_TOKENS must leave room for [CLS] and [SEP]."""
+        """MAX_CONTENT_TOKENS must leave room for the BOS (`<s>`) and EOS (`</s>`) tokens."""
         assert MAX_CONTENT_TOKENS == MAX_SEQUENCE_LENGTH - 2
 
     def test_stride_is_consistent(self):
@@ -107,6 +110,220 @@ class TestChunkTokenIds:
         chunks = SusFactorOnnxClassifier.chunk_token_ids([])
         assert len(chunks) == 1
         assert chunks[0] == []
+
+
+# ---------------------------------------------------------------------------
+# classify() BOS/EOS wrapping — every chunk fed to the model must carry real
+# special tokens (0DIN-2132). chunk_token_ids() itself stays payload-only;
+# these tests exercise the tokenize/wrap logic in classify() that sits
+# around it, using fake tokenizer/encoder/session components so no real
+# model is required.
+# ---------------------------------------------------------------------------
+
+class _FakeTokenizerContentOnly:
+    """Tokenizer stub that returns exactly `n` content-only token ids.
+
+    Requires ``add_special_tokens=False`` on every call, mirroring the real
+    HF tokenizer contract classify() now relies on.
+    """
+
+    bos_token_id = 0
+    eos_token_id = 2
+
+    def __init__(self, n: int):
+        # Distinct, easily-recognizable ids that never collide with bos/eos.
+        self.content_ids = [10 + i for i in range(n)]
+
+    def _check_kwargs(self, kwargs):
+        assert kwargs.get("add_special_tokens") is False, (
+            "classify() must tokenize with add_special_tokens=False so it can "
+            "wrap chunks with real BOS/EOS itself"
+        )
+
+
+class _FakeOnnxTokenizer(_FakeTokenizerContentOnly):
+    def __call__(self, text, **kwargs):
+        import numpy as np
+
+        self._check_kwargs(kwargs)
+        return {"input_ids": np.array([self.content_ids], dtype=np.int64)}
+
+
+class _FakeOnnxSessionCapturing:
+    """Fake ONNX session that records every input_ids/attention_mask it sees."""
+
+    def __init__(self):
+        self.calls: list[tuple[list[int], list[int]]] = []
+
+    def get_inputs(self):
+        class _In:
+            def __init__(self, name):
+                self.name = name
+
+        return [_In("input_ids"), _In("attention_mask")]
+
+    def get_outputs(self):
+        class _Out:
+            def __init__(self, name):
+                self.name = name
+
+        return [_Out("logits")]
+
+    def run(self, output_names, inputs):
+        import numpy as np
+
+        self.calls.append(
+            (inputs["input_ids"][0].tolist(), inputs["attention_mask"][0].tolist())
+        )
+        return [np.array([[2.0, -2.0]], dtype=np.float32)]
+
+
+class TestOnnxClassifyBosEosWrapping:
+    async def test_short_input_single_chunk_wrapped_with_bos_eos(self):
+        n_content = 100
+        tokenizer = _FakeOnnxTokenizer(n_content)
+        session = _FakeOnnxSessionCapturing()
+        clf = SusFactorOnnxClassifier(
+            session=session, tokenizer=tokenizer, model_name="fake"
+        )
+
+        result = await clf.classify("short prompt")
+
+        # Chunk count / content-token boundaries unchanged from before the fix.
+        assert len(result.chunks) == 1
+        assert len(session.calls) == 1
+        ids, mask = session.calls[0]
+        assert ids[0] == tokenizer.bos_token_id
+        assert ids[-1] == tokenizer.eos_token_id
+        assert ids[1:-1] == tokenizer.content_ids
+        assert len(ids) == n_content + 2
+        assert mask == [1] * (n_content + 2)
+
+    async def test_long_input_every_chunk_wrapped_with_bos_eos(self):
+        n_content = MAX_CONTENT_TOKENS * 3  # forces multiple chunks
+        tokenizer = _FakeOnnxTokenizer(n_content)
+        session = _FakeOnnxSessionCapturing()
+        clf = SusFactorOnnxClassifier(
+            session=session, tokenizer=tokenizer, model_name="fake"
+        )
+
+        result = await clf.classify("long prompt")
+
+        assert len(result.chunks) > 1
+        assert len(session.calls) == len(result.chunks)
+        for ids, mask in session.calls:
+            assert ids[0] == tokenizer.bos_token_id, (
+                "interior chunk missing real leading BOS token"
+            )
+            assert ids[-1] == tokenizer.eos_token_id, (
+                "interior chunk missing real trailing EOS token"
+            )
+            assert mask == [1] * len(ids)
+            assert len(ids) == len(ids[1:-1]) + 2
+
+
+class _FakeTorchTokenizer(_FakeTokenizerContentOnly):
+    def __call__(self, texts, **kwargs):
+        import torch
+
+        self._check_kwargs(kwargs)
+        return {"input_ids": torch.tensor([self.content_ids], dtype=torch.long)}
+
+
+class _FakeTorchEncoderCapturing:
+    def __init__(self, hidden_size=8):
+        self.hidden_size = hidden_size
+        self.calls: list[tuple[list[int], list[int]]] = []
+
+    def __call__(self, input_ids=None, attention_mask=None, **kwargs):
+        import torch
+
+        self.calls.append((input_ids[0].tolist(), attention_mask[0].tolist()))
+        batch, seq = input_ids.shape
+        hs = torch.ones((batch, seq, self.hidden_size), dtype=torch.float32) * 0.5
+
+        class _Output:
+            def __init__(self, last_hidden_state):
+                self.last_hidden_state = last_hidden_state
+
+        return _Output(hs)
+
+    def to(self, _device):
+        return self
+
+    def eval(self):
+        return self
+
+
+class _FakeTorchHead:
+    def __call__(self, pooled):
+        import torch
+
+        return torch.tensor([[2.0, -2.0]] * pooled.shape[0], dtype=torch.float32)
+
+    def to(self, _device):
+        return self
+
+    def eval(self):
+        return self
+
+
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires torch")
+class TestTorchClassifyBosEosWrapping:
+    async def test_short_input_single_chunk_wrapped_with_bos_eos(self):
+        from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
+
+        n_content = 100
+        tokenizer = _FakeTorchTokenizer(n_content)
+        encoder = _FakeTorchEncoderCapturing()
+        clf = SusFactorClassifier(
+            encoder=encoder,
+            tokenizer=tokenizer,
+            head=_FakeTorchHead(),
+            model_name="fake",
+            threshold=0.5,
+            device="cpu",
+        )
+
+        result = await clf.classify("short prompt")
+
+        assert len(result.chunks) == 1
+        assert len(encoder.calls) == 1
+        ids, mask = encoder.calls[0]
+        assert ids[0] == tokenizer.bos_token_id
+        assert ids[-1] == tokenizer.eos_token_id
+        assert ids[1:-1] == tokenizer.content_ids
+        assert len(ids) == n_content + 2
+        assert mask == [1] * (n_content + 2)
+
+    async def test_long_input_every_chunk_wrapped_with_bos_eos(self):
+        from odin_prompt_toolkit.susfactor.classifier import SusFactorClassifier
+
+        n_content = MAX_CONTENT_TOKENS * 3  # forces multiple chunks
+        tokenizer = _FakeTorchTokenizer(n_content)
+        encoder = _FakeTorchEncoderCapturing()
+        clf = SusFactorClassifier(
+            encoder=encoder,
+            tokenizer=tokenizer,
+            head=_FakeTorchHead(),
+            model_name="fake",
+            threshold=0.5,
+            device="cpu",
+        )
+
+        result = await clf.classify("long prompt")
+
+        assert len(result.chunks) > 1
+        assert len(encoder.calls) == len(result.chunks)
+        for ids, mask in encoder.calls:
+            assert ids[0] == tokenizer.bos_token_id, (
+                "interior chunk missing real leading BOS token"
+            )
+            assert ids[-1] == tokenizer.eos_token_id, (
+                "interior chunk missing real trailing EOS token"
+            )
+            assert mask == [1] * len(ids)
+            assert len(ids) == len(ids[1:-1]) + 2
 
 
 # ---------------------------------------------------------------------------

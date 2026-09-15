@@ -266,9 +266,9 @@ class SusFactorClassifier:
             return_tensors="pt",
             padding=False,
             truncation=False,
+            add_special_tokens=False,
         )
         all_ids: list[int] = inputs_full["input_ids"][0].tolist()
-        all_mask: list[int] = inputs_full["attention_mask"][0].tolist()
         tokenize_span = PhaseSpan(
             name="tokenize",
             start_ms=(tokenize_start - wall_start) * 1000,
@@ -283,15 +283,24 @@ class SusFactorClassifier:
             duration_ms=(_time.time() - chunk_start_t) * 1000,
         )
 
+        bos_id = self._tokenizer.bos_token_id
+        eos_id = self._tokenizer.eos_token_id
+        if bos_id is None or eos_id is None:
+            raise SusFactorError(
+                "Tokenizer is missing bos_token_id/eos_token_id required for "
+                f"SusFactor chunking (bos_token_id={bos_id!r}, eos_token_id={eos_id!r})"
+            )
+
         async def _score_chunk(
             index: int, chunk_ids: list[int]
         ) -> tuple[SusFactorResult, PhaseSpan]:
             chunk_start = _time.time()
-            chunk_len = len(chunk_ids)
-            chunk_mask = all_mask[:chunk_len]
+            wrapped_ids = [bos_id, *chunk_ids, eos_id]
+            chunk_len = len(wrapped_ids)
+            chunk_mask = [1] * chunk_len
 
             import torch as _torch
-            ids_t = _torch.tensor([chunk_ids], dtype=_torch.long).to(self._device)
+            ids_t = _torch.tensor([wrapped_ids], dtype=_torch.long).to(self._device)
             mask_t = _torch.tensor([chunk_mask], dtype=_torch.long).to(self._device)
 
             with _torch.no_grad():

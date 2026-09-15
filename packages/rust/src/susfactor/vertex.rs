@@ -72,6 +72,9 @@ pub struct VertexSusFactor {
     threshold: f32,
     auth: Arc<dyn gcp_auth::TokenProvider>,
     max_concurrent_chunks: usize,
+    /// `(bos_id, eos_id)`, resolved once at construction — the tokenizer's
+    /// vocab never changes for the lifetime of this classifier.
+    special_tokens: (i64, i64),
 }
 
 impl VertexSusFactor {
@@ -147,6 +150,7 @@ impl VertexSusFactor {
             .map_err(|e| SigError::Provider(format!("GCP auth initialisation failed: {e}")))?;
 
         let client = Self::build_traced_client(connect_timeout, request_timeout)?;
+        let special_tokens = common::resolve_special_token_ids(&tokenizer)?;
 
         Ok(Self {
             client,
@@ -156,6 +160,7 @@ impl VertexSusFactor {
             threshold,
             auth,
             max_concurrent_chunks,
+            special_tokens,
         })
     }
 
@@ -203,7 +208,8 @@ impl SusFactorProvider for VertexSusFactor {
 
         // Time tokenization of the full text.
         let tokenize_start = Instant::now();
-        let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
+        let all_ids = common::tokenize_full(&self.tokenizer, text)?;
+        let (bos_id, eos_id) = self.special_tokens;
         let tokenize_span = PhaseSpan {
             name: common::PHASE_TOKENIZE.to_string(),
             start_ms: common::offset_ms(tokenize_start, wall_start),
@@ -214,7 +220,7 @@ impl SusFactorProvider for VertexSusFactor {
 
         // Time chunking of the token stream.
         let chunk_start_instant = Instant::now();
-        let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
+        let chunks = common::chunk_token_ids_with_special_tokens(&all_ids, bos_id, eos_id);
         let chunk_span = PhaseSpan {
             name: common::PHASE_CHUNK.to_string(),
             start_ms: common::offset_ms(chunk_start_instant, wall_start),
@@ -551,6 +557,7 @@ mod tests {
 
     async fn build_vertex(server_url: &str, threshold: f32) -> VertexSusFactor {
         let tokenizer = load_test_tokenizer().await;
+        let special_tokens = common::resolve_special_token_ids(&tokenizer).unwrap();
         VertexSusFactor {
             client: VertexSusFactor::build_traced_client(
                 Duration::from_secs(10),
@@ -563,6 +570,7 @@ mod tests {
             threshold,
             auth: Arc::new(FakeTokenProvider),
             max_concurrent_chunks: 4,
+            special_tokens,
         }
     }
 
@@ -910,6 +918,8 @@ mod tests {
     #[tokio::test]
     async fn refused_connection_returns_provider_error() {
         // Port 1 is well-known to be refused on all platforms.
+        let tokenizer = load_test_tokenizer().await;
+        let special_tokens = common::resolve_special_token_ids(&tokenizer).unwrap();
         let clf = VertexSusFactor {
             client: VertexSusFactor::build_traced_client(
                 Duration::from_secs(5),
@@ -917,11 +927,12 @@ mod tests {
             )
             .unwrap(),
             endpoint_url: "http://127.0.0.1:1/rawPredict".to_string(),
-            tokenizer: load_test_tokenizer().await,
+            tokenizer,
             model_name: VertexSusFactor::DEFAULT_MODEL.to_string(),
             threshold: 0.5,
             auth: Arc::new(FakeTokenProvider),
             max_concurrent_chunks: 4,
+            special_tokens,
         };
 
         let err = clf.classify("test").await.expect_err("must return error");

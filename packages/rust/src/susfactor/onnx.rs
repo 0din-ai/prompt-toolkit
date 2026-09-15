@@ -44,6 +44,9 @@ pub struct OnnxSusFactor {
     tokenizer: Arc<tokenizers::Tokenizer>,
     model_name: String,
     threshold: f32,
+    /// `(bos_id, eos_id)`, resolved once at construction — the tokenizer's
+    /// vocab never changes for the lifetime of this classifier.
+    special_tokens: (i64, i64),
 }
 
 /// Backwards-compatible alias for [`OnnxSusFactor`].
@@ -130,11 +133,14 @@ impl OnnxSusFactor {
             .map_err(|e| SigError::Model(format!("spawn_blocking panicked: {e}")))?
             .map_err(SigError::Model)?;
 
+        let special_tokens = common::resolve_special_token_ids(&tokenizer)?;
+
         Ok(Self {
             session: Arc::new(Mutex::new(session)),
             tokenizer: Arc::new(tokenizer),
             model_name,
             threshold,
+            special_tokens,
         })
     }
 
@@ -223,7 +229,8 @@ impl OnnxSusFactor {
 
         // Time tokenization of the full text.
         let tokenize_start = Instant::now();
-        let (all_ids, all_mask) = common::tokenize_full(&self.tokenizer, text)?;
+        let all_ids = common::tokenize_full(&self.tokenizer, text)?;
+        let (bos_id, eos_id) = self.special_tokens;
         let tokenize_span = PhaseSpan {
             name: common::PHASE_TOKENIZE.to_string(),
             start_ms: common::offset_ms(tokenize_start, wall_start),
@@ -234,7 +241,7 @@ impl OnnxSusFactor {
 
         // Time chunking of the token stream.
         let chunk_start_instant = Instant::now();
-        let chunks = common::chunk_token_ids_with_mask(&all_ids, &all_mask);
+        let chunks = common::chunk_token_ids_with_special_tokens(&all_ids, bos_id, eos_id);
         let chunk_span = PhaseSpan {
             name: common::PHASE_CHUNK.to_string(),
             start_ms: common::offset_ms(chunk_start_instant, wall_start),
