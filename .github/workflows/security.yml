@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: mozilla/ssdlc-actions/.github/workflows/code-security-analysis-private-repo.yml@9ecc28ba241cdaa0b207cc2c352c2faa954732f8 # main @ 2026-07-15
+    uses: mozilla/ssdlc-actions/.github/workflows/code-security-analysis-private-repo.yml@3ff69ae8733c81c53a7fb058610e7fe728482e7f # main @ 2026-07-15
 
   # ────────────────────────────────────────────────────────────────────────────
   # Blocking Semgrep — the real SAST merge gate (design.md D2). Runs
