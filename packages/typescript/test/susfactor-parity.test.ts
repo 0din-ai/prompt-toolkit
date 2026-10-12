@@ -180,15 +180,10 @@ async function runParityCheck() {
 
 // Run when invoked via ts-node / node (not imported by jest).
 //
-// jest >=30.5 sets `require.main` to point at the currently-executing test
-// file's own module object (jest-runtime's TestMainModule, wired up so
-// `require.main`/`import.meta.main` behave like a real Node entry point
-// inside tests). That makes `require.main === module` true for *any* test
-// file loaded by jest -- in-band or in a worker -- so it can no longer be
-// used alone to detect "running outside jest". JEST_WORKER_ID is always set
-// by jest itself (to '1' for in-band runs, or the worker's 1-indexed id for
-// parallel runs) and is never set when this file is run directly via
-// ts-node/node, so gate on that as the authoritative check.
+// jest >=30.5 sets require.main to the currently-executing test file itself,
+// so require.main === module is no longer sufficient to detect "not under jest".
+// JEST_WORKER_ID is always set by jest (in-band or forked) and never set
+// outside it, so gate on that too for a version-independent check.
 if (require.main === module && process.env.JEST_WORKER_ID === undefined) {
   runParityCheck().catch((err) => {
     console.error(err);
