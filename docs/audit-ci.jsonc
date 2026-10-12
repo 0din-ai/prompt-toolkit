@@ -25,10 +25,14 @@
     "GHSA-5gmw-xhrv-c9v3", // Tinypool prototype pollution via worker options
     "GHSA-85c8-ppgw-ccpr", // Tinypool prototype pollution via run() options
 
-    // braces (transitive via chokidar via @docusaurus/core). Stack-exhaustion
-    // DoS fixed in 5.0.12+, available. Requires updating minimize versions
-    // or breaking Docusaurus dependency chain. Only triggered by malformed
-    // pattern input; Docusaurus glob patterns are internal/trusted.
+    // braces (transitive via @docusaurus/core's chokidar, and via micromatch
+    // in @docusaurus/utils/fast-glob/copy-webpack-plugin/webpack-dev-server).
+    // No patched release exists at any published version (latest 3.0.3 is
+    // still in the vulnerable range) as of 2026-10. Stack-exhaustion DoS from
+    // deeply nested brace patterns; braces here only ever receives the fixed
+    // glob patterns Docusaurus's own plugins pass to chokidar/fast-glob for
+    // build-time file discovery and dev-server watching, never
+    // user-controlled input, so the DoS surface is not reachable.
     "GHSA-vfj7-8cjw-p6xm" // braces stack-exhaustion DoS
   ]
 }
