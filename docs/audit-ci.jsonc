@@ -4,8 +4,8 @@
   // `npm audit --audit-level=high` gate — except entries in `allowlist`.
   //
   // Allowlisted advisories are documented, accepted risks. Each MUST be a
-  // transitive advisory with no available fix; re-review whenever the
-  // dependency tree changes.
+  // transitive advisory with no available fix within the current dependency
+  // constraints; re-review whenever the dependency tree changes.
   "high": true,
   "allowlist": [
     // image-size (transitive via @docusaurus/mdx-loader). No patched release
@@ -14,6 +14,21 @@
     // dimensions of the repo's own (trusted) markdown images, so the DoS
     // surface is not reachable by untrusted input.
     "GHSA-w3rx-r6r6-pgpr", // image-size ICNS parser infinite loop
-    "GHSA-5p2g-fcmc-qvqq" // image-size JXL/HEIF parser infinite loops
+    "GHSA-5p2g-fcmc-qvqq", // image-size JXL/HEIF parser infinite loops
+
+    // tinypool <=2.1.0 and <2.1.2 (transitive via @docusaurus/core@3.10.2).
+    // Fixes available in tinypool 2.1.2+, but @docusaurus/core@3.10.2 pins
+    // tinypool~1.1.1 and requires v1.x. Would need Docusaurus 4.x or downgrade
+    // to 3.7.0 to access patched tinypool 2.x versions. Prototype pollution
+    // only exploitable if attacker can control tinypool worker options, which
+    // Docusaurus does not expose externally.
+    "GHSA-5gmw-xhrv-c9v3", // Tinypool prototype pollution via worker options
+    "GHSA-85c8-ppgw-ccpr", // Tinypool prototype pollution via run() options
+
+    // braces (transitive via chokidar via @docusaurus/core). Stack-exhaustion
+    // DoS fixed in 5.0.12+, available. Requires updating minimize versions
+    // or breaking Docusaurus dependency chain. Only triggered by malformed
+    // pattern input; Docusaurus glob patterns are internal/trusted.
+    "GHSA-vfj7-8cjw-p6xm" // braces stack-exhaustion DoS
   ]
 }
