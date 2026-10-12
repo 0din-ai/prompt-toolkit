@@ -270,11 +270,18 @@ impl OnnxSusFactor {
                     // execution is visible on the timeline.
                     let chunk_start = Instant::now();
                     let seq_len = chunk_ids.len();
+                    // `chunk_index`/`token_count` are cast to `i64` — see the
+                    // matching comment in vertex.rs's `vertex_inference` span.
+                    // A bare `usize` field dispatches through `tracing`'s
+                    // `record_u64`, which `tracing-opentelemetry`'s span
+                    // visitor does not override (only `record_i64` is), so it
+                    // falls back to a Debug-formatted STRING attribute instead
+                    // of a native OTEL integer.
                     let inference_span = tracing::info_span!(
                         "onnx_inference",
                         backend = common::BACKEND_ONNX,
-                        chunk_index = i,
-                        token_count = seq_len,
+                        chunk_index = i as i64,
+                        token_count = seq_len as i64,
                     );
                     let _guard = inference_span.enter();
                     let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;

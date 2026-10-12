@@ -266,11 +266,24 @@ impl SusFactorProvider for VertexSusFactor {
                     // `rest_request` span), giving callers true parent-child
                     // trace linkage without the toolkit needing to touch
                     // OpenTelemetry context/baggage directly.
+                    //
+                    // `chunk_index`/`token_count` are cast to `i64`: `tracing`'s
+                    // `Visit::record_u64` default implementation (what a bare
+                    // `usize` field dispatches to) forwards to `record_debug`,
+                    // and `tracing-opentelemetry`'s span visitor does not
+                    // override `record_u64` — only `record_i64`. A `usize`
+                    // field is therefore exported as a Debug-formatted STRING
+                    // attribute (`"67"`) rather than a native OTEL integer,
+                    // which can silently fail to appear in APM if the field is
+                    // already mapped as numeric elsewhere (e.g. Elasticsearch
+                    // rejects/drops a string write to a `long`-mapped field).
+                    // Casting to `i64` routes through `record_i64`, which IS
+                    // overridden, producing a proper integer attribute.
                     let span = tracing::info_span!(
                         "vertex_inference",
                         backend = common::BACKEND_VERTEX,
-                        chunk_index = i,
-                        token_count = seq_len,
+                        chunk_index = i as i64,
+                        token_count = seq_len as i64,
                     );
                     async move {
                         let chunk_start = Instant::now();
@@ -778,6 +791,109 @@ mod tests {
             http_span.parent_name.as_deref(),
             Some("vertex_inference"),
             "HTTP request span should nest under vertex_inference"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 0c — `token_count`/`chunk_index` must export as native OTEL
+    // integers, not Debug-formatted strings.
+    //
+    // `tracing-opentelemetry`'s span visitor overrides `record_i64` but NOT
+    // `record_u64` — a bare `usize` field (as `chunk_index`/`token_count`
+    // naturally are: `Vec::len()`, `Iterator::enumerate()`) dispatches via
+    // `record_u64`, whose `tracing-core` default silently forwards to
+    // `record_debug`, producing a STRING attribute (`"67"`) instead of an
+    // integer. This is exactly the kind of regression the `SpanCaptureLayer`
+    // harness above cannot catch: `FieldMap` implements `record_u64` directly,
+    // so it observes the correct value regardless of which `Visit` method
+    // tracing dispatched through. Only a real `tracing-opentelemetry` layer
+    // exposes the gap, so this test uses the actual crate (dev-dependency
+    // only — see Cargo.toml) with an in-process `SpanExporter` and asserts on
+    // the exported `opentelemetry::Value` variant directly.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn vertex_inference_span_exports_token_count_as_integer_not_string() {
+        use opentelemetry::trace::TracerProvider as _;
+        use opentelemetry::Value as OtelValue;
+        use opentelemetry_sdk::trace::{SdkTracerProvider, SpanData, SpanExporter};
+        use tracing_opentelemetry::OpenTelemetryLayer;
+
+        #[derive(Clone, Default, Debug)]
+        struct CapturingExporter {
+            spans: Arc<Mutex<Vec<SpanData>>>,
+        }
+
+        impl SpanExporter for CapturingExporter {
+            fn export(
+                &self,
+                batch: Vec<SpanData>,
+            ) -> impl std::future::Future<Output = opentelemetry_sdk::error::OTelSdkResult> + Send
+            {
+                self.spans.lock().unwrap().extend(batch);
+                async { Ok(()) }
+            }
+        }
+
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("POST", "/rawPredict")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{"outputs":[{"name":"logits","shape":[1,2],"datatype":"FP32","data":[-1.5,2.3]}]}"#,
+            )
+            .create_async()
+            .await;
+
+        let exporter = CapturingExporter::default();
+        let spans = Arc::clone(&exporter.spans);
+        let provider = SdkTracerProvider::builder()
+            .with_simple_exporter(exporter)
+            .build();
+        let tracer = provider.tracer("vertex-test");
+        let otel_layer = OpenTelemetryLayer::new(tracer);
+        let subscriber = tracing_subscriber::registry().with(otel_layer);
+        let dispatch = tracing::Dispatch::new(subscriber);
+
+        let clf = build_vertex(&server.url(), 0.5).await;
+        clf.classify("hello world")
+            .with_subscriber(dispatch)
+            .await
+            .expect("classify must succeed");
+        provider.shutdown().expect("tracer provider shutdown");
+
+        let spans = spans.lock().unwrap();
+        let inference_span = spans
+            .iter()
+            .find(|s| s.name == "vertex_inference")
+            .unwrap_or_else(|| {
+                panic!(
+                    "expected an exported span named \"vertex_inference\", got: {:?}",
+                    spans.iter().map(|s| &s.name).collect::<Vec<_>>()
+                )
+            });
+
+        let token_count = inference_span
+            .attributes
+            .iter()
+            .find(|kv| kv.key.as_str() == "token_count")
+            .unwrap_or_else(|| panic!("no token_count attribute on exported span"));
+        assert!(
+            matches!(token_count.value, OtelValue::I64(_)),
+            "token_count must export as an OTEL integer, got {:?} \
+             (a String here means the usize-record_u64-fallback regression is back)",
+            token_count.value
+        );
+
+        let chunk_index = inference_span
+            .attributes
+            .iter()
+            .find(|kv| kv.key.as_str() == "chunk_index")
+            .unwrap_or_else(|| panic!("no chunk_index attribute on exported span"));
+        assert!(
+            matches!(chunk_index.value, OtelValue::I64(_)),
+            "chunk_index must export as an OTEL integer, got {:?}",
+            chunk_index.value
         );
     }
 
