@@ -37,6 +37,14 @@ pub const PHASE_INFERENCE: &str = "inference";
 /// Phase name for the result-assembly span.
 pub const PHASE_REDUCE: &str = "reduce";
 
+/// `backend` field value recorded on `tracing` inference spans emitted by
+/// [`super::onnx::OnnxSusFactor`], distinguishing in-pod ONNX inference from
+/// remote Vertex calls in exported traces.
+pub const BACKEND_ONNX: &str = "onnx";
+/// `backend` field value recorded on `tracing` inference spans emitted by
+/// [`super::vertex::VertexSusFactor`].
+pub const BACKEND_VERTEX: &str = "vertex";
+
 /// Softmax over a 2-logit slice, returning P(class 1) = suspicious.
 pub fn suspicious_prob(logits: &[f32]) -> f32 {
     debug_assert!(logits.len() >= 2);

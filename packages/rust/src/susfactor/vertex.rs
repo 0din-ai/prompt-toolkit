@@ -19,6 +19,7 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use futures_util::{StreamExt, TryStreamExt};
+use tracing::Instrument;
 
 use crate::error::{Result, SigError};
 use crate::providers::ModelCache;
@@ -252,9 +253,27 @@ impl SusFactorProvider for VertexSusFactor {
                     let endpoint_url = endpoint_url.clone();
                     let auth = Arc::clone(&auth);
                     let model_name = model_name.clone();
+                    let seq_len = chunk_ids.len();
+                    // `.instrument()` (not `.enter()`) so the span is correctly
+                    // re-entered on every poll regardless of which executor
+                    // thread resumes this future after an `.await` — holding
+                    // an `Entered` guard across an await point corrupts
+                    // whatever span happens to be ambient on that thread when
+                    // this task is later polled. This span becomes the parent
+                    // of the `HTTP request` span `reqwest_tracing` emits
+                    // inside `send()`, nesting under whatever span was active
+                    // when `classify()` was called (e.g. a caller's
+                    // `rest_request` span), giving callers true parent-child
+                    // trace linkage without the toolkit needing to touch
+                    // OpenTelemetry context/baggage directly.
+                    let span = tracing::info_span!(
+                        "vertex_inference",
+                        backend = common::BACKEND_VERTEX,
+                        chunk_index = i,
+                        token_count = seq_len,
+                    );
                     async move {
                         let chunk_start = Instant::now();
-                        let seq_len = chunk_ids.len();
 
                         let body = InferRequest {
                             inputs: vec![
@@ -348,6 +367,7 @@ impl SusFactorProvider for VertexSusFactor {
                         };
                         Ok::<_, SigError>((i, result, span))
                     }
+                    .instrument(span)
                 },
             ))
             .buffer_unordered(concurrency)
@@ -434,6 +454,7 @@ mod tests {
     struct CapturedSpan {
         name: String,
         fields: HashMap<String, String>,
+        parent_name: Option<String>,
     }
 
     #[derive(Clone, Default)]
@@ -470,10 +491,12 @@ mod tests {
                     .get::<FieldMap>()
                     .map(|f| f.0.clone())
                     .unwrap_or_default();
-                self.captured
-                    .lock()
-                    .unwrap()
-                    .push(CapturedSpan { name, fields });
+                let parent_name = span.parent().map(|p| p.name().to_string());
+                self.captured.lock().unwrap().push(CapturedSpan {
+                    name,
+                    fields,
+                    parent_name,
+                });
             }
         }
     }
@@ -671,6 +694,90 @@ mod tests {
         assert!(
             url_full.ends_with("/rawPredict"),
             "url.full should target the rawPredict endpoint, got: {url_full}"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 0b — a `vertex_inference` span is emitted per chunk, tagged with
+    // `backend = "vertex"` so exported traces can distinguish Vertex calls
+    // from in-pod ONNX inference, and it nests correctly as a child of
+    // whatever span was active when `classify()` was called and as the
+    // parent of `reqwest_tracing`'s `HTTP request` span — giving callers true
+    // parent-child trace linkage (e.g. Heimdall's `rest_request` span) without
+    // the toolkit touching OpenTelemetry context/baggage directly.
+    // -----------------------------------------------------------------------
+    #[tokio::test]
+    async fn vertex_inference_span_nests_under_caller_span_and_parents_http_span() {
+        ensure_global_subscriber_installed();
+
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("POST", "/rawPredict")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{"outputs":[{"name":"logits","shape":[1,2],"datatype":"FP32","data":[-1.5,2.3]}]}"#,
+            )
+            .create_async()
+            .await;
+
+        let captured = Arc::new(Mutex::new(Vec::new()));
+        let layer = SpanCaptureLayer {
+            captured: Arc::clone(&captured),
+        };
+        let subscriber = tracing_subscriber::registry().with(layer);
+        let dispatch = tracing::Dispatch::new(subscriber);
+
+        let clf = build_vertex(&server.url(), 0.5).await;
+        // The outer span simulates a caller (e.g. Heimdall's `rest_request`
+        // span) that is already active when `classify()` is invoked. It must
+        // be created *inside* the instrumented/dispatched future (async
+        // blocks defer their body to first poll) so `info_span!` picks up
+        // the test-local dispatch rather than whatever is globally default.
+        async {
+            let caller_span = tracing::info_span!("rest_request");
+            clf.classify("hello world").instrument(caller_span).await
+        }
+        .with_subscriber(dispatch)
+        .await
+        .expect("classify must succeed");
+
+        let captured = captured.lock().unwrap();
+        let inference_span = captured
+            .iter()
+            .find(|s| s.name == "vertex_inference")
+            .unwrap_or_else(|| {
+                panic!(
+                    "expected a span named \"vertex_inference\", got spans: {:?}",
+                    captured.iter().map(|s| &s.name).collect::<Vec<_>>()
+                )
+            });
+
+        assert_eq!(
+            inference_span.fields.get("backend").map(String::as_str),
+            Some("vertex"),
+            "span fields: {:?}",
+            inference_span.fields
+        );
+        assert_eq!(
+            inference_span.parent_name.as_deref(),
+            Some("rest_request"),
+            "vertex_inference span should nest under the caller's active span"
+        );
+
+        let http_span = captured
+            .iter()
+            .find(|s| s.name == "HTTP request")
+            .unwrap_or_else(|| {
+                panic!(
+                    "expected a span named \"HTTP request\", got spans: {:?}",
+                    captured.iter().map(|s| &s.name).collect::<Vec<_>>()
+                )
+            });
+        assert_eq!(
+            http_span.parent_name.as_deref(),
+            Some("vertex_inference"),
+            "HTTP request span should nest under vertex_inference"
         );
     }
 

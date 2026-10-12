@@ -255,13 +255,28 @@ impl OnnxSusFactor {
             let session = Arc::clone(&self.session);
             let model_name = self.model_name.clone();
             let threshold = self.threshold;
+            // `spawn_blocking` runs on a fresh OS thread with no ambient
+            // `tracing` context of its own, so the caller's current span must
+            // be captured here (on the async side, where it's actually
+            // current) and re-entered inside the closure. Entering is safe
+            // here because the closure is synchronous end-to-end — there's no
+            // `.await` to suspend across while the guard is held.
+            let parent_span = tracing::Span::current();
 
             handles.push(tokio::task::spawn_blocking(
                 move || -> Result<(SusFactorResult, PhaseSpan)> {
+                    let _parent_guard = parent_span.enter();
                     // Capture the inference start INSIDE the task so overlapping
                     // execution is visible on the timeline.
                     let chunk_start = Instant::now();
                     let seq_len = chunk_ids.len();
+                    let inference_span = tracing::info_span!(
+                        "onnx_inference",
+                        backend = common::BACKEND_ONNX,
+                        chunk_index = i,
+                        token_count = seq_len,
+                    );
+                    let _guard = inference_span.enter();
                     let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
                     let result = common::result_from_logits(
                         &logits,
