@@ -164,3 +164,154 @@ async fn classify_no_score_aggregation() {
             first_score);
     }
 }
+
+// ---------------------------------------------------------------------------
+// `onnx_inference` span — verifies that real (not mocked) ONNX inference
+// emits a tracing span tagged `backend = "onnx"`, nested under whatever span
+// was active when `classify()` was called. This is the ONNX-side mirror of
+// `VertexSusFactor`'s `vertex_inference` span: it lets exported traces show
+// which backend actually served a request (in-pod ONNX vs. remote Vertex),
+// which matters because the two are selected interchangeably via
+// `SusFactorProvider` and a trace alone wouldn't otherwise say which ran.
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn onnx_inference_span_tagged_with_backend_and_nests_under_caller_span() {
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+    use tracing::field::{Field, Visit};
+    use tracing::instrument::WithSubscriber;
+    use tracing::span::{Attributes, Id, Record};
+    use tracing::{Instrument, Subscriber};
+    use tracing_subscriber::layer::{Context, Layer, SubscriberExt};
+    use tracing_subscriber::registry::LookupSpan;
+
+    let Some(dir) = model_dir() else {
+        eprintln!("skipping: SUSFACTOR_MODEL_DIR not set or model missing");
+        return;
+    };
+
+    #[derive(Default)]
+    struct FieldMap(HashMap<String, String>);
+
+    impl Visit for FieldMap {
+        fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+            self.0
+                .insert(field.name().to_string(), format!("{value:?}"));
+        }
+        fn record_str(&mut self, field: &Field, value: &str) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+        fn record_u64(&mut self, field: &Field, value: u64) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+        fn record_i64(&mut self, field: &Field, value: i64) {
+            self.0.insert(field.name().to_string(), value.to_string());
+        }
+    }
+
+    struct CapturedSpan {
+        name: String,
+        fields: HashMap<String, String>,
+        parent_name: Option<String>,
+    }
+
+    #[derive(Clone, Default)]
+    struct SpanCaptureLayer {
+        captured: Arc<Mutex<Vec<CapturedSpan>>>,
+    }
+
+    impl<S> Layer<S> for SpanCaptureLayer
+    where
+        S: Subscriber + for<'a> LookupSpan<'a>,
+    {
+        fn on_new_span(&self, attrs: &Attributes<'_>, id: &Id, ctx: Context<'_, S>) {
+            let mut fields = FieldMap::default();
+            attrs.record(&mut fields);
+            if let Some(span) = ctx.span(id) {
+                span.extensions_mut().insert(fields);
+            }
+        }
+        fn on_record(&self, id: &Id, values: &Record<'_>, ctx: Context<'_, S>) {
+            if let Some(span) = ctx.span(id) {
+                let mut ext = span.extensions_mut();
+                if let Some(fields) = ext.get_mut::<FieldMap>() {
+                    values.record(fields);
+                }
+            }
+        }
+        fn on_close(&self, id: Id, ctx: Context<'_, S>) {
+            if let Some(span) = ctx.span(&id) {
+                let name = span.name().to_string();
+                let fields = span
+                    .extensions()
+                    .get::<FieldMap>()
+                    .map(|f| f.0.clone())
+                    .unwrap_or_default();
+                let parent_name = span.parent().map(|p| p.name().to_string());
+                self.captured.lock().unwrap().push(CapturedSpan {
+                    name,
+                    fields,
+                    parent_name,
+                });
+            }
+        }
+    }
+
+    // `tracing` caches whether a span callsite is "interesting" process-wide
+    // based on whichever subscriber is active the first time it fires;
+    // install a permissive global default once so the per-test dispatch below
+    // actually receives callbacks (mirrors vertex.rs's test harness).
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        let _ = tracing::subscriber::set_global_default(tracing_subscriber::registry());
+    });
+
+    let cache = ModelCache::new().expect("cache");
+    let clf = OnnxSusFactor::new(&cache, None, Some(dir), None)
+        .await
+        .expect("load classifier");
+
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let layer = SpanCaptureLayer {
+        captured: Arc::clone(&captured),
+    };
+    let subscriber = tracing_subscriber::registry().with(layer);
+    let dispatch = tracing::Dispatch::new(subscriber);
+
+    // Outer span simulates a caller (e.g. Heimdall's `rest_request` span)
+    // already active when `classify()` is invoked. Created inside the
+    // dispatched future so `info_span!` sees the test-local dispatch rather
+    // than whatever is globally default (async blocks defer their body to
+    // first poll).
+    async {
+        let caller_span = tracing::info_span!("rest_request");
+        clf.classify("hello world").instrument(caller_span).await
+    }
+    .with_subscriber(dispatch)
+    .await
+    .expect("classify must succeed");
+
+    let captured = captured.lock().unwrap();
+    let inference_span = captured
+        .iter()
+        .find(|s| s.name == "onnx_inference")
+        .unwrap_or_else(|| {
+            panic!(
+                "expected a span named \"onnx_inference\", got spans: {:?}",
+                captured.iter().map(|s| &s.name).collect::<Vec<_>>()
+            )
+        });
+
+    assert_eq!(
+        inference_span.fields.get("backend").map(String::as_str),
+        Some("onnx"),
+        "span fields: {:?}",
+        inference_span.fields
+    );
+    assert_eq!(
+        inference_span.parent_name.as_deref(),
+        Some("rest_request"),
+        "onnx_inference span should nest under the caller's active span"
+    );
+}

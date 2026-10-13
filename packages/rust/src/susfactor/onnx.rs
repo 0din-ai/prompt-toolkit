@@ -255,28 +255,74 @@ impl OnnxSusFactor {
             let session = Arc::clone(&self.session);
             let model_name = self.model_name.clone();
             let threshold = self.threshold;
+            // `spawn_blocking` runs on a fresh OS thread with no ambient
+            // `tracing` context of its own, so both pieces of the caller's
+            // context must be captured here (on the async side, where they
+            // are actually current) and re-installed inside the closure:
+            //
+            // - `parent_span.enter()` makes the caller's span the *current
+            //   span* so `onnx_inference` nests under it as a child.
+            // - `tracing::dispatcher::with_default(&dispatch, ...)` makes the
+            //   caller's *subscriber* the default for this thread, so the
+            //   `tracing::info_span!` call below actually routes through it.
+            //
+            // These are two separate thread-locals and entering the span
+            // alone is not enough: `info_span!` resolves which `Dispatch` to
+            // register the new span with via `dispatcher::get_default`, not
+            // via the entered-span stack. A fresh `spawn_blocking` thread's
+            // default dispatcher is whatever was installed globally (or
+            // nothing), not the caller's possibly-scoped one, so without
+            // `with_default` the new span can be silently created against
+            // the wrong (or no) subscriber. Caught in review (0din-ai/prompt-
+            // toolkit#179) — the `onnx_inference` nesting test only exercises
+            // this path with `SUSFACTOR_MODEL_DIR` set, so it had never
+            // actually been run end-to-end before this fix.
+            //
+            // Entering/installing both here is safe because the closure is
+            // synchronous end-to-end — there's no `.await` to suspend across
+            // while the guards are held.
+            let parent_span = tracing::Span::current();
+            let dispatch = tracing::dispatcher::get_default(|d| d.clone());
 
             handles.push(tokio::task::spawn_blocking(
                 move || -> Result<(SusFactorResult, PhaseSpan)> {
-                    // Capture the inference start INSIDE the task so overlapping
-                    // execution is visible on the timeline.
-                    let chunk_start = Instant::now();
-                    let seq_len = chunk_ids.len();
-                    let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
-                    let result = common::result_from_logits(
-                        &logits,
-                        &model_name,
-                        threshold,
-                        common::elapsed_ms(chunk_start),
-                    );
-                    let span = PhaseSpan {
-                        name: common::PHASE_INFERENCE.to_string(),
-                        start_ms: common::offset_ms(chunk_start, wall_start),
-                        duration_ms: result.timing_ms,
-                        chunk_index: Some(i),
-                        token_count: Some(seq_len),
-                    };
-                    Ok((result, span))
+                    tracing::dispatcher::with_default(&dispatch, || {
+                        let _parent_guard = parent_span.enter();
+                        // Capture the inference start INSIDE the task so
+                        // overlapping execution is visible on the timeline.
+                        let chunk_start = Instant::now();
+                        let seq_len = chunk_ids.len();
+                        // `chunk_index`/`token_count` are cast to `i64` — see
+                        // the matching comment in vertex.rs's
+                        // `vertex_inference` span. A bare `usize` field
+                        // dispatches through `tracing`'s `record_u64`, which
+                        // `tracing-opentelemetry`'s span visitor does not
+                        // override (only `record_i64` is), so it falls back
+                        // to a Debug-formatted STRING attribute instead of a
+                        // native OTEL integer.
+                        let inference_span = tracing::info_span!(
+                            "onnx_inference",
+                            backend = common::BACKEND_ONNX,
+                            chunk_index = i as i64,
+                            token_count = seq_len as i64,
+                        );
+                        let _guard = inference_span.enter();
+                        let logits = Self::run_inference_sync(&session, chunk_ids, chunk_mask)?;
+                        let result = common::result_from_logits(
+                            &logits,
+                            &model_name,
+                            threshold,
+                            common::elapsed_ms(chunk_start),
+                        );
+                        let span = PhaseSpan {
+                            name: common::PHASE_INFERENCE.to_string(),
+                            start_ms: common::offset_ms(chunk_start, wall_start),
+                            duration_ms: result.timing_ms,
+                            chunk_index: Some(i),
+                            token_count: Some(seq_len),
+                        };
+                        Ok((result, span))
+                    })
                 },
             ));
         }

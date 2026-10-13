@@ -59,6 +59,15 @@ rand = "0.9"
 mockito = "1.4"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["registry"] }
+# Dev-only: verifies our tracing spans actually export the attribute TYPES
+# consumers expect once bridged through tracing-opentelemetry (see the
+# `token_count`/`chunk_index` regression test in susfactor/vertex.rs). This is
+# never a runtime dependency of the crate — see vertex.rs's `build_traced_client`
+# doc comment for why the toolkit deliberately avoids depending on
+# `opentelemetry` itself.
+tracing-opentelemetry = "0.33"
+opentelemetry = "0.32"
+opentelemetry_sdk = { version = "0.32", features = ["trace"] }
 
 [[example]]
 name = "generate_vectors"
