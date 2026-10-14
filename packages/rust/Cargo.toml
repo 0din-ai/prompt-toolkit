@@ -65,7 +65,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["r
 # never a runtime dependency of the crate — see vertex.rs's `build_traced_client`
 # doc comment for why the toolkit deliberately avoids depending on
 # `opentelemetry` itself.
-tracing-opentelemetry = "0.33"
+tracing-opentelemetry = "0.34"
 opentelemetry = "0.32"
 opentelemetry_sdk = { version = "0.32", features = ["trace"] }
 
