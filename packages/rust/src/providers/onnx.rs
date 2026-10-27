@@ -53,12 +53,13 @@
 use async_trait::async_trait;
 use ndarray::{Array2, Axis};
 use ort::{
+    environment::Environment,
     session::{builder::GraphOptimizationLevel, Session},
     value::Tensor,
 };
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
-    Arc, Mutex,
+    Arc, LazyLock, Mutex,
 };
 use tracing::{debug, info};
 
@@ -68,6 +69,12 @@ use crate::provider::EmbeddingProvider;
 use crate::providers::ModelCache;
 use crate::types::EmbeddingResult;
 
+static ONNX_ENVIRONMENT: LazyLock<std::result::Result<Environment, String>> =
+    LazyLock::new(|| ort::init().build().map_err(|error| error.to_string()));
+
+pub(crate) fn onnx_environment() -> std::result::Result<&'static Environment, String> {
+    ONNX_ENVIRONMENT.as_ref().map_err(Clone::clone)
+}
 // ---------------------------------------------------------------------------
 // OnnxSessionPool
 // ---------------------------------------------------------------------------
@@ -128,11 +135,14 @@ impl OnnxSessionPool {
             return Err("pool_size must be at least 1".into());
         }
 
+        let environment = onnx_environment()
+            .map_err(|error| format!("Failed to create ONNX Runtime environment: {error}"))?;
+
         let mut sessions = Vec::with_capacity(pool_size);
         let mut requires_token_type_ids = false;
 
         for i in 0..pool_size {
-            let mut builder = Session::builder()
+            let mut builder = Session::builder(environment)
                 .map_err(|e| format!("Failed to create session builder (session {i}): {e}"))?
                 .with_optimization_level(GraphOptimizationLevel::Level3)
                 .map_err(|e| format!("Failed to set optimization level (session {i}): {e}"))?;
