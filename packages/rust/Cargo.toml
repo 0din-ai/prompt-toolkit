@@ -66,8 +66,8 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["r
 # doc comment for why the toolkit deliberately avoids depending on
 # `opentelemetry` itself.
 tracing-opentelemetry = "0.34"
-opentelemetry = "0.32"
-opentelemetry_sdk = { version = "0.32", features = ["trace"] }
+opentelemetry = "0.33"
+opentelemetry_sdk = { version = "0.33", features = ["trace"] }
 
 [[example]]
 name = "generate_vectors"
