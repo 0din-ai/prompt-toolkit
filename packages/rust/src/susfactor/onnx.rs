@@ -117,7 +117,9 @@ impl OnnxSusFactor {
         // model-loading + optimization phase.
         let (session, tokenizer) =
             tokio::task::spawn_blocking(move || -> std::result::Result<_, String> {
-                let session = Session::builder()
+                let environment = crate::providers::onnx::onnx_environment()
+                    .map_err(|e| format!("Failed to create ONNX Runtime environment: {e}"))?;
+                let session = Session::builder(environment)
                     .map_err(|e| format!("Failed to create ORT session builder: {e}"))?
                     .with_optimization_level(GraphOptimizationLevel::Level3)
                     .map_err(|e| format!("Failed to set optimization level: {e}"))?
