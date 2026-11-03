@@ -14,7 +14,7 @@
 //!   Per-signature: 0.123ms
 
 use odin_prompt_toolkit::{simhash_lsh_multi, LshConfig};
-use rand::Rng;
+use rand::RngExt;
 use std::time::Instant;
 
 fn main() {
@@ -31,10 +31,10 @@ fn main() {
     );
 
     // Generate random normalized vectors (simulating embeddings)
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let vectors: Vec<Vec<f32>> = (0..count)
         .map(|_| {
-            let mut v: Vec<f32> = (0..384).map(|_| rng.gen_range(-1.0..1.0)).collect();
+            let mut v: Vec<f32> = (0..384).map(|_| rng.random_range(-1.0..1.0)).collect();
             // Normalize
             let norm: f32 = v.iter().map(|x| x * x).sum::<f32>().sqrt();
             if norm > 0.0 {
