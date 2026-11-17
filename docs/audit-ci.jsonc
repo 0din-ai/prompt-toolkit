@@ -33,6 +33,16 @@
     // glob patterns Docusaurus's own plugins pass to chokidar/fast-glob for
     // build-time file discovery and dev-server watching, never
     // user-controlled input, so the DoS surface is not reachable.
-    "GHSA-vfj7-8cjw-p6xm" // braces stack-exhaustion DoS
+    "GHSA-vfj7-8cjw-p6xm", // braces stack-exhaustion DoS
+
+    // picomatch <=4.0.7 (transitive via @docusaurus/utils' micromatch,
+    // chokidar/anymatch, tinyglobby/fdir, readdirp and jest-util). No patched
+    // release exists at any published version (latest 4.0.7 is still in the
+    // vulnerable range) as of 2026-11. ReDoS via single-branch repeated
+    // extglobs; picomatch here only ever receives the fixed glob patterns
+    // Docusaurus's own plugins use for build-time file discovery and
+    // dev-server watching, never user-controlled input, so the ReDoS surface
+    // is not reachable. Remove once a patched picomatch is published.
+    "GHSA-fc5q-39xc-vjpf" // picomatch ReDoS through repeated extglobs
   ]
 }
