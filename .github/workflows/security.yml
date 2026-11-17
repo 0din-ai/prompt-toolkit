@@ -149,7 +149,7 @@ jobs:
       - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
         with:
           # Toolchain used to install/run the govulncheck scanner tool itself;
-          # independent of packages/go/go.mod's own `go 1.22` module directive.
+          # independent of packages/go/go.mod's own `go 1.25` module directive.
           # Must satisfy whatever `golang.org/x/vuln@latest` requires at the time
           # the action runs (the action always installs @latest, unpinned) — it
           # needed >=1.26 as of 2026-09.
