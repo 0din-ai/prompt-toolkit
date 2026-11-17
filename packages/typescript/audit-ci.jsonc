@@ -5,5 +5,14 @@
   // add an entry only for a transitive advisory with no available fix, with a
   // documented justification (see docs/audit-ci.jsonc for the pattern).
   "high": true,
-  "allowlist": []
+  "allowlist": [
+    // picomatch <=4.0.7 (dev-only transitive via jest, ts-jest and
+    // typescript-eslint's tinyglobby). No patched release exists at any
+    // published version (latest 4.0.7 is still in the vulnerable range) as of
+    // 2026-11. ReDoS via single-branch repeated extglobs; picomatch here only
+    // matches the fixed test/lint file globs from the repo's own config, never
+    // user-controlled input, and is not part of the published package. Remove
+    // once a patched picomatch is published.
+    "GHSA-fc5q-39xc-vjpf" // picomatch ReDoS through repeated extglobs
+  ]
 }
