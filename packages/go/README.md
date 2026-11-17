@@ -121,6 +121,7 @@ CGO_ENABLED=1 go test ./susfactor/... -run TestSusFactorParityGoldens -v
 | `WithModel(name)` | `"0dinai/susfactor-e5-large"` | Override model string in results |
 | `WithThreshold(t)` | `0.5` | Decision threshold (inclusive: `score >= t` → suspicious) |
 | `WithORTLibPath(path)` | auto | Path to ORT shared lib; falls back to `ORT_LIB_PATH` env |
+| `WithIntraOpThreads(n)` | unset (ORT default) | ORT intra-op thread count; `n <= 0` or omitted leaves ORT's default. See [CPU and container sizing](#cpu-and-container-sizing) |
 | `WithHFToken(token)` | `$HF_TOKEN` | HuggingFace token for gated model download |
 
 ## Model cache layout
@@ -147,6 +148,64 @@ CGO_ENABLED=1 go run ./cmd/susfactor-check/
 # With explicit model dir
 SUSFACTOR_MODEL_DIR=/path/to/model ORT_LIB_PATH=/path/to/ort go run ./cmd/susfactor-check/
 ```
+
+## CPU and container sizing
+
+Inference is CPU-bound, so how many CPUs the process can use sets latency.
+
+**ONNX Runtime sizes its thread pool to the host's cores, not your container's
+limit.** The classifier does not set a thread count by default, so ORT starts one
+intra-op thread per core it sees. Inside a container that is the node's core
+count; a Kubernetes CPU limit (a CFS quota) does not change it. A process with
+a 2-CPU quota on a 12-core node therefore runs 12 threads that the kernel
+throttles to 2 CPUs of time, which is slower than running 2 threads.
+
+Set the thread count to the CPUs the process actually has:
+
+```go
+clf, err := susfactor.NewClassifier(ctx,
+    susfactor.WithModelDir(dir),
+    susfactor.WithIntraOpThreads(2), // match the container's CPU limit
+)
+```
+
+`WithIntraOpThreads(n)` calls ORT's `SetIntraOpNumThreads(n)` on the session
+options. `n <= 0`, or leaving the option out, makes no call and keeps ORT's
+default, so existing code behaves exactly as before. The option does not change
+scores, chunk scores or chunking.
+
+**Inference is serial.** `Classify` scores a prompt's chunks one after another,
+and each chunk's inference holds the classifier's mutex, so concurrent `Classify`
+calls on one classifier also run one chunk at a time. Extra goroutines do not add
+throughput; extra CPUs (with matching threads) make each chunk faster.
+
+### Sizing guidance
+
+The numbers below are **indicative**: one run on an Apple M2 Pro under Docker
+(12 cores available), for about 1,000 tokens of input. Measure on your own
+hardware before sizing a deployment.
+
+| CPU configuration | Time per 1k tokens |
+|---|---|
+| 12 cores, unrestricted | 2.0 s |
+| 2 cores, pinned | 13.8 s |
+| 2-CPU quota, default threads | 18.7 s |
+| 1-CPU quota, default threads | 52.7 s |
+
+- Cost is about **24 core-seconds per 1k tokens**. Divide by the CPUs you have for
+  a rough latency: 4 CPUs is roughly 6 s per 1k tokens, before any
+  throttling penalty.
+- **Pinned cores beat a quota** of the same size. In the run above the 2-CPU
+  quota was 36% slower than 2 pinned cores, because threads sized to the host
+  contend for a quota they cannot exceed. In Kubernetes, requests and limits
+  are a quota; pinning needs the static CPU manager policy and an integer
+  Guaranteed-QoS request.
+- **Set `WithIntraOpThreads` equal to the CPUs you actually have**: the CPU
+  limit rounded down, with a minimum of 1. More threads than CPUs only adds
+  contention.
+- Long prompts cost proportionally more. Chunks are 510 tokens and advance by a
+  460-token stride, so a 10k-token prompt is about 22 chunks scored one after
+  another. Size CPUs for your longest prompt, not the average.
 
 ## Docker
 

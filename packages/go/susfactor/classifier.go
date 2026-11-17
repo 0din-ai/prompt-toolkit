@@ -58,6 +58,9 @@ type config struct {
 	ortLibPath string
 	modelCache *ModelCache
 	cacheOpts  []CacheOption
+	// intraOpThreads <= 0 means "leave ORT's default"; SetIntraOpNumThreads is
+	// not called at all.
+	intraOpThreads int
 }
 
 // Option configures a SusFactorClassifier.
@@ -90,6 +93,18 @@ func WithThreshold(t float32) Option {
 // level note on ortOnce for implications.
 func WithORTLibPath(path string) Option {
 	return func(c *config) { c.ortLibPath = path }
+}
+
+// WithIntraOpThreads sets the number of threads ONNX Runtime uses to
+// parallelize work inside a single graph node (intra-op parallelism).
+//
+// By default ORT sizes its thread pool to the number of cores it sees on the
+// host, which in a container is the node's core count, not the container's CPU
+// quota. Set n to the CPUs the process actually has. n <= 0, or omitting the
+// option, leaves ORT's default untouched. Scores, chunking and labels are not
+// affected.
+func WithIntraOpThreads(n int) Option {
+	return func(c *config) { c.intraOpThreads = n }
 }
 
 // WithModelCache configures the classifier to download missing model files
@@ -178,6 +193,9 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 	if err := sessionOpts.SetGraphOptimizationLevel(ort.GraphOptimizationLevelEnableAll); err != nil {
 		return nil, newError("set graph optimization: %v", err)
 	}
+	if err := applyIntraOpThreads(sessionOpts, cfg.intraOpThreads); err != nil {
+		return nil, newError("set intra-op threads: %v", err)
+	}
 
 	// The validated SusFactor ONNX graph always uses exactly these two inputs.
 	// token_type_ids is not required by this model; we avoid the double-load
@@ -210,6 +228,21 @@ func NewClassifier(ctx context.Context, opts ...Option) (*SusFactorClassifier, e
 		model:      cfg.model,
 		threshold:  cfg.threshold,
 	}, nil
+}
+
+// intraOpSetter is the subset of *ort.SessionOptions that applyIntraOpThreads
+// needs; it lets the n <= 0 no-op contract be tested without an ORT library.
+type intraOpSetter interface {
+	SetIntraOpNumThreads(n int) error
+}
+
+// applyIntraOpThreads sets the intra-op thread count when n > 0. For n <= 0 it
+// makes no call, so session options stay exactly as ORT defaults them.
+func applyIntraOpThreads(s intraOpSetter, n int) error {
+	if n <= 0 {
+		return nil
+	}
+	return s.SetIntraOpNumThreads(n)
 }
 
 // loadTokenizerNoTruncation loads a tokenizer from a tokenizer.json file with
