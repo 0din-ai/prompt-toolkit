@@ -131,7 +131,7 @@ func main() {
 }
 ```
 
-Requires ORT v1.26+ shared lib and libtokenizers. See [Installation](./getting-started/installation) and [Go + Docker Guide](./guides/go-docker-integration).
+Requires ORT v1.31.0 shared lib and libtokenizers. See [Installation](./getting-started/installation) and [Go + Docker Guide](./guides/go-docker-integration).
 
   </TabItem>
 </Tabs>
