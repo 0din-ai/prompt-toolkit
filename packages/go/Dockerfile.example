@@ -15,10 +15,10 @@
 #   docker run --rm my-service:latest /usr/local/bin/susfactor-check
 
 # ─── Pinned versions ─────────────────────────────────────────────────────────
-# yalue/onnxruntime_go v1.35.0 requires ORT API version 29 → ORT v1.29.0 exactly.
-ARG ORT_VERSION=1.29.0
+# yalue/onnxruntime_go v1.38.0 requires ORT API version 31 → ORT v1.31.0 exactly.
+ARG ORT_VERSION=1.31.0
 ARG TOKENIZERS_VERSION=1.27.0
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.25
 
 # ─── Stage 1: Download SusFactor model from HuggingFace ──────────────────────
 FROM python:3.12-slim AS model-fetcher
