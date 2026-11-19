@@ -124,9 +124,9 @@ Single-process, single-thread benchmarks. Concurrency, batch size, and hardware 
 | **Rust** | ort 2.x (ONNX Runtime) | **15.7ms** | 18.5ms | 22.8ms | **~63 req/s** |
 | **Python** | onnxruntime 1.x | 21.4ms | 32.3ms | 40.0ms | ~44 req/s |
 | **TypeScript** | onnxruntime-node | 22.2ms | 34.7ms | 53.4ms | ~42 req/s |
-| **Go** | ort via CGo (ORT 1.26) | ~15–25ms¹ | — | — | ~40–65 req/s¹ |
+| **Go** | ort via CGo (ORT 1.31) | ~15–25ms¹ | — | — | ~40–65 req/s¹ |
 
-¹ Estimated from the same ORT 1.26 backend on equivalent hardware; exact measurement requires the CGo native libs installed locally.
+¹ Estimated from the same ORT 1.31 backend on equivalent hardware; exact measurement requires the CGo native libs installed locally.
 
 **Why does Rust lead?** All four SDKs run the same ONNX graph through the same ORT C++ engine. The Rust advantage comes from a native tokenizer (the `tokenizers` crate) and zero interpreter overhead in the hot path.
 
