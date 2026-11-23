@@ -22,7 +22,7 @@ The model is ~2.1 GB (encoder weights). Keep it in its own Docker layer to avoid
 
 | Component | Version |
 |---|---|
-| Go | 1.25+ |
+| Go | 1.22+ |
 | `yalue/onnxruntime_go` | v1.38.0 |
 | ONNX Runtime | **v1.31.0** (must match — ORT API version 31) |
 | `daulet/tokenizers` | v1.27.0 |
@@ -58,15 +58,17 @@ FROM golang:1.25 AS builder
 WORKDIR /build
 
 # Install build dependencies for CGo
-RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download ORT shared lib (must match yalue/onnxruntime_go version)
+# Download ORT shared lib from the PyPI wheel (must match yalue/onnxruntime_go version)
 ARG ORT_VERSION=1.31.0
-RUN curl -fsSL \
-    "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
-    | tar -xz -C /opt/ && \
-    cp "/opt/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" \
-       /usr/local/lib/libonnxruntime.so && \
+ARG ORT_WHEEL_URL=https://files.pythonhosted.org/packages/6c/44/1e9e762b95b7da0a8424913a1ed7c38cdaf88624a3c41ddba24ebac88bc9/onnxruntime-1.31.0-cp312-cp312-manylinux_2_28_x86_64.whl
+ARG ORT_WHEEL_SHA256=5e129d6c56abd53e659cb70f00a108d6824086470ff99c2e47a82e5786563db3
+RUN curl -fsSL -o /tmp/onnxruntime.whl "${ORT_WHEEL_URL}" && \
+    echo "${ORT_WHEEL_SHA256}  /tmp/onnxruntime.whl" | sha256sum -c - && \
+    unzip -o -j /tmp/onnxruntime.whl "onnxruntime/capi/libonnxruntime.so.${ORT_VERSION}" -d /tmp/ort-wheel && \
+    cp "/tmp/ort-wheel/libonnxruntime.so.${ORT_VERSION}" /usr/local/lib/libonnxruntime.so && \
+    rm -rf /tmp/onnxruntime.whl /tmp/ort-wheel && \
     ldconfig
 
 # Download libtokenizers.a static lib (pre-built; no Rust toolchain needed)

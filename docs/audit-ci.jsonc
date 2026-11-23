@@ -8,31 +8,14 @@
   // constraints; re-review whenever the dependency tree changes.
   "high": true,
   "allowlist": [
-    // image-size (transitive via @docusaurus/mdx-loader). No patched release
-    // exists at any version as of 2026-08. DoS via infinite loops in the
-    // ICNS/JXL/HEIF parsers. image-size is used only at build time to read
-    // dimensions of the repo's own (trusted) markdown images, so the DoS
-    // surface is not reachable by untrusted input.
-    "GHSA-w3rx-r6r6-pgpr", // image-size ICNS parser infinite loop
-    "GHSA-5p2g-fcmc-qvqq", // image-size JXL/HEIF parser infinite loops
-
-    // tinypool <=2.1.0 and <2.1.2 (transitive via @docusaurus/core@3.10.2).
-    // Fixes available in tinypool 2.1.2+, but @docusaurus/core@3.10.2 pins
-    // tinypool~1.1.1 and requires v1.x. Would need Docusaurus 4.x or downgrade
-    // to 3.7.0 to access patched tinypool 2.x versions. Prototype pollution
-    // only exploitable if attacker can control tinypool worker options, which
-    // Docusaurus does not expose externally.
-    "GHSA-5gmw-xhrv-c9v3", // Tinypool prototype pollution via worker options
-    "GHSA-85c8-ppgw-ccpr", // Tinypool prototype pollution via run() options
-
-    // braces (transitive via @docusaurus/core's chokidar, and via micromatch
-    // in @docusaurus/utils/fast-glob/copy-webpack-plugin/webpack-dev-server).
-    // No patched release exists at any published version (latest 3.0.3 is
-    // still in the vulnerable range) as of 2026-10. Stack-exhaustion DoS from
-    // deeply nested brace patterns; braces here only ever receives the fixed
-    // glob patterns Docusaurus's own plugins pass to chokidar/fast-glob for
-    // build-time file discovery and dev-server watching, never
-    // user-controlled input, so the DoS surface is not reachable.
-    "GHSA-vfj7-8cjw-p6xm" // braces stack-exhaustion DoS
+    // picomatch <=4.0.7 (transitive via @docusaurus/utils' micromatch,
+    // chokidar/anymatch, tinyglobby/fdir, readdirp and jest-util). No patched
+    // release exists at any published version (latest 4.0.7 is still in the
+    // vulnerable range) as of 2026-11. ReDoS via single-branch repeated
+    // extglobs; picomatch here only ever receives the fixed glob patterns
+    // Docusaurus's own plugins use for build-time file discovery and
+    // dev-server watching, never user-controlled input, so the ReDoS surface
+    // is not reachable. Remove once a patched picomatch is published.
+    "GHSA-fc5q-39xc-vjpf" // picomatch ReDoS through repeated extglobs
   ]
 }

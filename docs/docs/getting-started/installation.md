@@ -141,10 +141,12 @@ The Go SDK uses CGo and links against:
 **Linux (CI / Docker):**
 
 ```bash
-# ORT v1.31.0
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-linux-x64-1.31.0.tgz \
-  | tar -xz -C /opt/
-sudo cp /opt/onnxruntime-linux-x64-1.31.0/lib/libonnxruntime.so.1.31.0 /usr/local/lib/libonnxruntime.so
+# ORT v1.31.0 (shared lib from the PyPI onnxruntime 1.31.0 wheel)
+curl -fsSL -o /tmp/onnxruntime.whl \
+  "https://files.pythonhosted.org/packages/6c/44/1e9e762b95b7da0a8424913a1ed7c38cdaf88624a3c41ddba24ebac88bc9/onnxruntime-1.31.0-cp312-cp312-manylinux_2_28_x86_64.whl"
+echo "5e129d6c56abd53e659cb70f00a108d6824086470ff99c2e47a82e5786563db3  /tmp/onnxruntime.whl" | sha256sum -c -
+unzip -o -j /tmp/onnxruntime.whl "onnxruntime/capi/libonnxruntime.so.1.31.0" -d /tmp/ort-wheel
+sudo cp /tmp/ort-wheel/libonnxruntime.so.1.31.0 /usr/local/lib/libonnxruntime.so
 sudo ldconfig
 
 # libtokenizers v1.27.0
