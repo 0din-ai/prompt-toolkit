@@ -34,16 +34,20 @@ go get github.com/0din-ai/prompt-toolkit/packages/go
 bash scripts/download-libtokenizers.sh
 # Writes: lib/<GOOS>_<GOARCH>/libtokenizers.a
 
-# 3. Download and install ORT shared lib
+# 3. Download and install ORT shared lib (from the PyPI onnxruntime 1.31.0 wheel)
 # macOS (Apple Silicon):
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-osx-arm64-1.31.0.tgz \
-  | tar -xz -C /tmp/
-export ORT_LIB_PATH=/tmp/onnxruntime-osx-arm64-1.31.0/lib/libonnxruntime.dylib
+curl -fsSL -o /tmp/onnxruntime.whl \
+  "https://files.pythonhosted.org/packages/b3/bd/2ac094311163b803e3626c3937461d6900934bd56cca7601f6150ff860c3/onnxruntime-1.31.0-cp312-cp312-macosx_14_0_arm64.whl"
+echo "aaab9b3af536b06ca27ab5e35e3d429c97457ce76cf298af103f687e8b9975c0  /tmp/onnxruntime.whl" | shasum -a 256 -c -
+unzip -o -j /tmp/onnxruntime.whl "onnxruntime/capi/libonnxruntime.1.31.0.dylib" -d /tmp/ort-wheel
+export ORT_LIB_PATH=/tmp/ort-wheel/libonnxruntime.1.31.0.dylib
 
 # Linux x86-64:
-curl -fsSL https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-linux-x64-1.31.0.tgz \
-  | tar -xz -C /opt/
-sudo cp /opt/onnxruntime-linux-x64-1.31.0/lib/libonnxruntime.so.1.31.0 /usr/local/lib/libonnxruntime.so
+curl -fsSL -o /tmp/onnxruntime.whl \
+  "https://files.pythonhosted.org/packages/6c/44/1e9e762b95b7da0a8424913a1ed7c38cdaf88624a3c41ddba24ebac88bc9/onnxruntime-1.31.0-cp312-cp312-manylinux_2_28_x86_64.whl"
+echo "5e129d6c56abd53e659cb70f00a108d6824086470ff99c2e47a82e5786563db3  /tmp/onnxruntime.whl" | sha256sum -c -
+unzip -o -j /tmp/onnxruntime.whl "onnxruntime/capi/libonnxruntime.so.1.31.0" -d /tmp/ort-wheel
+sudo cp /tmp/ort-wheel/libonnxruntime.so.1.31.0 /usr/local/lib/libonnxruntime.so
 sudo ldconfig
 export ORT_LIB_PATH=/usr/local/lib/libonnxruntime.so
 ```
