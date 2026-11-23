@@ -46,6 +46,8 @@ print('Model ready at /model')
 # ─── Stage 2: Build Go binary ─────────────────────────────────────────────────
 FROM golang:${GO_VERSION} AS builder
 ARG ORT_VERSION
+ARG ORT_WHEEL_URL
+ARG ORT_WHEEL_SHA256
 ARG TOKENIZERS_VERSION
 WORKDIR /build
 
