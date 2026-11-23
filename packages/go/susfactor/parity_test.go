@@ -52,20 +52,39 @@ func loadGoldens(t *testing.T) goldenFile {
 //	ORT_LIB_PATH       — path to libonnxruntime.dylib/.so (defaults to common brew/tmp paths)
 //
 // Skips automatically when SUSFACTOR_MODEL_DIR is not set.
+//
+// The goldens run once with ORT's default thread count and once per
+// WithIntraOpThreads setting, to show the option does not move scores or labels.
 func TestSusFactorParityGoldens(t *testing.T) {
 	modelDir := os.Getenv("SUSFACTOR_MODEL_DIR")
 	if modelDir == "" {
 		t.Skip("SUSFACTOR_MODEL_DIR not set — skipping parity test")
 	}
 
-	clf, err := NewClassifier(context.Background(),
-		WithModelDir(modelDir),
-	)
-	if err != nil {
-		t.Fatalf("NewClassifier: %v", err)
+	variants := []struct {
+		name string
+		opts []Option
+	}{
+		{"default", nil},
+		{"intra_op_1", []Option{WithIntraOpThreads(1)}},
+		{"intra_op_2", []Option{WithIntraOpThreads(2)}},
 	}
-	defer clf.Close()
+	for _, variant := range variants {
+		t.Run(variant.name, func(t *testing.T) {
+			clf, err := NewClassifier(context.Background(),
+				append([]Option{WithModelDir(modelDir)}, variant.opts...)...,
+			)
+			if err != nil {
+				t.Fatalf("NewClassifier: %v", err)
+			}
+			defer clf.Close()
+			runParityGoldens(t, clf)
+		})
+	}
+}
 
+func runParityGoldens(t *testing.T, clf *SusFactorClassifier) {
+	t.Helper()
 	gf := loadGoldens(t)
 
 	for _, v := range gf.Vectors {

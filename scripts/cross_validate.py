@@ -151,8 +151,8 @@ def run_susfactor_parity(root_dir: Path, model_dir: str, py_model_cache: str = "
 
     # ── Rust parity (self-check) ─────────────────────────────────────────────
     # ORT_LIB_PATH is set in the CI step env to point the Go SDK at its private
-    # ORT v1.26 install (/opt/ort-go/lib/).  ort-sys for ort 2.0.0-rc.12 reads
-    # this var and tries to link against that path, but rejects the v1.26 ABI.
+    # ORT v1.31 install (/opt/ort-go/lib/).  ort-sys for ort 2.0.0-rc.12 reads
+    # this var and tries to link against that path, but rejects the v1.31 ABI.
     # With download-binaries enabled, ort-sys fetches its own ORT 2.x — but
     # only when ORT_LIB_PATH is absent.  Unset it so Rust uses download-binaries.
     success, _ = run_command(
@@ -249,7 +249,7 @@ def main() -> int:
 
     # Rust: unset ORT_LIB_PATH so ort-sys uses its download-binaries path.
     # The default feature set includes "onnx", which pulls in ort-sys; if
-    # ORT_LIB_PATH points at a Go-only ORT v1.26 install, ort-sys rejects it.
+    # ORT_LIB_PATH points at a Go-only ORT v1.31 install, ort-sys rejects it.
     success, output = run_command(
         ["cargo", "test", "--lib", "--features", "cm-lsh"],
         root_dir / "packages" / "rust",
