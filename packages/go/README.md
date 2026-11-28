@@ -18,7 +18,7 @@ across 15+ golden test vectors.
 
 | Dependency | Version | Notes |
 |---|---|---|
-| Go | 1.22+ | CGo required (`CGO_ENABLED=1`) |
+| Go | 1.25+ | CGo required (`CGO_ENABLED=1`) |
 | ONNX Runtime | **v1.31.0** | Must match `yalue/onnxruntime_go` v1.38.0 exactly |
 | `libtokenizers.a` | v1.27.0 | Pre-built static lib from `daulet/tokenizers` releases |
 

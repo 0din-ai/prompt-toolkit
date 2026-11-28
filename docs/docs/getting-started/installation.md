@@ -165,7 +165,7 @@ CGO_ENABLED=1 CGO_LDFLAGS="-L/usr/local/lib" \
 
 ### Requirements
 
-- Go 1.22 or higher
+- Go 1.25 or higher
 - CGo enabled (`CGO_ENABLED=1`)
 - ORT v1.31.0 shared library
 - libtokenizers v1.27.0 static library

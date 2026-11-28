@@ -22,7 +22,7 @@ The model is ~2.1 GB (encoder weights). Keep it in its own Docker layer to avoid
 
 | Component | Version |
 |---|---|
-| Go | 1.22+ |
+| Go | 1.25+ |
 | `yalue/onnxruntime_go` | v1.38.0 |
 | ONNX Runtime | **v1.31.0** (must match — ORT API version 31) |
 | `daulet/tokenizers` | v1.27.0 |
@@ -54,7 +54,7 @@ print('Model downloaded to /model')
 "
 
 # ── Stage 2: Build Go binary ───────────────────────────────────────────────────
-FROM golang:1.22 AS builder
+FROM golang:1.25-bookworm AS builder
 WORKDIR /build
 
 # Install build dependencies for CGo

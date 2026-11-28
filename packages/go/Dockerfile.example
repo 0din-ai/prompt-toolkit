@@ -20,7 +20,7 @@ ARG ORT_VERSION=1.31.0
 ARG ORT_WHEEL_URL=https://files.pythonhosted.org/packages/6c/44/1e9e762b95b7da0a8424913a1ed7c38cdaf88624a3c41ddba24ebac88bc9/onnxruntime-1.31.0-cp312-cp312-manylinux_2_28_x86_64.whl
 ARG ORT_WHEEL_SHA256=5e129d6c56abd53e659cb70f00a108d6824086470ff99c2e47a82e5786563db3
 ARG TOKENIZERS_VERSION=1.27.0
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.25
 
 # ─── Stage 1: Download SusFactor model from HuggingFace ──────────────────────
 FROM python:3.12-slim AS model-fetcher
@@ -44,7 +44,7 @@ print('Model ready at /model')
 "
 
 # ─── Stage 2: Build Go binary ─────────────────────────────────────────────────
-FROM golang:${GO_VERSION} AS builder
+FROM golang:${GO_VERSION}-bookworm AS builder
 ARG ORT_VERSION
 ARG ORT_WHEEL_URL
 ARG ORT_WHEEL_SHA256
